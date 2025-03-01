@@ -34,7 +34,9 @@ class ROCAUC(BaseMetric):
 
         # Ensure p_true is a valid number (including NumPy numeric types)
         if not isinstance(p_true, (int, float, np.number)):
-            raise TypeError(f"y_pred must be a number or a dictionary with a valid key. Got: {type(p_true)}")
+            raise TypeError(
+                f"y_pred must be a number or a dictionary with a valid key. Got: {type(p_true)}"
+            )
 
         # Update confusion matrices for each threshold
         for t, cm in zip(self.thresholds, self.cms):

@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "onad"
+version = "0.0.1"
+description = "Online Anomaly Detection"
+authors = [
+  { name = "Oliver Hennhoefer", email = "oliver.hennhoefer@mail.de" },
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.2.3",
+    "faiss-cpu>=1.10.0",
+    "tqdm>=4.67.1",
+    "scipy>=1.15.2"
+]
+
+[project.optional-dependencies]
+dev = ["black", "river>=0.22.0"]
+all = ["black", "river>=0.22.0"]
+
+[project.urls]
+"Homepage" = "https://github.com/OliverHennhoefer/onad"
+"Bugs" = "https://github.com/OliverHennhoefer/onad/issues"
