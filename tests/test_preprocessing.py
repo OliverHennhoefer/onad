@@ -3,7 +3,7 @@ import unittest
 
 class MyTestCase(unittest.TestCase):
     def test_min_max_scaler(self):
-        from onad.transformer.scaler.min_max import MinMaxScaler
+        from onad.transformer.scaler.normalize import MinMaxScaler
         from onad.utils.streamer.datasets import Dataset
         from onad.utils.streamer.streamer import NPZStreamer
 

@@ -1,20 +1,17 @@
 from onad.metric.pr_auc import PRAUC
-from onad.model.knn import KNN
+from onad.model.autoencoder import Autoencoder
 from onad.transformer.scaler.normalize import MinMaxScaler
-from onad.utils.similarity.faiss_engine import FaissSimilaritySearchEngine
 from onad.utils.streamer.datasets import Dataset
 from onad.utils.streamer.streamer import NPZStreamer
 
 scaler = MinMaxScaler()
 
-engine = FaissSimilaritySearchEngine(window_size=250, warm_up=50)
-model = KNN(k=55, similarity_engine=engine)
-
+model = Autoencoder(hidden_size=16, latent_size=4, learning_rate=0.05, seed=1)
 pipeline = scaler | model
 
 metric = PRAUC(n_thresholds=10)
 
-with NPZStreamer(Dataset.SHUTTLE) as streamer:
+with NPZStreamer(Dataset.FRAUD) as streamer:
     for x, y in streamer:
         pipeline.learn_one(x)
         score = pipeline.score_one(x)
