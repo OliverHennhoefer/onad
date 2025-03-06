@@ -5,13 +5,12 @@ import numpy as np
 class MyTestCase(unittest.TestCase):
     def test_min_max_scaler(self):
         from onad.transformer.scaler.normalize import MinMaxScaler
-        from onad.utils.streamer.datasets import Dataset
         from onad.utils.streamer.streamer import NPZStreamer
 
         scaler = MinMaxScaler()
 
         normalized_vals = []
-        with NPZStreamer(Dataset.SHUTTLE) as streamer:
+        with NPZStreamer("./data/shuttle.npz") as streamer:
             for x, y in streamer:
                 scaler.learn_one(x)
                 scaled_x = scaler.transform_one(x)
@@ -27,13 +26,12 @@ class MyTestCase(unittest.TestCase):
 
     def test_standard_scaler(self):
         from onad.transformer.scaler.standardize import StandardScaler
-        from onad.utils.streamer.datasets import Dataset
         from onad.utils.streamer.streamer import NPZStreamer
 
         scaler = StandardScaler()
 
         standardized_vals = []
-        with NPZStreamer(Dataset.SHUTTLE) as streamer:
+        with NPZStreamer("./data/shuttle.npz") as streamer:
             for i, (x, y) in enumerate(streamer):
                 scaler.learn_one(x)
                 scaled_x = scaler.transform_one(x)

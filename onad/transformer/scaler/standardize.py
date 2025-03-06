@@ -35,7 +35,9 @@ class StandardScaler(BaseTransformer):
 
                 # Update mean and variance using Welford's online algorithm
                 self.mean[feature] = mean_prev + (value - mean_prev) / (n + 1)
-                self.variance[feature] = variance_prev + (value - mean_prev) * (value - self.mean[feature])
+                self.variance[feature] = variance_prev + (value - mean_prev) * (
+                    value - self.mean[feature]
+                )
                 self.n_samples[feature] += 1
 
     def transform_one(self, x: Dict[str, Union[float, np.float64]]) -> Dict[str, float]:
@@ -50,7 +52,11 @@ class StandardScaler(BaseTransformer):
         """
         standardized_x = {}
         for feature, value in x.items():
-            if feature not in self.mean or feature not in self.variance or feature not in self.n_samples:
+            if (
+                feature not in self.mean
+                or feature not in self.variance
+                or feature not in self.n_samples
+            ):
                 raise ValueError(
                     f"Feature '{feature}' has not been seen during learning."
                 )
@@ -61,7 +67,9 @@ class StandardScaler(BaseTransformer):
                 # If there's only one sample, the variance is zero, so we can't scale
                 standardized_x[feature] = 0.0
             else:
-                std_dev = math.sqrt(self.variance[feature] / (self.n_samples[feature] - 1))
+                std_dev = math.sqrt(
+                    self.variance[feature] / (self.n_samples[feature] - 1)
+                )
                 if std_dev == 0:
                     standardized_x[feature] = 0.0
                 else:

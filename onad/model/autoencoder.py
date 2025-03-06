@@ -13,13 +13,14 @@ class AutoencoderModel(nn.Module):
         super().__init__()
         self.encoder = nn.Sequential(
             nn.Linear(input_size, hidden_size),
-            nn.ReLU(),
+            nn.LeakyReLU(0.01),
+            nn.Dropout(0.1),
             nn.Linear(hidden_size, latent_size),
             nn.ReLU(),
         )
         self.decoder = nn.Sequential(
             nn.Linear(latent_size, hidden_size),
-            nn.ReLU(),
+            nn.LeakyReLU(0.01),
             nn.Linear(hidden_size, input_size),
         )
 
@@ -45,7 +46,6 @@ class Autoencoder(BaseModel):
         self.model = None
         self.optimizer = None
         self.criterion = nn.MSELoss()
-        self.iteration_count = 0  # Counter to track the number of iterations
 
         if self.seed is not None:
             self._set_seed(seed)
@@ -88,13 +88,6 @@ class Autoencoder(BaseModel):
     def score_one(self, x: Dict[str, float]) -> Optional[float]:
         if self.feature_names is None:
             self._initialize_model(x)
-
-        # Increment the iteration counter
-        self.iteration_count += 1
-
-        # Return None during the warm-up period
-        if self.iteration_count <= self.warmup:
-            return None
 
         x_tensor = self._convert_x_to_tensor(x)
         self.model.eval()
