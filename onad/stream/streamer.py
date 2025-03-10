@@ -8,16 +8,18 @@ from tqdm import tqdm
 class Dataset(Enum):
     FRAUD = "./resources/fraud.parquet"
     SHUTTLE = "onad/stream/resources/shuttle.parquet"
-    SMD1 = "onad/stream/resources/smd1.parquet"
-    SMD2 = "onad/stream/resources/smd2.parquet"
-    SMD3 = "onad/stream/resources/smd3.parquet"
+    SMD = "onad/stream/resources/smd.parquet"  # Entity 1
 
 
-class DataStreamer:
-    def __init__(self, dataset: Dataset):
-        # Make the dataset path relative to the current Python file
+class ParquetStreamer:
+    def __init__(self, dataset: str | Dataset):
+
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        self.file_path = os.path.join(current_dir, dataset.value)
+        if isinstance(dataset, Dataset):
+            # Make the dataset path relative to the current Python file
+            self.file_path = os.path.join(current_dir, dataset.value)
+        else:
+            self.file_path = dataset
 
     def __enter__(self):
         try:
