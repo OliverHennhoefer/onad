@@ -3,3 +3,4 @@ faiss-cpu>=1.10.0
 tqdm>=4.67.1
 scipy>=1.15.2
 torch>=2.6.0
+pyarrow>=19.0.1

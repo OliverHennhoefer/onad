@@ -1,8 +1,8 @@
 from onad.metric.pr_auc import PRAUC
-from onad.model.knn import KNN
-from onad.transformer.scaler.normalize import MinMaxScaler
+from onad.model.unsupervised.knn import KNN
+from onad.stream.streamer import DataStreamer, Dataset
+from onad.transform.scale import MinMaxScaler
 from onad.utils.similarity.faiss_engine import FaissSimilaritySearchEngine
-from onad.utils.streamer.streamer import NPZStreamer
 
 scaler = MinMaxScaler()
 
@@ -13,7 +13,7 @@ pipeline = scaler | model
 
 metric = PRAUC(n_thresholds=10)
 
-with NPZStreamer("./data/shuttle.npz") as streamer:
+with DataStreamer(dataset=Dataset.FRAUD) as streamer:
     for x, y in streamer:
         pipeline.learn_one(x)
         score = pipeline.score_one(x)

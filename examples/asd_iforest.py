@@ -1,12 +1,12 @@
 from onad.metric.pr_auc import PRAUC
-from onad.model.asd_iforest import ASDIsolationForest
-from onad.utils.streamer.streamer import NPZStreamer
+from onad.model.unsupervised.asd_iforest import ASDIsolationForest
+from onad.stream.streamer import DataStreamer, Dataset
 
 model = ASDIsolationForest(n_estimators=750, max_samples=2750, seed=1)
 
 metric = PRAUC(n_thresholds=10)
 
-with NPZStreamer("./data/fraud.npz") as streamer:
+with DataStreamer(dataset=Dataset.FRAUD) as streamer:
     for x, y in streamer:
         model.learn_one(x)
         score = model.score_one(x)

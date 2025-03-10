@@ -7,27 +7,27 @@ class Pipeline:
         self.second = second
 
     def learn_one(self, x: Dict[str, float]) -> None:
-        """Learn from the input data."""
+        """Learn from the input resources."""
         self.first.learn_one(x)
         transformed_x = self.first.transform_one(x)
         self.second.learn_one(transformed_x)
 
     def transform_one(self, x: Dict[str, float]) -> Dict[str, float]:
-        """Transform the input data."""
+        """Transform the input resources."""
         transformed_x = self.first.transform_one(x)
         return self.second.transform_one(transformed_x)
 
     def score_one(self, x: Dict[str, float]) -> float:
         """
-        Score the input data using the model in the pipeline.
+        Score the input resources using the model in the pipeline.
 
         Args:
             x (Dict[str, float]): A dictionary of feature-value pairs.
 
         Returns:
-            float: The score for the input data.
+            float: The score for the input resources.
         """
-        # Transform the input data using the preprocessor
+        # Transform the input resources using the preprocessor
         transformed_x = self.first.transform_one(x)
 
         # Check if the second component (model) has a score_one method

@@ -15,5 +15,5 @@ class BaseTransformer(abc.ABC):
         raise NotImplementedError
 
     def __or__(self, other):
-        """Overload the | operator to pipe the output of this transformer to another transformer or model."""
+        """Overload the | operator to pipe the output of this transform to another transform or model."""
         return Pipeline(self, other)
