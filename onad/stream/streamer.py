@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 class Dataset(Enum):
     FRAUD = "./resources/fraud.parquet"
-    SHUTTLE = "onad/stream/resources/shuttle.parquet"
+    SHUTTLE = "./resources/shuttle.parquet"
     SMD = "onad/stream/resources/smd.parquet"  # Entity 1
 
 

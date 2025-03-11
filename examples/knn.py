@@ -1,4 +1,5 @@
-from onad.metric.pr_auc import PRAUC
+from sklearn.metrics import average_precision_score
+
 from onad.model.unsupervised.knn import KNN
 from onad.stream.streamer import ParquetStreamer, Dataset
 from onad.transform.scale import MinMaxScaler
@@ -11,12 +12,16 @@ model = KNN(k=55, similarity_engine=engine)
 
 pipeline = scaler | model
 
-metric = PRAUC(n_thresholds=10)
-
+labels, scores = [], []
 with ParquetStreamer(dataset=Dataset.FRAUD) as streamer:
-    for x, y in streamer:
-        pipeline.learn_one(x)
-        score = pipeline.score_one(x)
-        metric.update(y, score)
+    for i, (x, y) in enumerate(streamer):
+        if y == 0 and i < 2_000:
+            model.learn_one(x)
+            continue
+        model.learn_one(x)
+        score = model.score_one(x)
 
-print(metric.get())
+        labels.append(y)
+        scores.append(score)
+
+print(f"PR_AUC: {round(average_precision_score(labels, scores), 3)}")  # 0.386
