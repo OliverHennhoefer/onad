@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "onad"
-version = "0.0.5"
+version = "0.0.6"
 description = "Online Anomaly Detection Models"
 authors = [
   { name = "Oliver Hennhoefer", email = "oliver.hennhoefer@mail.de" },

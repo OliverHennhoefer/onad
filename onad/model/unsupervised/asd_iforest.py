@@ -1,7 +1,7 @@
 import math
 import random
 from collections import deque
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 import numpy as np
 
@@ -10,15 +10,12 @@ from onad.base.model import BaseModel
 
 class ASDIsolationForest(BaseModel):
     """
-    Online ASD Isolation Forest for anomaly detection.
-
-    This algorithm adapts the Isolation Forest to an online setting by incrementally
-    updating a collection of trees built on recent resources points. Each tree is constructed
-    from a subsample of the resources stream, and older trees are replaced as new resources arrives.
+    Optimized Online ASD Isolation Forest for anomaly detection using NumPy for efficient computations.
 
     Args:
         n_estimators (int): Number of trees in the forest. Default is 100.
         max_samples (int): Number of samples used to build each tree. Default is 256.
+        seed (Optional[int]): Random seed for reproducibility. Default is None.
     """
 
     def __init__(
@@ -30,97 +27,117 @@ class ASDIsolationForest(BaseModel):
         super().__init__()
         self.n_estimators = n_estimators
         self.max_samples = max_samples
-        self.buffer = []
-        self.trees = deque()
-        self.c_n = self._compute_c(max_samples)
+        self.feature_names: Optional[List[str]] = None
+        self.buffer: np.ndarray = np.empty((0, 0))
+        self.buffer_count: int = 0
+        self.trees: deque = deque()
+        self.c_n: float = self._compute_c(max_samples)
         self.seed = seed
 
         if self.seed is not None:
             self._set_seed(seed)
 
-    @staticmethod
-    def _set_seed(seed: int):
+    def _set_seed(self, seed: int) -> None:
+        """Set random seed for reproducibility."""
         random.seed(seed)
         np.random.seed(seed)
 
-    def _compute_c(self, n: int) -> float:
-        """Compute the average path length adjustment term c(n) for a given sample size n."""
+    @staticmethod
+    def _compute_c(n: int) -> float:
+        """Compute the average path length adjustment term c(n)."""
         if n <= 1:
             return 0.0
         harmonic = math.log(n - 1) + 0.5772156649
         return 2.0 * harmonic - 2.0 * (n - 1) / n
 
-    def _build_tree(self, data: list) -> Dict:
-        """Build an isolation tree from a subsample of resources."""
-        max_height = math.ceil(math.log2(len(data)))
-        return self._build_tree_helper(data, current_height=0, max_height=max_height)
-
-    def _build_tree_helper(
-        self, data: list, current_height: int, max_height: int
-    ) -> Dict:
-        """Recursively build an isolation tree node."""
-        if len(data) <= 1 or current_height >= max_height:
-            return {"size": len(data)}
-        # Select a random feature
-        feature = random.choice(list(data[0].keys()))
-        # Extract feature values and determine split value
-        values = [d[feature] for d in data]
-        min_val, max_val = min(values), max(values)
-        if min_val == max_val:
-            return {"size": len(data)}
-        split_val = random.uniform(min_val, max_val)
-        # Split resources into left and right
-        left_data = [d for d in data if d[feature] < split_val]
-        right_data = [d for d in data if d[feature] >= split_val]
-        # Recursively build left and right subtrees
-        left = self._build_tree_helper(left_data, current_height + 1, max_height)
-        right = self._build_tree_helper(right_data, current_height + 1, max_height)
-        return {
-            "split_feature": feature,
-            "split_val": split_val,
-            "left": left,
-            "right": right,
-            "size": len(data),
-        }
-
     def learn_one(self, x: Dict[str, float]) -> None:
-        """Update the model with a single resources point."""
-        self.buffer.append(x)
-        if len(self.buffer) >= self.max_samples:
-            # Build a new tree and update the forest
+        """Update the model with a single data point."""
+        if self.feature_names is None:
+            self.feature_names = list(x.keys())
+            self.buffer = np.zeros((self.max_samples, len(self.feature_names)))
+            self.buffer_count = 0
+
+        x_converted = np.array([x.get(f, 0.0) for f in self.feature_names])
+
+        if self.buffer_count < self.max_samples:
+            self.buffer[self.buffer_count] = x_converted
+            self.buffer_count += 1
+        else:
+            # Build new tree and manage buffer
             new_tree = self._build_tree(self.buffer)
             self.trees.append(new_tree)
-            # Remove the oldest tree if exceeding n_estimators
             if len(self.trees) > self.n_estimators:
                 self.trees.popleft()
-            # Reset buffer for new samples
-            self.buffer = []
+            # Reset buffer with current sample
+            self.buffer_count = 0
+            self.buffer[self.buffer_count] = x_converted
+            self.buffer_count += 1
+
+    def _build_tree(self, data_arr: np.ndarray) -> Dict:
+        """Build an isolation tree from a NumPy array buffer."""
+        n_samples = data_arr.shape[0]
+        indices = np.arange(n_samples)
+        max_height = math.ceil(math.log2(n_samples))
+        return self._build_tree_helper(data_arr, indices, max_height)
+
+    def _build_tree_helper(
+        self,
+        data_arr: np.ndarray,
+        indices: np.ndarray,
+        max_height: int,
+        current_height: int = 0,
+    ) -> Dict:
+        """Iteratively build isolation tree nodes with NumPy optimizations."""
+        n = len(indices)
+        if n <= 1 or current_height >= max_height:
+            return {"size": n, "c": self._compute_c(n)}
+
+        feature_idx = random.randint(0, data_arr.shape[1] - 1)
+        feature_vals = data_arr[indices, feature_idx]
+        min_val, max_val = np.min(feature_vals), np.max(feature_vals)
+
+        if min_val == max_val:
+            return {"size": n, "c": self._compute_c(n)}
+
+        split_val = random.uniform(min_val, max_val)
+        mask = feature_vals < split_val
+        left_indices = indices[mask]
+        right_indices = indices[~mask]
+
+        return {
+            "split_feature": self.feature_names[feature_idx],
+            "split_val": split_val,
+            "left": self._build_tree_helper(
+                data_arr, left_indices, max_height, current_height + 1
+            ),
+            "right": self._build_tree_helper(
+                data_arr, right_indices, max_height, current_height + 1
+            ),
+            "size": n,  # For consistency, though mainly used in leaves
+        }
 
     def _compute_path_length(self, x: Dict[str, float], tree: Dict) -> float:
-        """Compute the path length of a resources point through a single tree."""
-
-        def traverse(node: Dict, depth: int) -> float:
-            if "split_feature" not in node:
-                # Leaf node: adjust path length by c(node['size'])
-                return depth + self._compute_c(node["size"])
-            # Traverse left or right child based on split value
-            if x.get(node["split_feature"], 0) < node["split_val"]:
-                return traverse(node["left"], depth + 1)
+        """Iteratively compute path length with precomputed c values."""
+        depth = 0
+        current_node = tree
+        while True:
+            if "split_feature" not in current_node:
+                return depth + current_node["c"]
+            feature_val = x.get(current_node["split_feature"], 0.0)
+            if feature_val < current_node["split_val"]:
+                current_node = current_node["left"]
             else:
-                return traverse(node["right"], depth + 1)
-
-        return traverse(tree, 0)
+                current_node = current_node["right"]
+            depth += 1
 
     def score_one(self, x: Dict[str, float]) -> float:
-        """Compute the anomaly score for a single resources point."""
+        """Compute anomaly score using optimized path calculations."""
         if not self.trees:
-            # Return a default score if no trees are available
             return 0.0
-        # Calculate average path length across all trees
-        total_path_length = 0.0
+
+        total_path = 0.0
         for tree in self.trees:
-            total_path_length += self._compute_path_length(x, tree)
-        avg_path_length = total_path_length / len(self.trees)
-        # Compute anomaly score
-        anomaly_score = 2.0 ** (-avg_path_length / self.c_n)
-        return anomaly_score
+            total_path += self._compute_path_length(x, tree)
+
+        avg_path = total_path / len(self.trees)
+        return 2.0 ** (-avg_path / self.c_n)
