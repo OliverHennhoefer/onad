@@ -1,27 +1,32 @@
 import random
-
 import numpy as np
 import torch
 import torch.nn as nn
 from typing import Dict, Optional
-
 from onad.base.model import BaseModel
 
 
 class AutoencoderModel(nn.Module):
-    def __init__(self, input_size: int, hidden_size: int, latent_size: int):
+    def __init__(self, input_size: int, hidden_sizes: list, latent_size: int, dropout: float):
         super().__init__()
-        self.encoder = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.LeakyReLU(0.01),
-            nn.Dropout(0.1),
-            nn.Linear(hidden_size, latent_size),
-            nn.ReLU(),
-        )
+
+        layers = []
+        in_features = input_size
+        for hidden_size in hidden_sizes:
+            layers.append(nn.Linear(in_features, hidden_size))
+            layers.append(nn.LeakyReLU(0.01))
+            layers.append(nn.Dropout(dropout))
+            in_features = hidden_size
+
+        layers.append(nn.Linear(in_features, latent_size))
+        layers.append(nn.ReLU())
+        self.encoder = nn.Sequential(*layers)
+
+        # Decoder
         self.decoder = nn.Sequential(
-            nn.Linear(latent_size, hidden_size),
+            nn.Linear(latent_size, in_features),
             nn.LeakyReLU(0.01),
-            nn.Linear(hidden_size, input_size),
+            nn.Linear(in_features, input_size),
         )
 
     def forward(self, x):
@@ -30,16 +35,18 @@ class AutoencoderModel(nn.Module):
 
 class Autoencoder(BaseModel):
     def __init__(
-        self,
-        hidden_size: int,
-        latent_size: int,
-        learning_rate: float = 0.001,
-        warmup: int = 0,
-        seed: Optional[int] = None,
+            self,
+            hidden_sizes: list,
+            latent_size: int,
+            learning_rate: float = 0.001,
+            dropout: float = 0.1,
+            warmup: int = 0,
+            seed: Optional[int] = None,
     ):
-        self.hidden_size = hidden_size
+        self.hidden_sizes = hidden_sizes
         self.latent_size = latent_size
         self.learning_rate = learning_rate
+        self.dropout = dropout
         self.warmup = warmup
         self.seed = seed
         self.feature_names = None
@@ -63,10 +70,13 @@ class Autoencoder(BaseModel):
     def _initialize_model(self, x: Dict[str, float]):
         self.feature_names = sorted(x.keys())
         input_size = len(self.feature_names)
-        self.model = AutoencoderModel(input_size, self.hidden_size, self.latent_size)
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(), lr=self.learning_rate
+        self.model = AutoencoderModel(
+            input_size,
+            self.hidden_sizes,
+            self.latent_size,
+            self.dropout,
         )
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
 
     def _convert_x_to_tensor(self, x: Dict[str, float]) -> torch.Tensor:
         if sorted(x.keys()) != self.feature_names:
