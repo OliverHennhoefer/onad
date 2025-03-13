@@ -6,8 +6,14 @@ from onad.base.model import BaseModel
 
 class MondrianNode:
     __slots__ = [
-        'split_feature', 'split_threshold', 'left_child', 'right_child',
-        'is_leaf_', 'min', 'max', 'count'
+        "split_feature",
+        "split_threshold",
+        "left_child",
+        "right_child",
+        "is_leaf_",
+        "min",
+        "max",
+        "count",
     ]
 
     def __init__(self):
@@ -41,7 +47,9 @@ class MondrianNode:
         if rng.random() < 1 - np.exp(-lambda_ * volume):
             probs = ranges / np.sum(ranges)
             split_feature = rng.choice(len(probs), p=probs)
-            split_threshold = rng.uniform(self.min[split_feature], self.max[split_feature])
+            split_threshold = rng.uniform(
+                self.min[split_feature], self.max[split_feature]
+            )
 
             self.left_child = MondrianNode()
             self.right_child = MondrianNode()
@@ -62,7 +70,9 @@ class MondrianNode:
 
 
 class MondrianTree:
-    def __init__(self, selected_indices: np.ndarray, lambda_: float, rng: np.random.Generator):
+    def __init__(
+        self, selected_indices: np.ndarray, lambda_: float, rng: np.random.Generator
+    ):
         self.selected_indices = selected_indices
         self.lambda_ = lambda_
         self.rng = rng
@@ -81,7 +91,10 @@ class MondrianTree:
                 else:
                     break
             else:
-                if x_projected[current_node.split_feature] <= current_node.split_threshold:
+                if (
+                    x_projected[current_node.split_feature]
+                    <= current_node.split_threshold
+                ):
                     current_node = current_node.left_child
                 else:
                     current_node = current_node.right_child
@@ -105,7 +118,7 @@ class MondrianForest(BaseModel):
         n_estimators: int = 100,
         subspace_size: int = 256,
         lambda_: float = 1.0,
-        random_state: int = None
+        random_state: int = None,
     ):
         self.number_of_trees = n_estimators
         self.subspace_size = subspace_size
@@ -139,7 +152,9 @@ class MondrianForest(BaseModel):
             selected_features = self.rng_.choice(
                 self.features_, size=self.subspace_size, replace=False
             )
-            selected_indices = np.array([self.feature_to_index[f] for f in selected_features])
+            selected_indices = np.array(
+                [self.feature_to_index[f] for f in selected_features]
+            )
             tree = MondrianTree(selected_indices, self.lambda_, self.rng_)
             x_projected = global_features[selected_indices]
             tree.learn_one(x_projected)
