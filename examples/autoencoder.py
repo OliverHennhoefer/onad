@@ -1,14 +1,17 @@
 from sklearn.metrics import average_precision_score
+from torch import optim, nn
 
 from onad.model.unsupervised.autoencoder import Autoencoder
 from onad.stream.streamer import ParquetStreamer, Dataset
 from onad.transform.scale import MinMaxScaler
 from onad.utils.architecture.autoencoder import VanillaAutoencoder
 
+model = VanillaAutoencoder(input_size=9, seed=1)
+
 autoencoder = Autoencoder(
-    model=VanillaAutoencoder(input_size=9),
-    learning_rate=0.0001,
-    seed=1
+    model=model,
+    optimizer=optim.Adam(model.parameters(), lr=0.001, weight_decay=0),
+    criterion=nn.MSELoss(),
 )
 
 scaler = MinMaxScaler()
