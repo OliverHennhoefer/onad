@@ -1,14 +1,19 @@
 from sklearn.metrics import average_precision_score
 
-from onad.model.unsupervised.forest.mondrian_iforest import MondrianForest
+from onad.model.unsupervised.svm.gadget_svm import GADGETSVM
 from onad.stream.streamer import ParquetStreamer, Dataset
+from onad.transform.scale import MinMaxScaler
 
-model = MondrianForest(n_estimators=250, subspace_size=500, random_state=1)
+scaler = MinMaxScaler()
+
+model = GADGETSVM()
+
+pipeline = scaler | model
 
 labels, scores = [], []
-with ParquetStreamer(dataset=Dataset.SHUTTLE) as streamer:
+with ParquetStreamer(dataset=Dataset.FRAUD) as streamer:
     for i, (x, y) in enumerate(streamer):
-        if y == 0 and i < 10_000:
+        if y == 0 and i < 2_000:
             model.learn_one(x)
             continue
         model.learn_one(x)
@@ -17,4 +22,4 @@ with ParquetStreamer(dataset=Dataset.SHUTTLE) as streamer:
         labels.append(y)
         scores.append(score)
 
-print(f"PR_AUC: {round(average_precision_score(labels, scores), 3)}")  # 0.329
+print(f"PR_AUC: {round(average_precision_score(labels, scores), 3)}")  # 0.386

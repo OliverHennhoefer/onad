@@ -1,7 +1,7 @@
 from sklearn.metrics import average_precision_score
 from torch import optim, nn
 
-from onad.model.unsupervised.autoencoder import Autoencoder
+from onad.model.unsupervised.deep.autoencoder import Autoencoder
 from onad.stream.streamer import ParquetStreamer, Dataset
 from onad.transform.scale import MinMaxScaler
 from onad.utils.architecture.autoencoder import VanillaAutoencoder
