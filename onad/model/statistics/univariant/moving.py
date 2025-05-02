@@ -63,14 +63,15 @@ class MovingHarmonicAverage(BaseModel):
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
-            x (Dict[str, float]): A dictionary representing a single resource point.
+            x (Dict[str, float]): A dictionary representing a single resource point. 0 will be ignored. 
         Raises:
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
         if self.feature_names == None:
             self.feature_names = list(x.keys())
-        self.window.append(x[self.feature_names[0]])
+        if x[self.feature_names[0]] != 0:
+            self.window.append(x[self.feature_names[0]])
 
     def score_one(self) -> float:
         """Calculate and return the harmonic avarage of the values in the window.
@@ -95,6 +96,8 @@ class MovingGeometricAverage(BaseModel):
         """Initialize a new instance of MovingGeometricAverage.
         Args:
             window_size (int): The number of recent absolute values to consider for calculating the moving geometric average.
+            absoluteValues (bool): Default is False. If True, the class is calculating the growth between the data point and then calculating 
+                the geometric avarage from window_size - 1 values. 
         Raises:
             ValueError: If window_size is not a positive integer."""
         if window_size <= 0:
@@ -203,6 +206,7 @@ class MovingQuantile(BaseModel):
         Args:
             window_size (int): The number of recent values to consider for calculating the
                                 moving quantle.
+            quantile (float): The quantile set for this instance. Default is 0.5
         Raises:
             ValueError: If window_size is not a positive integer."""
         if window_size <= 0:
@@ -444,8 +448,11 @@ class MovingKurtosis(BaseModel):
             std_4 = (
                 sum((value - mean) ** 2 for value in self.window) / actual_window_length
             ) ** 2
-            kurtosis = central_moment_4 / std_4
-            return kurtosis - 3 if self.fisher else kurtosis
+            if std_4 == 0:
+                return 0
+            else:
+                kurtosis = central_moment_4 / std_4
+                return kurtosis - 3 if self.fisher else kurtosis
 
 
 class MovingSkewness(BaseModel):
@@ -496,12 +503,3 @@ class MovingSkewness(BaseModel):
             return 0 if std_3 == 0 else central_moment_3 / std_3
 
 
-if __name__ == "__main__":
-    ma = MovingSkewness(5)
-    for x in [1, 2, 3, 4, 5]:
-        ma.learn_one({"value": x})
-    print(ma.score_one())
-    ma = MovingSkewness(6)
-    for x in [1, 3, 10, 11, 43, 55]:
-        ma.learn_one({"value": x})
-    print(ma.score_one())

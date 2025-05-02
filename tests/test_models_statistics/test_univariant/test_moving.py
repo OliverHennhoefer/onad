@@ -43,6 +43,12 @@ class TestMovingAverage(unittest.TestCase):
             ma.learn_one({"value": x})
         self.assertEqual(ma.window, deque([2, 3, 4]))
 
+    def test_zero_division(self):
+        ma = MovingAverage(3)
+        for x in [0, 0, 0, 0, 0]:
+            ma.learn_one({"value": x})
+        self.assertEqual(ma.score_one(), 0)
+
 
 class TestMovingHarmonicAverage(unittest.TestCase):
 
@@ -108,10 +114,16 @@ class TestMovingHarmonicAverage(unittest.TestCase):
         self.assertAlmostEqual(mah.score_one(), 2 / (0.25 + 0.0625), places=6)
 
     def test_window_shifting(self):
-        ma = MovingAverage(3)
+        ma = MovingHarmonicAverage(3)
         for x in [1, 2, 3, 4]:
             ma.learn_one({"value": x})
         self.assertEqual(ma.window, deque([2, 3, 4]))
+
+    def test_zero_division(self):
+        ma = MovingHarmonicAverage(3)
+        for x in [0, 0, 0, 0, 0]:
+            ma.learn_one({"value": x})
+        self.assertEqual(ma.score_one(), 0)
 
 
 class TestMovingGeometricAverage(unittest.TestCase):
@@ -184,10 +196,16 @@ class TestMovingGeometricAverage(unittest.TestCase):
         self.assertAlmostEqual(m.score_one(), expected)
 
     def test_window_shifting(self):
-        ma = MovingAverage(3)
+        ma = MovingGeometricAverage(3)
         for x in [1, 2, 3, 4]:
             ma.learn_one({"value": x})
         self.assertEqual(ma.window, deque([2, 3, 4]))
+    
+    def test_zero_division(self):
+        ma = MovingGeometricAverage(3)
+        for x in [0, 0, 0, 0, 0]:
+            ma.learn_one({"value": x})
+        self.assertEqual(ma.score_one(), 1)
 
 
 class TestMovingMedian(unittest.TestCase):
@@ -252,10 +270,16 @@ class TestMovingMedian(unittest.TestCase):
         self.assertEqual(list(mm.window), [20, 30, 40])
 
     def test_window_shifting(self):
-        ma = MovingAverage(3)
+        ma = MovingMedian(3)
         for x in [1, 2, 3, 4]:
             ma.learn_one({"value": x})
         self.assertEqual(ma.window, deque([2, 3, 4]))
+    
+    def test_zero_division(self):
+        ma = MovingMedian(3)
+        for x in [0, 0, 0, 0, 0]:
+            ma.learn_one({"value": x})
+        self.assertEqual(ma.score_one(), 0)
 
 
 class TestMovingQuantile(unittest.TestCase):
@@ -327,10 +351,16 @@ class TestMovingQuantile(unittest.TestCase):
         self.assertAlmostEqual(model.score_one(), np.quantile(model.window, 0.6))
 
     def test_window_shifting(self):
-        ma = MovingAverage(3)
+        ma = MovingQuantile(3, quantile=0.6)
         for x in [1, 2, 3, 4]:
             ma.learn_one({"value": x})
         self.assertEqual(ma.window, deque([2, 3, 4]))
+
+    def test_zero_division(self):
+        ma = MovingQuantile(3, quantile=0.6)
+        for x in [0, 0, 0, 0, 0]:
+            ma.learn_one({"value": x})
+        self.assertEqual(ma.score_one(), 0)
 
 
 class TestMovingVariance(unittest.TestCase):
@@ -398,6 +428,12 @@ class TestMovingVariance(unittest.TestCase):
         expected_variance2 = np.var([12, 23, 18])
         self.assertAlmostEqual(mv.score_one(), expected_variance2)
 
+    def test_zero_division(self):
+        ma = MovingVariance(3)
+        for x in [0, 0, 0, 0, 0]:
+            ma.learn_one({"value": x})
+        self.assertEqual(ma.score_one(), 0)
+
 
 class TestMovingInterquartileRange(unittest.TestCase):
 
@@ -441,6 +477,12 @@ class TestMovingInterquartileRange(unittest.TestCase):
             ma.learn_one({"value": x})
         self.assertEqual(ma.window, deque([2, 3, 4]))
 
+    def test_zero_division(self):
+        ma = MovingInterquartileRange(3)
+        for x in [0, 0, 0, 0, 0]:
+            ma.learn_one({"value": x})
+        self.assertEqual(ma.score_one(), 0)
+
 
 class TestMovingAverageAbsoluteDeviation(unittest.TestCase):
 
@@ -483,6 +525,12 @@ class TestMovingAverageAbsoluteDeviation(unittest.TestCase):
         for x in [1, 2, 3, 4]:
             ma.learn_one({"value": x})
         self.assertEqual(ma.window, deque([2, 3, 4]))
+
+    def test_zero_division(self):
+        ma = MovingAverageAbsoluteDeviation(3)
+        for x in [0, 0, 0, 0, 0]:
+            ma.learn_one({"value": x})
+        self.assertEqual(ma.score_one(), 0)
 
 
 class TestMovingKurtosis(unittest.TestCase):
@@ -531,6 +579,12 @@ class TestMovingKurtosis(unittest.TestCase):
             ma.learn_one({"value": x})
         self.assertEqual(ma.window, deque([2, 3, 4]))
 
+    def test_zero_division(self):
+        ma = MovingKurtosis(3)
+        for x in [0, 0, 0, 0, 0]:
+            ma.learn_one({"value": x})
+        self.assertEqual(ma.score_one(), 0)
+
 
 class TestMovingSkewness(unittest.TestCase):
 
@@ -570,6 +624,12 @@ class TestMovingSkewness(unittest.TestCase):
         for x in [1, 2, 3, 4]:
             ma.learn_one({"value": x})
         self.assertEqual(ma.window, deque([2, 3, 4]))
+
+    def test_zero_division(self):
+        ma = MovingSkewness(3)
+        for x in [0, 0, 0, 0, 0]:
+            ma.learn_one({"value": x})
+        self.assertEqual(ma.score_one(), 0)
 
 
 if __name__ == "__main__":
