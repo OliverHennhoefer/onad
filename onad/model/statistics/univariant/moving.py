@@ -513,12 +513,3 @@ class MovingSkewness(BaseModel):
                 sum((value - mean) ** 2 for value in self.window) / actual_window_length
             ) ** (3 / 2)
             return 0 if std_3 == 0 else central_moment_3 / std_3
-
-
-if __name__ == '__main__':
-    mw = MovingHarmonicAverage(5)
-    mw.learn_one({"abc": 5})
-    mw.learn_one({"abc": 4})
-    print(mw.score_one())
-    print(mw.window)
-    print(mw.feature_name)
