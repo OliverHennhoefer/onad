@@ -1,0 +1,112 @@
+import unittest
+import numpy as np
+from collections import deque
+from scipy.stats import kurtosis, skew
+from onad.model.statistics.multivariant.moving import *
+
+class TestMovingCovariance(unittest.TestCase):
+
+    def test_initialization_with_positive_window_size(self):
+        model = MovingCovariance(window_size=5)
+        self.assertEqual(model.window_size, 5)
+
+    def test_initialization_with_negative_window_size(self):
+        with self.assertRaises(ValueError):
+            MovingCovariance(window_size=-1)
+
+    def test_learn_one_with_valid_input(self):
+        model = MovingCovariance(window_size=3)
+        point = {'x': 1.0, 'y': 2.0}
+        model.learn_one(point)
+        self.assertEqual(model.window['x'], deque([1]))
+        self.assertEqual(model.window['y'], deque([2]))
+
+    def test_learn_one_with_multiple_points(self):
+        model = MovingCovariance(window_size=3)
+        points = [{'x': float(i), 'y': float(i) + 1} for i in range(5)]
+        for point in points:
+            model.learn_one(point)
+        self.assertEqual(len(model.window['x']), 3)
+        self.assertEqual(len(model.window['y']), 3)
+
+    def test_score_one_with_empty_window(self):
+        model = MovingCovariance(window_size=2)
+        self.assertEqual(model.score_one(), 0)
+
+    def test_score_one_with_zero_window(self):
+        model = MovingCovariance(window_size=5)
+        for _ in range(4):
+            model.learn_one({"a": 0, "b": 0})
+        self.assertEqual(model.score_one(), 0)
+
+    def test_score_one_without_bessel(self):
+        model = MovingCovariance(window_size=3, bessel=False)
+        points = [{'x': float(i), 'y': 2 * float(i)} for i in range(1, 4)]
+        for point in points:
+            model.learn_one(point)
+        expected_covariance = ((1-2)*(2-4) + (2-2)*(4-4) + (3-2)*(6-4)) / 3
+        self.assertAlmostEqual(model.score_one(), expected_covariance)
+
+    def test_score_one_with_bessel_correction(self):
+        model = MovingCovariance(window_size=3, bessel=True)
+        points = [{'x': float(i), 'y': 2 * float(i)} for i in range(1, 4)]
+        for point in points:
+            model.learn_one(point)
+        expected_covariance_bessel = ((1-2)*(2-4) + (2-2)*(4-4) + (3-2)*(6-4)) / 2
+        self.assertAlmostEqual(model.score_one(), expected_covariance_bessel)
+
+
+class TestMovingCorrelationCoefficient(unittest.TestCase):
+
+    def test_initialization_with_positive_window_size(self):
+        model = MovingCorrelationCoefficient(window_size=5)
+        self.assertEqual(model.window_size, 5)
+
+    def test_initialization_with_negative_window_size(self):
+        with self.assertRaises(ValueError):
+            MovingCorrelationCoefficient(window_size=-1)
+
+    def test_learn_one_with_valid_input(self):
+        model = MovingCorrelationCoefficient(window_size=3)
+        point = {'x': 1.0, 'y': 2.0}
+        model.learn_one(point)
+        self.assertEqual(model.window['x'], deque([1]))
+        self.assertEqual(model.window['y'], deque([2]))
+
+    def test_learn_one_with_multiple_points(self):
+        model = MovingCorrelationCoefficient(window_size=3)
+        points = [{'x': float(i), 'y': float(i) + 1} for i in range(5)]
+        for point in points:
+            model.learn_one(point)
+        self.assertEqual(len(model.window['x']), 3)
+        self.assertEqual(len(model.window['y']), 3)
+
+    def test_score_one_with_empty_window(self):
+        model = MovingCorrelationCoefficient(window_size=2)
+        self.assertEqual(model.score_one(), 0)
+
+    def test_score_one_with_zero_window(self):
+        model = MovingCorrelationCoefficient(window_size=5)
+        for _ in range(4):
+            model.learn_one({"a": 0, "b": 0})
+        self.assertEqual(model.score_one(), 0)
+
+    def test_score_one_without_bessel(self):
+        model = MovingCorrelationCoefficient(window_size=3, bessel=False)
+        points = [{'x': float(i), 'y': 2 * float(i)} for i in range(1, 4)]
+        for point in points:
+            model.learn_one(point)
+        expected_covariance = ((1-2)*(2-4) + (2-2)*(4-4) + (3-2)*(6-4)) / 3
+        std_xy = np.std([1, 2, 3]) * np.std([2, 4, 6])
+        self.assertAlmostEqual(model.score_one(), expected_covariance/std_xy)
+
+    def test_score_one_with_bessel_correction(self):
+        model = MovingCorrelationCoefficient(window_size=3, bessel=True)
+        points = [{'x': float(i), 'y': 2 * float(i)} for i in range(1, 4)]
+        for point in points:
+            model.learn_one(point)
+        self.assertAlmostEqual(model.score_one(), np.corrcoef(model.window["x"], model.window["y"])[1][0])
+
+
+if __name__ == '__main__':
+    unittest.main()
