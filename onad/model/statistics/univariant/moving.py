@@ -9,7 +9,7 @@ class MovingAverage(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int) -> None:
+    def __init__(self, window_size: int, key: Optional[str]=None) -> None:
         """Initialize a new instance of MovingAverage.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving arithmetic average.
@@ -18,7 +18,7 @@ class MovingAverage(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_names: Optional[List[str]] = None
+        self.feature_name: Optional[str] = key
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -28,9 +28,10 @@ class MovingAverage(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_names == None:
-            self.feature_names = list(x.keys())
-        self.window.append(x[self.feature_names[0]])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
     def score_one(self) -> float:
         """Calculate and return the arithmetic avarage of the values in the window.
@@ -49,7 +50,7 @@ class MovingHarmonicAverage(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int) -> None:
+    def __init__(self, window_size: int, key: Optional[str]=None) -> None:
         """Initialize a new instance of MovingHarmonicAverage.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving harmonic average.
@@ -58,7 +59,7 @@ class MovingHarmonicAverage(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_names: Optional[List[str]] = None
+        self.feature_name: Optional[str] = key
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -68,10 +69,12 @@ class MovingHarmonicAverage(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_names == None:
-            self.feature_names = list(x.keys())
-        if x[self.feature_names[0]] != 0:
-            self.window.append(x[self.feature_names[0]])
+        if self.feature_name == None:
+            if list(x.values())[0] != 0:
+                self.window.append(list(x.values())[0])
+        else:
+            if x[self.feature_name] != 0:
+                self.window.append(x[self.feature_name])
 
     def score_one(self) -> float:
         """Calculate and return the harmonic avarage of the values in the window.
@@ -92,7 +95,7 @@ class MovingGeometricAverage(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int, absoluteValues=False) -> None:
+    def __init__(self, window_size: int, key: Optional[str]=None, absoluteValues=False) -> None:
         """Initialize a new instance of MovingGeometricAverage.
         Args:
             window_size (int): The number of recent absolute values to consider for calculating the moving geometric average.
@@ -103,7 +106,7 @@ class MovingGeometricAverage(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_names: Optional[List[str]] = None
+        self.feature_name: Optional[str] = key
         self.absoluteValues: bool = absoluteValues
 
     def learn_one(self, x: Dict[str, float]) -> None:
@@ -115,10 +118,12 @@ class MovingGeometricAverage(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_names == None:
-            self.feature_names = list(x.keys())
-        if x[self.feature_names[0]] > 0:
-            self.window.append(x[self.feature_names[0]])
+        if self.feature_name == None:
+            if list(x.values())[0] > 0:
+                self.window.append(list(x.values())[0])
+        else:
+            if x[self.feature_name] > 0:
+                self.window.append(x[self.feature_name])
 
     def score_one(self) -> float:
         """Calculate and return the geometric avarage of the values in the window.
@@ -151,7 +156,7 @@ class MovingMedian(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int) -> None:
+    def __init__(self, window_size: int, key: Optional[str]=None) -> None:
         """Initialize a new instance of MovingMedian.
         Args:
             window_size (int): The number of recent values to consider for calculating the
@@ -161,7 +166,7 @@ class MovingMedian(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window = deque([], maxlen=window_size)
-        self.feature_names: Optional[List[str]] = None
+        self.feature_name: Optional[str] = key
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -172,9 +177,10 @@ class MovingMedian(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_names == None:
-            self.feature_names = list(x.keys())
-        self.window.append(x[self.feature_names[0]])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
     def score_one(self) -> float:
         """Calculate and return the median of the values in the window.
@@ -201,7 +207,7 @@ class MovingQuantile(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int, quantile=0.5) -> None:
+    def __init__(self, window_size: int, key: Optional[str]=None, quantile=0.5) -> None:
         """Initialize a new instance of MovingQuantile.
         Args:
             window_size (int): The number of recent values to consider for calculating the
@@ -212,7 +218,7 @@ class MovingQuantile(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_names: Optional[List[str]] = None
+        self.feature_name: Optional[str] = key
         self.quantile = quantile
 
     def learn_one(self, x: Dict[str, float]) -> None:
@@ -224,9 +230,10 @@ class MovingQuantile(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_names == None:
-            self.feature_names = list(x.keys())
-        self.window.append(x[self.feature_names[0]])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
     def score_one(self) -> float:
         """Calculate and return the median of the values in the window.
@@ -258,7 +265,7 @@ class MovingVariance(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int) -> None:
+    def __init__(self, window_size: int, key: Optional[str]=None) -> None:
         """Initialize a new instance of MovingVariance.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving arithmetic average.
@@ -267,7 +274,7 @@ class MovingVariance(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_names: Optional[List[str]] = None
+        self.feature_name: Optional[str] = key
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -277,9 +284,10 @@ class MovingVariance(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_names == None:
-            self.feature_names = list(x.keys())
-        self.window.append(x[self.feature_names[0]])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
     def score_one(self) -> float:
         """Calculate and return the variance of the values in the window.
@@ -302,7 +310,7 @@ class MovingInterquartileRange(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int) -> None:
+    def __init__(self, window_size: int, key: Optional[str]=None) -> None:
         """Initialize a new instance of MovingInterquartileRange.
         Args:
             window_size (int): The number of recent values to consider for calculating the
@@ -312,7 +320,7 @@ class MovingInterquartileRange(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_names: Optional[List[str]] = None
+        self.feature_name: Optional[str] = key
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -323,9 +331,10 @@ class MovingInterquartileRange(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_names == None:
-            self.feature_names = list(x.keys())
-        self.window.append(x[self.feature_names[0]])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
     def __score_one_quantile(self, quantile) -> float:
         """Calculate and return the value of a quantile of the values in the window.
@@ -363,7 +372,7 @@ class MovingAverageAbsoluteDeviation(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int) -> None:
+    def __init__(self, window_size: int, key: Optional[str]=None) -> None:
         """Initialize a new instance of MovingAverageAbsoluteDeviation.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving average absolute deviation.
@@ -372,7 +381,7 @@ class MovingAverageAbsoluteDeviation(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_names: Optional[List[str]] = None
+        self.feature_name: Optional[str] = key
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -382,9 +391,10 @@ class MovingAverageAbsoluteDeviation(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_names == None:
-            self.feature_names = list(x.keys())
-        self.window.append(x[self.feature_names[0]])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
     def score_one(self) -> float:
         """Calculate and return the average absolute deviation of the values in the window.
@@ -407,7 +417,7 @@ class MovingKurtosis(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int, fisher: bool = True) -> None:
+    def __init__(self, window_size: int, key: Optional[str]=None, fisher: bool = True) -> None:
         """Initialize a new instance of MovingKurtosis.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving kurtosis.
@@ -417,7 +427,7 @@ class MovingKurtosis(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_names: Optional[List[str]] = None
+        self.feature_name: Optional[str] = key
         self.fisher = fisher
 
     def learn_one(self, x: Dict[str, float]) -> None:
@@ -428,9 +438,10 @@ class MovingKurtosis(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_names == None:
-            self.feature_names = list(x.keys())
-        self.window.append(x[self.feature_names[0]])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
     def score_one(self) -> float:
         """Calculate and return the kurtois of the values in the window.
@@ -461,7 +472,7 @@ class MovingSkewness(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int) -> None:
+    def __init__(self, window_size: int, key: Optional[str]=None, bias=False) -> None:
         """Initialize a new instance of MovingSkewness.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving Skewness.
@@ -470,7 +481,7 @@ class MovingSkewness(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_names: Optional[List[str]] = None
+        self.feature_name: Optional[str] = key
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -480,9 +491,10 @@ class MovingSkewness(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_names == None:
-            self.feature_names = list(x.keys())
-        self.window.append(x[self.feature_names[0]])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
     def score_one(self) -> float:
         """Calculate and return the kurtois of the values in the window.
@@ -503,3 +515,10 @@ class MovingSkewness(BaseModel):
             return 0 if std_3 == 0 else central_moment_3 / std_3
 
 
+if __name__ == '__main__':
+    mw = MovingHarmonicAverage(5)
+    mw.learn_one({"abc": 5})
+    mw.learn_one({"abc": 4})
+    print(mw.score_one())
+    print(mw.window)
+    print(mw.feature_name)
