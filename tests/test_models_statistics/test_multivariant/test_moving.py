@@ -108,5 +108,70 @@ class TestMovingCorrelationCoefficient(unittest.TestCase):
         self.assertAlmostEqual(model.score_one(), np.corrcoef(model.window["x"], model.window["y"])[1][0])
 
 
+class TestMovingMahalanobisDistance(unittest.TestCase):
+
+    def test_initialization(self):
+        # Test valid initialization
+        mmd = MovingMahalanobisDistance(window_size=3)
+        self.assertEqual(mmd.window_size, 3)
+        
+        # Test invalid window size
+        with self.assertRaises(ValueError):
+            MovingMahalanobisDistance(window_size=-1)
+
+
+    def test_learn_one(self):
+        mmd = MovingMahalanobisDistance(window_size=3)
+        
+        # Test learning a single data point
+        mmd.learn_one({'feature1': 1.0, 'feature2': 2.0})
+        self.assertEqual(mmd.window, deque([[1.0, 2.0]]))
+
+        # Test updating with another point
+        mmd.learn_one({'feature1': 3.0, 'feature2': 4.0})
+        self.assertEqual(len(mmd.window), 2)
+        
+        # Test handling of non-numeric data#
+        mmd.learn_one({'feature1': 'a', 'feature2': 5.0})  # type: ignore
+        self.assertEqual(len(mmd.window), 2)  # The invalid entry should not be added
+
+
+
+    def test_score_one_insufficient_data_points(self):
+        mmd = MovingMahalanobisDistance(window_size=2)
+        
+        # Test scoring with insufficient data points
+        self.assertEqual(mmd.score_one(), 0)
+
+        # Add two valid data points and check the score
+        mmd.learn_one({'feature1': 1.0, 'feature2': 2.0})
+        mmd.learn_one({'feature1': 3.0, 'feature2': 4.0})
+        
+        # Test scoring with insufficient data points
+        score = mmd.score_one()
+        self.assertGreaterEqual(score, 0)
+
+    def test_score_one_singular_matrix(self):
+        mmd = MovingMahalanobisDistance(window_size=5)
+        mmd.learn_one({'feature1': 1.0, 'feature2': 1.0})
+        mmd.learn_one({'feature1': 2.0, 'feature2': 3.0})
+        mmd.learn_one({'feature1': 4.0, 'feature2': 5.0})
+        self.assertGreaterEqual(mmd.score_one(), 1)
+    
+    def test_score_one(self):
+        mmd = MovingMahalanobisDistance(window_size=10)
+        values = np.array([[1, 2], [2, 3], [2, 3.5], [3, 5], [5, 10], [6, 11]])
+        for point in values:
+            mmd.learn_one({"a": point[0], "b": point[1]})
+        previous_points = np.array(list(values)[:-1])
+        cov_matrix = np.cov(previous_points, rowvar=False)
+        inv_cov_matrix = np.linalg.inv(cov_matrix)
+        feature_mean = np.mean(previous_points, axis=0)
+        x = np.array(values[-1])
+        diff = x - feature_mean
+        score =  float(diff.T @ inv_cov_matrix @ diff)
+        self.assertGreaterEqual(mmd.score_one(), score)
+
+
 if __name__ == '__main__':
     unittest.main()
