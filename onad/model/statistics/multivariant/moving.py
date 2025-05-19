@@ -176,7 +176,7 @@ class MovingMahalanobisDistance(BaseModel):
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point.
         """
-        if self.feature_names == None:
+        if self.feature_names is None:
             self.feature_names = list(x.keys())
         datapoint = [x[key] for key in self.feature_names]
         if all([isinstance(x, (int, float)) for x in datapoint]):
@@ -187,7 +187,7 @@ class MovingMahalanobisDistance(BaseModel):
         Returns:
             float: The covariance of the values in the window. 0 if the window is empty or has less then 2 data points.
         """
-        if self.feature_names == None or len(self.window) < 3:
+        if self.feature_names is None or len(self.window) < 3:
             return 0
         previous_points = np.array(list(self.window)[:-1])
         cov_matrix = np.cov(previous_points, rowvar=False)
@@ -204,7 +204,3 @@ class MovingMahalanobisDistance(BaseModel):
         x = np.array(self.window[-1])
         diff = x - feature_mean
         return float(diff.T @ inv_cov_matrix @ diff)
-
-
-if __name__ == "__main__":
-    pass
