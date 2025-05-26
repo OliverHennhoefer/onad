@@ -22,7 +22,7 @@ class MovingCovariance(BaseModel):
         self.window_size = window_size
         self.window: Dict = {}  # {key: deque([], maxlen=window_size)}
         self.feature_names: Optional[list[str]] = keys
-        self.bessel = not bias
+        self.bias = bias
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -60,10 +60,10 @@ class MovingCovariance(BaseModel):
         if len_0 < 2:
             return 0
 
-        if self.bessel:
-            n = len_0 - 1
-        else:
+        if self.bias:
             n = len_0
+        else:
+            n = len_0 - 1
         mean_0 = sum(score_window_0) / len_0
         mean_1 = sum(score_window_1) / len_1
         return (
@@ -94,7 +94,7 @@ class MovingCorrelationCoefficient(BaseModel):
         self.window_size = window_size
         self.window: Dict = {}  # {key: deque([], maxlen=window_size)}
         self.feature_names: Optional[list[str]] = keys
-        self.bessel = not bias
+        self.bias = bias
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -132,10 +132,10 @@ class MovingCorrelationCoefficient(BaseModel):
         if len_0 < 2:
             return 0
 
-        if self.bessel:
-            n = len_0 - 1
-        else:
+        if self.bias:
             n = len_0
+        else:
+            n = len_0 - 1
         mean_0 = sum(score_window_0) / len_0
         mean_1 = sum(score_window_1) / len_1
         cov_01 = (
