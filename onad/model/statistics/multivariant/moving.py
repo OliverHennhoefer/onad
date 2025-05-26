@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from onad.base.model import BaseModel
 from collections import deque
 import numpy as np
@@ -10,7 +10,7 @@ class MovingCovariance(BaseModel):
     """
 
     def __init__(
-        self, window_size: int, bessel=True, keys: Optional[list[str]] = None
+        self, window_size: int, bias=True, keys: Optional[list[str]] = None
     ) -> None:
         """Initialize a new instance of MovingCovariance.
         Args:
@@ -22,7 +22,7 @@ class MovingCovariance(BaseModel):
         self.window_size = window_size
         self.window: Dict = {}  # {key: deque([], maxlen=window_size)}
         self.feature_names: Optional[list[str]] = keys
-        self.bessel = bessel
+        self.bessel = not bias
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -42,15 +42,19 @@ class MovingCovariance(BaseModel):
             self.window[self.feature_names[0]].append(x[self.feature_names[0]])
             self.window[self.feature_names[1]].append(x[self.feature_names[1]])
 
-    def score_one(self) -> float:
+    def score_one(self, x: Dict[str, float]) -> float:
         """Calculate and return the covariance of the values in the window.
         Returns:
             float: The covariance of the values in the window. 0 if the window is empty or has less then 2 data points.
         """
         if self.feature_names is None:
             return 0
-        len_0 = len(self.window[self.feature_names[0]])
-        len_1 = len(self.window[self.feature_names[1]])
+        score_window_0 = self.window[self.feature_names[0]].copy()
+        score_window_1 = self.window[self.feature_names[1]].copy()
+        score_window_0.append(x[self.feature_names[0]])
+        score_window_1.append(x[self.feature_names[1]])
+        len_0 = len(score_window_0)
+        len_1 = len(score_window_1)
         if len_0 != len_1:
             raise ValueError("Both windows must have the same length.")
         if len_0 < 2:
@@ -60,12 +64,12 @@ class MovingCovariance(BaseModel):
             n = len_0 - 1
         else:
             n = len_0
-        mean_0 = sum(self.window[self.feature_names[0]]) / len_0
-        mean_1 = sum(self.window[self.feature_names[1]]) / len_1
+        mean_0 = sum(score_window_0) / len_0
+        mean_1 = sum(score_window_1) / len_1
         return (
             sum(
-                (self.window[self.feature_names[0]][i] - mean_0)
-                * (self.window[self.feature_names[1]][i] - mean_1)
+                (score_window_0[i] - mean_0)
+                * (score_window_1[i] - mean_1)
                 for i in range(len_0)
             )
             / n
@@ -78,7 +82,7 @@ class MovingCorrelationCoefficient(BaseModel):
     """
 
     def __init__(
-        self, window_size: int, bessel=True, keys: Optional[list[str]] = None
+        self, window_size: int, bias=True, keys: Optional[list[str]] = None
     ) -> None:
         """Initialize a new instance of MovingCorrelationCoefficient.
         Args:
@@ -90,7 +94,7 @@ class MovingCorrelationCoefficient(BaseModel):
         self.window_size = window_size
         self.window: Dict = {}  # {key: deque([], maxlen=window_size)}
         self.feature_names: Optional[list[str]] = keys
-        self.bessel = bessel
+        self.bessel = not bias
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -110,15 +114,19 @@ class MovingCorrelationCoefficient(BaseModel):
             self.window[self.feature_names[0]].append(x[self.feature_names[0]])
             self.window[self.feature_names[1]].append(x[self.feature_names[1]])
 
-    def score_one(self) -> float:
+    def score_one(self, x: Dict[str, float]) -> float:
         """Calculate and return the covaricorrelation coefficientance of the values in the window.
         Returns:
             float: The correlation coefficient of the values in the window. 0 if the window is empty or has less then 2 data points.
         """
         if self.feature_names is None:
             return 0
-        len_0 = len(self.window[self.feature_names[0]])
-        len_1 = len(self.window[self.feature_names[1]])
+        score_window_0 = self.window[self.feature_names[0]].copy()
+        score_window_1 = self.window[self.feature_names[1]].copy()
+        score_window_0.append(x[self.feature_names[0]])
+        score_window_1.append(x[self.feature_names[1]])
+        len_0 = len(score_window_0)
+        len_1 = len(score_window_1)
         if len_0 != len_1:
             raise ValueError("Both windows must have the same length.")
         if len_0 < 2:
@@ -128,21 +136,21 @@ class MovingCorrelationCoefficient(BaseModel):
             n = len_0 - 1
         else:
             n = len_0
-        mean_0 = sum(self.window[self.feature_names[0]]) / len_0
-        mean_1 = sum(self.window[self.feature_names[1]]) / len_1
+        mean_0 = sum(score_window_0) / len_0
+        mean_1 = sum(score_window_1) / len_1
         cov_01 = (
             sum(
-                (self.window[self.feature_names[0]][i] - mean_0)
-                * (self.window[self.feature_names[1]][i] - mean_1)
+                (score_window_0[i] - mean_0)
+                * (score_window_1[i] - mean_1)
                 for i in range(len_0)
             )
             / n
         )
         std_0 = (
-            sum((x - mean_0) ** 2 for x in self.window[self.feature_names[0]]) / n
+            sum((_ - mean_0) ** 2 for _ in score_window_0) / n
         ) ** 0.5
         std_1 = (
-            sum((x - mean_1) ** 2 for x in self.window[self.feature_names[1]]) / n
+            sum((_ - mean_1) ** 2 for _ in score_window_1) / n
         ) ** 0.5
         if std_0 == 0 or std_1 == 0:
             return 0
@@ -182,14 +190,14 @@ class MovingMahalanobisDistance(BaseModel):
         if all([isinstance(x, (int, float)) for x in datapoint]):
             self.window.append(datapoint)
 
-    def score_one(self) -> float:
+    def score_one(self, x: Dict[str, float]) -> float:
         """Calculate and return the covariance of the values in the window.
         Returns:
             float: The covariance of the values in the window. 0 if the window is empty or has less then 2 data points.
         """
         if self.feature_names is None or len(self.window) < 3:
             return 0
-        previous_points = np.array(list(self.window)[:-1])
+        previous_points = np.array(list(self.window))
         cov_matrix = np.cov(previous_points, rowvar=False)
         if cov_matrix.shape[0] == cov_matrix.shape[1]:
             try:
@@ -201,6 +209,6 @@ class MovingMahalanobisDistance(BaseModel):
                 inv_cov_matrix = np.linalg.inv(cov_matrix)
 
         feature_mean = np.mean(previous_points, axis=0)
-        x = np.array(self.window[-1])
-        diff = x - feature_mean
+        x_vector = np.array([x[key] for key in self.feature_names])
+        diff = x_vector - feature_mean
         return float(diff.T @ inv_cov_matrix @ diff)
