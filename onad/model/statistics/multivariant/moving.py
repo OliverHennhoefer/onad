@@ -32,7 +32,7 @@ class MovingCovariance(BaseModel):
             AssertionError: If the input dictionary contains other than two key-value pairs.
         """
         assert len(x) == 2, "Dictionary has more than one key-value pair."
-        if self.feature_names == None:
+        if self.feature_names is None:
             self.feature_names = list(x.keys())
             self.window[self.feature_names[0]] = deque([], maxlen=self.window_size)
             self.window[self.feature_names[1]] = deque([], maxlen=self.window_size)
@@ -47,7 +47,7 @@ class MovingCovariance(BaseModel):
         Returns:
             float: The covariance of the values in the window. 0 if the window is empty or has less then 2 data points.
         """
-        if self.feature_names == None:
+        if self.feature_names is None:
             return 0
         len_0 = len(self.window[self.feature_names[0]])
         len_1 = len(self.window[self.feature_names[1]])
@@ -100,7 +100,7 @@ class MovingCorrelationCoefficient(BaseModel):
             AssertionError: If the input dictionary contains other than two key-value pairs.
         """
         assert len(x) == 2, "Dictionary has more than one key-value pair."
-        if self.feature_names == None:
+        if self.feature_names is None:
             self.feature_names = list(x.keys())
             self.window[self.feature_names[0]] = deque([], maxlen=self.window_size)
             self.window[self.feature_names[1]] = deque([], maxlen=self.window_size)
@@ -115,7 +115,7 @@ class MovingCorrelationCoefficient(BaseModel):
         Returns:
             float: The correlation coefficient of the values in the window. 0 if the window is empty or has less then 2 data points.
         """
-        if self.feature_names == None:
+        if self.feature_names is None:
             return 0
         len_0 = len(self.window[self.feature_names[0]])
         len_1 = len(self.window[self.feature_names[1]])
