@@ -74,8 +74,8 @@ class TestMovingHarmonicAverage(unittest.TestCase):
         mah = MovingHarmonicAverage(3)
         mah.learn_one({"value": 10.0})
         self.assertEqual(len(mah.window), 1)
-        if mah.feature_names:
-            self.assertIn("value", mah.feature_names)
+        if mah.feature_name:
+            self.assertIn("value", mah.feature_name)
 
     def test_learn_one_raises_assertion_error_if_more_than_one_key(self):
         mah = MovingHarmonicAverage(3)
