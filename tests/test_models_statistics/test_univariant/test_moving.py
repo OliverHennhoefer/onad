@@ -31,11 +31,11 @@ class TestMovingAverage(unittest.TestCase):
         ma = MovingAverage(3)
         ma.learn_one({"value": 1.0})
         ma.learn_one({"value": 2.0})
-        self.assertEqual(ma.score_one(), 1.5)
+        self.assertEqual(ma.score_one({"key1": 3}), 0.5)
 
     def test_score_one_with_empty_window(self):
         ma = MovingAverage(3)
-        self.assertEqual(ma.score_one(), 0)
+        self.assertEqual(ma.score_one({"key1": 3}), 0)
 
     def test_window_shifting(self):
         ma = MovingAverage(3)
@@ -47,7 +47,7 @@ class TestMovingAverage(unittest.TestCase):
         ma = MovingAverage(3)
         for x in [0, 0, 0, 0, 0]:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one(), 0)
+        self.assertEqual(ma.score_one({"key1": 0}), 0)
 
 
 class TestMovingHarmonicAverage(unittest.TestCase):
@@ -95,23 +95,15 @@ class TestMovingHarmonicAverage(unittest.TestCase):
 
     def test_score_one_with_no_values_returns_zero(self):
         mah = MovingHarmonicAverage(3)
-        self.assertEqual(mah.score_one(), 0.0)
+        self.assertEqual(mah.score_one({"value": 4}), 0.0)
 
     def test_score_one_calculates_correct_harmonic_average(self):
-        mah = MovingHarmonicAverage(3)
+        mah = MovingHarmonicAverage(3, abs_diff=False)
         mah.learn_one({"value": 1.0})
         mah.learn_one({"value": 2.0})
         mah.learn_one({"value": 4.0})
-        self.assertAlmostEqual(mah.score_one(), 3 / (1 + 0.5 + 0.25), places=6)
-
-    def test_score_one_with_window_full_updates_harmonic_average(self):
-        mah = MovingHarmonicAverage(2)
-        mah.learn_one({"value": 1.0})
-        mah.learn_one({"value": 4.0})
-        self.assertAlmostEqual(mah.score_one(), 2 / (1 + 0.25), places=6)
-        mah.learn_one({"value": 16.0})
-        # Now the window contains only [4.0, 16.0]
-        self.assertAlmostEqual(mah.score_one(), 2 / (0.25 + 0.0625), places=6)
+        expected_score = 4/(1 +0.5 + 0.25 + 1) - 3/(1 + 0.5 + 0.25)
+        self.assertAlmostEqual(mah.score_one({"value": 1}), expected_score, places=6)
 
     def test_window_shifting(self):
         ma = MovingHarmonicAverage(3)
@@ -120,10 +112,11 @@ class TestMovingHarmonicAverage(unittest.TestCase):
         self.assertEqual(ma.window, deque([2, 3, 4]))
 
     def test_zero_division(self):
-        ma = MovingHarmonicAverage(3)
+        ma = MovingHarmonicAverage(5)
         for x in [0, 0, 0, 0, 0]:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one(), 0)
+        self.assertEqual(ma.score_one({"value": 0}), 0)
+        self.assertEqual(ma.score_one({"value": 1}), 0)
 
 
 class TestMovingGeometricAverage(unittest.TestCase):
@@ -156,44 +149,34 @@ class TestMovingGeometricAverage(unittest.TestCase):
 
     def test_score_one_with_empty_window(self):
         m = MovingGeometricAverage(window_size=3)
-        self.assertEqual(m.score_one(), 1)
+        self.assertEqual(m.score_one({"value": 1}), 1)
 
     def test_score_one_with_single_value_in_window(self):
         m = MovingGeometricAverage(window_size=3)
         m.learn_one({"feature": 2.0})
-        self.assertEqual(m.score_one(), 1)
-
-    def test_score_one_with_two_values_no_absolute_values(self):
-        m = MovingGeometricAverage(window_size=3)
-        m.learn_one({"feature": 2.0})
-        m.learn_one({"feature": 8.0})
-        expected = (2.0 * 8.0) ** (
-            1 / 1
-        )  # Geometric mean of [2, 8] is sqrt(16) which is 4
-        self.assertAlmostEqual(m.score_one(), expected)
-
-    def test_score_one_with_multiple_values_no_absolute_values(self):
-        m = MovingGeometricAverage(window_size=3)
-        m.learn_one({"feature": 2.0})
-        m.learn_one({"feature": 8.0})
-        m.learn_one({"feature": 4.0})
-        window_product = 2.0 * 8.0 * 4.0
-        expected = (window_product) ** (
-            1 / 2
-        )  # Geometric mean of [2, 8, 4] is sqrt(64) which is 8
-        self.assertAlmostEqual(m.score_one(), expected)
+        self.assertEqual(m.score_one({"value": 1}), 1)
 
     def test_score_one_with_multiple_values_absolute_values(self):
-        m = MovingGeometricAverage(window_size=3, absoluteValues=True)
-        m.learn_one({"feature": 2.0})
-        m.learn_one({"feature": 8.0})
-        m.learn_one({"feature": 4.0})
-        window_growth = [8.0 / 2.0, 4.0 / 8.0]  # Growth factors: [4.0, 0.5]
-        window_product = 4.0 * 0.5
-        expected = (window_product) ** (
-            1 / 2
-        )  # Geometric mean of growth factors [4.0, 0.5] is sqrt(2)
-        self.assertAlmostEqual(m.score_one(), expected)
+        m = MovingGeometricAverage(window_size=5, abs_diff=False, absoluteValues=True)
+        for point in [1, 1.5, 1.65]:
+            m.learn_one({"feature": point})
+        window_growth = [1.5, 1.1]
+        score_factor = 1,98/1,65
+        geo_window = (1.5 * 1.1)**(1/2)
+        geo_score = (1.5 * 1.1*1.2)**(1/3)
+        expected_score = geo_score - geo_window
+        self.assertAlmostEqual(m.score_one({"feature": 1.98}), expected_score)
+    
+    def test_score_one_with_multiple_values_relative_values(self):
+        m = MovingGeometricAverage(window_size=5, abs_diff=False, absoluteValues=False)
+        for point in [1.5, 1.1]:
+            m.learn_one({"feature": point})
+        window_growth = [1.5, 1.1]
+        score_factor = 1,98/1,65
+        geo_window = (1.5 * 1.1)**(1/2)
+        geo_score = (1.5 * 1.1*1.2)**(1/3)
+        expected_score = geo_score - geo_window
+        self.assertAlmostEqual(m.score_one({"feature": 1.2}), expected_score)
 
     def test_window_shifting(self):
         ma = MovingGeometricAverage(3)
@@ -205,7 +188,7 @@ class TestMovingGeometricAverage(unittest.TestCase):
         ma = MovingGeometricAverage(3)
         for x in [0, 0, 0, 0, 0]:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one(), 1)
+        self.assertEqual(ma.score_one({"value": 1}), 1)
 
 
 class TestMovingMedian(unittest.TestCase):
@@ -232,13 +215,13 @@ class TestMovingMedian(unittest.TestCase):
     def test_score_one_empty_window(self):
         # Test scoring when the window is empty
         mm = MovingMedian(3)
-        self.assertEqual(mm.score_one(), 0)
+        self.assertEqual(mm.score_one({"value": 1}), 0)
 
     def test_score_one_single_element(self):
         # Test scoring with a single element in the window
-        mm = MovingMedian(1)
+        mm = MovingMedian(1, abs_diff=False)
         mm.learn_one({"value": 5})
-        self.assertEqual(mm.score_one(), 5)
+        self.assertEqual(mm.score_one({"value": 10}), 2.5)
 
     def test_score_one_odd_window_size(self):
         # Test scoring for an odd-sized window
@@ -246,16 +229,16 @@ class TestMovingMedian(unittest.TestCase):
         mm.learn_one({"value": 10})
         mm.learn_one({"value": 20})
         mm.learn_one({"value": 30})
-        self.assertEqual(mm.score_one(), 20)
+        self.assertEqual(mm.score_one({"value": 40}), 5)
 
     def test_score_one_even_window_size(self):
         # Test scoring for an even-sized window
-        mm = MovingMedian(4)
+        mm = MovingMedian(4, abs_diff=False)
         mm.learn_one({"value": 10})
         mm.learn_one({"value": 20})
         mm.learn_one({"value": 30})
         mm.learn_one({"value": 40})
-        self.assertEqual(mm.score_one(), 25)
+        self.assertEqual(mm.score_one({"value": 10}), -5)
 
     def test_window_replacement(self):
         # Test that old values are replaced in a full window
@@ -268,18 +251,12 @@ class TestMovingMedian(unittest.TestCase):
         # Adding another value should remove the oldest (first added) one
         mm.learn_one({"value": 40})
         self.assertEqual(list(mm.window), [20, 30, 40])
-
-    def test_window_shifting(self):
-        ma = MovingMedian(3)
-        for x in [1, 2, 3, 4]:
-            ma.learn_one({"value": x})
-        self.assertEqual(ma.window, deque([2, 3, 4]))
     
     def test_zero_division(self):
         ma = MovingMedian(3)
         for x in [0, 0, 0, 0, 0]:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one(), 0)
+        self.assertEqual(ma.score_one({"value": 1}), 0)
 
 
 class TestMovingQuantile(unittest.TestCase):

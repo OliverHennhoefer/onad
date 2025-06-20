@@ -4,21 +4,22 @@ from collections import deque
 
 
 class MovingAverage(BaseModel):
-    """A simple moving model that calculates the arithmetic average of the most recent values.
-    Attributes:
-        window (collections.deque): A fixed-size deque storing the most recent values.
+    """A simple moving model that calculates the difference between arithmetic average of a window + new value and the window.
     """
 
-    def __init__(self, window_size: int, key: Optional[str]=None) -> None:
+    def __init__(self, window_size: int, key: Optional[str]=None, abs_diff=True) -> None:
         """Initialize a new instance of MovingAverage.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving arithmetic average.
+            key (str): optional, if None is given, the first learned key-value pair will set the key
+            abs_diff (bool): When true (default) returns abs() from the difference
         Raises:
             ValueError: If window_size is not a positive integer."""
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
         self.feature_name: Optional[str] = key
+        self.abs_diff = abs_diff
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -33,33 +34,46 @@ class MovingAverage(BaseModel):
         else:
             self.window.append(x[self.feature_name])
 
-    def score_one(self) -> float:
-        """Calculate and return the arithmetic avarage of the values in the window.
+    def score_one(self, x) -> float:
+        """Calculate and return the difference between the moving average of the current window (including the new data point) 
+        and the moving average of the original window.
+
+        Args:
+            x (Dict[str, float]): A dictionary representing a single data point. It is expected to contain one key-value pair,
+            where the value will be used in the calculation.
+
         Returns:
-            float: The arithmetic average of the values in the window. 0 if the window is empty.
+            float: The difference between the new moving average (including `x`) and the current moving average of the window.
+            If the original window has zero or fewer elements, returns 0.
         """
         actual_window_length = len(self.window)
-        return (
-            0 if actual_window_length == 0 else sum(self.window) / actual_window_length
-        )
+        if actual_window_length <= 0:
+            return 0 
+        score_window = list(self.window)
+        score_window.append(list(x.values())[0])
+        score = sum(score_window) / len(score_window) - sum(self.window)/actual_window_length
+        return abs(score) if self.abs_diff else score
 
 
 class MovingHarmonicAverage(BaseModel):
-    """A simple moving model that calculates the harmonic average of the most recent values.
+    """A simple moving model that calculates the difference between harmonic average of a window + new value and the window.
     Attributes:
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int, key: Optional[str]=None) -> None:
+    def __init__(self, window_size: int, key: Optional[str]=None, abs_diff=True) -> None:
         """Initialize a new instance of MovingHarmonicAverage.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving harmonic average.
+            key (str): optional, if None is given, the first learned key-value pair will set the key
+            abs_diff (bool): When true (default) returns abs() from the difference
         Raises:
             ValueError: If window_size is not a positive integer."""
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
         self.feature_name: Optional[str] = key
+        self.abs_diff = abs_diff
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -76,38 +90,52 @@ class MovingHarmonicAverage(BaseModel):
             if x[self.feature_name] != 0:
                 self.window.append(x[self.feature_name])
 
-    def score_one(self) -> float:
-        """Calculate and return the harmonic avarage of the values in the window.
+    def score_one(self, x) -> float:
+        """Calculate and return the difference between the harmonic average of the current window (including the new data point) 
+        and the moving average of the original window.
+
+        Args:
+            x (Dict[str, float]): A dictionary representing a single data point. It is expected to contain one key-value pair,
+            where the value will be used in the calculation.
+
         Returns:
-            float: The harmonic average of the values in the window. 0 if the window is empty
+            float: The difference between the new harmonic average (including `x`) and the current harmonic average of the window.
+            If the original window has zero or fewer elements, returns 0.
         """
         actual_window_length = len(self.window)
-        return (
-            0
-            if actual_window_length == 0
-            else actual_window_length / sum(1 / x for x in self.window)
-        )
+        if actual_window_length <= 0:
+            return 0
+        
+        score_window = list(self.window)
+        score_window.append(list(x.values())[0])
+        score =   len(score_window)/sum((1 /x for x in score_window)) - actual_window_length/sum(1 / x for x in self.window) 
+        return abs(score) if self.abs_diff else score
 
 
 class MovingGeometricAverage(BaseModel):
-    """A simple moving model that calculates the geometric average of the most recent (absolute) values.
+    """A simple moving model that calculates the difference between geometric average of a window + new value and the window.
     Attributes:
         window (collections.deque): A fixed-size deque storing the most recent values.
+            abs_diff (bool): When true (default) returns abs() from the difference
+
     """
 
-    def __init__(self, window_size: int, key: Optional[str]=None, absoluteValues=False) -> None:
+    def __init__(self, window_size: int, key: Optional[str]=None, absoluteValues=False, abs_diff=True) -> None:
         """Initialize a new instance of MovingGeometricAverage.
         Args:
             window_size (int): The number of recent absolute values to consider for calculating the moving geometric average.
+            key (str): optional, if None is given, the first learned key-value pair will set the key
             absoluteValues (bool): Default is False. If True, the class is calculating the growth between the data point and then calculating 
-                the geometric avarage from window_size - 1 values. 
+                the geometric avarage from window_size - 1 values.
+            abs_diff (bool): When true (default) returns abs() from the difference
         Raises:
             ValueError: If window_size is not a positive integer."""
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
         self.feature_name: Optional[str] = key
-        self.absoluteValues: bool = absoluteValues
+        self.absoluteValues = absoluteValues
+        self.abs_diff: bool = abs_diff
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -125,48 +153,57 @@ class MovingGeometricAverage(BaseModel):
             if x[self.feature_name] > 0:
                 self.window.append(x[self.feature_name])
 
-    def score_one(self) -> float:
-        """Calculate and return the geometric avarage of the values in the window.
+    def score_one(self, x) -> float:
+        """Calculate and return the difference between the gemetric average of the current window (including the new data point) 
+        and the gemotric average of the original window.
+
+        Args:
+            x (Dict[str, float]): A dictionary representing a single data point. It is expected to contain one key-value pair,
+            where the value will be used in the calculation.
+
         Returns:
-            float: The geometric average of the values in the window. 1 if the window is empty
+            float: The difference between the new geometric average (including `x`) and the current geometric average of the window.
+            If the original window has zero or fewer elements, returns 0.
         """
         actual_window_length = len(self.window)
-
         if actual_window_length <= 1 or (
             actual_window_length <= 2 and self.absoluteValues
         ):
             return 1
         else:
             if self.absoluteValues:
-                window_growth = [
-                    self.window[i + 1] / self.window[i]
-                    for i in range(actual_window_length - 1)
+                window_growth = [self.window[i + 1] / self.window[i]for i in range(actual_window_length - 1)
                 ]
+                score_factor = list(x.values())[0] / self.window[-1]
             else:
                 window_growth = self.window
+                score_factor = list(x.values())[0]
             window_product = 1
             for value in window_growth:
                 window_product *= value
-            return window_product ** (1 / (actual_window_length - 1))
+            window_geo = window_product ** (1 / (len(window_growth)))
+            score_geo = (window_product * score_factor) ** (1 / (len(window_growth) + 1))
+            return abs(score_geo - window_geo) if self.abs_diff else score_geo - window_geo
 
 
 class MovingMedian(BaseModel):
-    """A simple moving model that calculates the median of the most recent values.
+    """A simple moving model that calculates the difference between median of a window + new value and the window.
     Attributes:
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int, key: Optional[str]=None) -> None:
+    def __init__(self, window_size: int, key: Optional[str]=None, abs_diff=True) -> None:
         """Initialize a new instance of MovingMedian.
         Args:
-            window_size (int): The number of recent values to consider for calculating the
-                                moving median.
+            window_size (int): The number of recent values to consider for calculating the moving median.
+            key (str): optional, if None is given, the first learned key-value pair will set the key
         Raises:
             ValueError: If window_size is not a positive integer."""
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window = deque([], maxlen=window_size)
         self.feature_name: Optional[str] = key
+        self.abs_diff = abs_diff
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -182,23 +219,39 @@ class MovingMedian(BaseModel):
         else:
             self.window.append(x[self.feature_name])
 
-    def score_one(self) -> float:
-        """Calculate and return the median of the values in the window.
+    def score_one(self, x) -> float:
+        """Calculate and return the difference between the median of the current window (including the new data point) 
+        and the median of the original window.
+
+        Args:
+            x (Dict[str, float]): A dictionary representing a single data point. It is expected to contain one key-value pair,
+            where the value will be used in the calculation.
+
         Returns:
-            float: The median of the values in the window. 0 if the window is empty"""
+            float: The difference between the new median (including `x`) and the current median of the window.
+            If the original window has zero or fewer elements, returns 0.
+        """
         actual_window_length = len(self.window)
         if actual_window_length <= 0:
             return 0
         sorted_data = sorted(self.window)
-        mid_index = actual_window_length // 2
+        window_score = sorted_data.copy()
+        window_score.append(list(x.values())[0])
+        window_score.sort()
+
+        mid_index_old = actual_window_length // 2
+        mid_index_new = len(window_score) // 2
 
         if actual_window_length % 2 == 1:
             # If odd, return the middle element
-            median = sorted_data[mid_index]
+            median_old = sorted_data[mid_index_old]
+            median_new = (window_score[mid_index_new - 1] + window_score[mid_index_new]) / 2
         else:
             # If even, return the average of the two middle elements
-            median = (sorted_data[mid_index - 1] + sorted_data[mid_index]) / 2
-        return median
+            median_old = (sorted_data[mid_index_old - 1] + sorted_data[mid_index_old]) / 2
+            median_new = window_score[mid_index_new]
+        score = median_new - median_old
+        return abs(score) if self.abs_diff else score
 
 
 class MovingQuantile(BaseModel):
@@ -212,6 +265,7 @@ class MovingQuantile(BaseModel):
         Args:
             window_size (int): The number of recent values to consider for calculating the
                                 moving quantle.
+            key (str): optional, if None is given, the first learned key-value pair will set the key
             quantile (float): The quantile set for this instance. Default is 0.5
         Raises:
             ValueError: If window_size is not a positive integer."""
@@ -269,6 +323,7 @@ class MovingVariance(BaseModel):
         """Initialize a new instance of MovingVariance.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving arithmetic average.
+            key (str): optional, if None is given, the first learned key-value pair will set the key
         Raises:
             ValueError: If window_size is not a positive integer."""
         if window_size <= 0:
@@ -315,6 +370,7 @@ class MovingInterquartileRange(BaseModel):
         Args:
             window_size (int): The number of recent values to consider for calculating the
                                 moving median.
+            key (str): optional, if None is given, the first learned key-value pair will set the key
         Raises:
             ValueError: If window_size is not a positive integer."""
         if window_size <= 0:
@@ -376,6 +432,7 @@ class MovingAverageAbsoluteDeviation(BaseModel):
         """Initialize a new instance of MovingAverageAbsoluteDeviation.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving average absolute deviation.
+            key (str): optional, if None is given, the first learned key-value pair will set the key
         Raises:
             ValueError: If window_size is not a positive integer."""
         if window_size <= 0:
@@ -421,6 +478,7 @@ class MovingKurtosis(BaseModel):
         """Initialize a new instance of MovingKurtosis.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving kurtosis.
+            key (str): optional, if None is given, the first learned key-value pair will set the key
             fisher (bool): If Fisher’s definition is used, then 3.0 is subtracted from the result to give 0.0 for a normal distribution.
         Raises:
             ValueError: If window_size is not a positive integer."""
@@ -476,6 +534,7 @@ class MovingSkewness(BaseModel):
         """Initialize a new instance of MovingSkewness.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving Skewness.
+            key (str): optional, if None is given, the first learned key-value pair will set the key
         Raises:
             ValueError: If window_size is not a positive integer."""
         if window_size <= 0:
