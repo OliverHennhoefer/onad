@@ -207,3 +207,7 @@ class TestMovingMahalanobisDistance(unittest.TestCase):
         score = float(diff.T @ inv_cov_matrix @ diff)
 
         self.assertEqual(scored, score)
+
+
+if __name__ == "__main__":
+    unittest.main()
