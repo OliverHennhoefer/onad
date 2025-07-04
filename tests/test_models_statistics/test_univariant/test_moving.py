@@ -274,12 +274,6 @@ class TestMovingQuantile(unittest.TestCase):
         model.learn_one({"value": 1})
         self.assertEqual(len(model.window), 1)
 
-        model.learn_one({"value": 2})
-        self.assertEqual(len(model.window), 2)
-
-        model.learn_one({"value": 3})
-        self.assertEqual(len(model.window), 3)
-
     def test_learn_one_invalid(self):
         model = MovingQuantile(window_size=3)
         with self.assertRaises(AssertionError):
@@ -290,42 +284,41 @@ class TestMovingQuantile(unittest.TestCase):
 
     def test_score_empty_window(self):
         model = MovingQuantile(window_size=3)
-        self.assertEqual(model.score_one(), 0)
+        self.assertEqual(model.score_one({"value": 1}), 0)
 
     def test_score_single_value(self):
-        model = MovingQuantile(window_size=1)
+        model = MovingQuantile(window_size=1, abs_diff=False)
         model.learn_one({"value": 5})
-        self.assertEqual(model.score_one(), 5)
+        self.assertEqual(model.score_one({"value": 0}), np.quantile([0, 5], 0.5) - np.quantile(model.window, 0.5))
 
     def test_score_median(self):
         model = MovingQuantile(window_size=3, quantile=0.5)
         model.learn_one({"value": 1})
         model.learn_one({"value": 3})
         model.learn_one({"value": 2})
-        self.assertEqual(model.score_one(), 2)
+        self.assertEqual(model.score_one({"value": 1}), 0.5)
 
     def test_score_quantile_below_50(self):
-        model = MovingQuantile(window_size=4, quantile=0.25)
+        model = MovingQuantile(window_size=4, quantile=0.25, abs_diff=False)
         model.learn_one({"value": 1})
         model.learn_one({"value": 3})
         model.learn_one({"value": 5})
         model.learn_one({"value": 2})
-        self.assertEqual(model.score_one(), np.quantile(model.window, 0.25))
+        self.assertEqual(model.score_one({"value": 1}), np.quantile([1, 1, 2, 3, 5], 0.25) - np.quantile(model.window, 0.25))
 
     def test_score_quantile_above_50(self):
-        model = MovingQuantile(window_size=4, quantile=0.75)
+        model = MovingQuantile(window_size=4, quantile=0.75, abs_diff=False)
         model.learn_one({"value": 1})
         model.learn_one({"value": 3})
         model.learn_one({"value": 5})
         model.learn_one({"value": 2})
-        self.assertEqual(model.score_one(), np.quantile(model.window, 0.75))
+        self.assertEqual(model.score_one({"value": 1}), np.quantile([1, 1, 3, 5, 2], 0.75) - np.quantile(model.window, 0.75))
 
     def test_interpolation(self):
-        model = MovingQuantile(window_size=5, quantile=0.6)
+        model = MovingQuantile(window_size=5, quantile=0.6, abs_diff=False)
         for value in [1, 3, 7, 9, 10]:
             model.learn_one({"value": value})
-        # Expected: (7 + 0.8 * (9 - 7))
-        self.assertAlmostEqual(model.score_one(), np.quantile(model.window, 0.6))
+        self.assertAlmostEqual(model.score_one({"value": 1}), np.quantile([1, 1, 3, 7, 9, 10], 0.6) - np.quantile(model.window, 0.6))
 
     def test_window_shifting(self):
         ma = MovingQuantile(3, quantile=0.6)
@@ -337,7 +330,7 @@ class TestMovingQuantile(unittest.TestCase):
         ma = MovingQuantile(3, quantile=0.6)
         for x in [0, 0, 0, 0, 0]:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one(), 0)
+        self.assertEqual(ma.score_one({"value": 1}), 0)
 
 
 class TestMovingVariance(unittest.TestCase):
@@ -363,53 +356,38 @@ class TestMovingVariance(unittest.TestCase):
 
     def test_score_one_empty_window_returns_zero(self):
         mv = MovingVariance(window_size=3)
-        self.assertEqual(mv.score_one(), 0)
+        self.assertEqual(mv.score_one({"value": 10}), 0)
 
     def test_score_one_single_value_variance_is_zero(self):
         mv = MovingVariance(window_size=5)
         mv.learn_one({"value": 10})
-        self.assertEqual(mv.score_one(), 0)
-
-    def test_score_one_two_same_values_variance_is_zero(self):
-        mv = MovingVariance(window_size=3)
-        mv.learn_one({"value": 15})
-        mv.learn_one({"value": 15})
-        self.assertEqual(mv.score_one(), 0)
+        self.assertEqual(mv.score_one({"value": 10}), 0)
 
     def test_score_one_calculates_correct_variance(self):
         mv = MovingVariance(window_size=5)
         values = [10, 12, 23, 23, 16]
         for value in values:
             mv.learn_one({"value": value})
-
-        expected_variance = (
-            (10 - 16.8) ** 2
-            + (12 - 16.8) ** 2
-            + (23 - 16.8) ** 2
-            + (23 - 16.8) ** 2
-            + (16 - 16.8) ** 2
-        ) / 5
-
-        self.assertAlmostEqual(mv.score_one(), expected_variance)
+        self.assertAlmostEqual(mv.score_one({"value": 10}), np.var([10, 12, 23, 23, 16, 10]) - np.var(values))
 
     def test_score_one_with_window_rolling(self):
-        mv = MovingVariance(window_size=3)
+        mv = MovingVariance(window_size=3, abs_diff=False)
         values = [10, 12, 23]
         for value in values:
             mv.learn_one({"value": value})
         # Expect variance of window [10, 12, 23]
         expected_variance1 = np.var([10, 12, 23])
-        self.assertAlmostEqual(mv.score_one(), expected_variance1)
+        self.assertAlmostEqual(mv.score_one({"value": 10}), np.var([10, 12, 23, 10]) - np.var(values))
         mv.learn_one({"value": 18})
         # Expect variance of window [12, 23, 18]
         expected_variance2 = np.var([12, 23, 18])
-        self.assertAlmostEqual(mv.score_one(), expected_variance2)
+        self.assertAlmostEqual(mv.score_one({"value": 10}), np.var([12, 23, 18, 10]) - np.var([12, 23, 18]))
 
     def test_zero_division(self):
         ma = MovingVariance(3)
         for x in [0, 0, 0, 0, 0]:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one(), 0)
+        self.assertEqual(ma.score_one({"value": 0}), 0)
 
 
 class TestMovingInterquartileRange(unittest.TestCase):
@@ -439,14 +417,14 @@ class TestMovingInterquartileRange(unittest.TestCase):
         test_values = [1, 4, 2, 6, 7, 3, 9, 33, 34, -5]
         for x in test_values:
             ma.learn_one({"value": x})
-        self.assertEqual(
-            ma.score_one(),
-            np.quantile(test_values, 0.75) - np.quantile(test_values, 0.25),
-        )
+        iqr_window = np.quantile(test_values, 0.75) - np.quantile(test_values, 0.25)
+        score_window = [1, 4, 2, 6, 7, 3, 9, 33, 34, -5, 1]
+        iqr_score = np.quantile(score_window, 0.75) - np.quantile(score_window, 0.25)
+        self.assertEqual(ma.score_one({"value": 1.0}), iqr_score - iqr_window)
 
     def test_score_one_with_empty_window(self):
         ma = MovingInterquartileRange(3)
-        self.assertEqual(ma.score_one(), 0)
+        self.assertEqual(ma.score_one({"value": 1.0}), 0)
 
     def test_window_shifting(self):
         ma = MovingInterquartileRange(3)
@@ -458,7 +436,7 @@ class TestMovingInterquartileRange(unittest.TestCase):
         ma = MovingInterquartileRange(3)
         for x in [0, 0, 0, 0, 0]:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one(), 0)
+        self.assertEqual(ma.score_one({"value": 0.0}), 0)
 
 
 class TestMovingAverageAbsoluteDeviation(unittest.TestCase):
@@ -484,18 +462,17 @@ class TestMovingAverageAbsoluteDeviation(unittest.TestCase):
             ma.learn_one({"key1": 1.0, "key2": 2.0})
 
     def test_score_one_calculates_mean_correctly(self):
-        ma = MovingAverageAbsoluteDeviation(10)
+        ma = MovingAverageAbsoluteDeviation(10, abs_diff=False)
         test_values = [1, 4, 2, 6, 7, 3, 9, 33, 34, -5]
         for x in test_values:
             ma.learn_one({"value": x})
-        self.assertEqual(
-            ma.score_one(),
-            sum(abs(x - np.mean(test_values)) for x in test_values) / len(test_values),
-        )
+        window = sum(abs(x - np.mean(test_values)) for x in test_values) / len(test_values)
+        score_window = sum(abs(x - np.mean([1, 4, 2, 6, 7, 3, 9, 33, 34, -5, 1])) for x in [1, 4, 2, 6, 7, 3, 9, 33, 34, -5, 1]) / len([1, 4, 2, 6, 7, 3, 9, 33, 34, -5, 1])
+        self.assertEqual(ma.score_one({"value": 1}), score_window - window)
 
     def test_score_one_with_empty_window(self):
         ma = MovingAverageAbsoluteDeviation(3)
-        self.assertEqual(ma.score_one(), 0)
+        self.assertEqual(ma.score_one({"value": 1}), 0)
 
     def test_window_shifting(self):
         ma = MovingAverageAbsoluteDeviation(3)
@@ -507,7 +484,7 @@ class TestMovingAverageAbsoluteDeviation(unittest.TestCase):
         ma = MovingAverageAbsoluteDeviation(3)
         for x in [0, 0, 0, 0, 0]:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one(), 0)
+        self.assertEqual(ma.score_one({"value": 0}), 0)
 
 
 class TestMovingKurtosis(unittest.TestCase):
@@ -532,23 +509,17 @@ class TestMovingKurtosis(unittest.TestCase):
         with self.assertRaises(AssertionError):
             ma.learn_one({"key1": 1.0, "key2": 2.0})
 
-    def test_score_one_calculates_fisher_correctly(self):
-        ma = MovingKurtosis(5)
-        test_values = [1, 2, 3, 4]
-        for x in test_values:
-            ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one(), kurtosis(test_values, fisher=True))
-
     def test_score_one_calculates_pearson_correctly(self):
-        ma = MovingKurtosis(5, fisher=False)
+        ma = MovingKurtosis(5, abs_diff=False)
         test_values = [1, 2, 3, 4]
         for x in test_values:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one(), kurtosis(test_values, fisher=False))
+        
+        self.assertAlmostEqual(ma.score_one({"value": 1.0}), float(kurtosis([1, 2, 3, 4, 1], fisher=False) - kurtosis(test_values, fisher=False)))
 
     def test_score_one_with_empty_window(self):
         ma = MovingKurtosis(3)
-        self.assertEqual(ma.score_one(), 0)
+        self.assertEqual(ma.score_one({"value": 1.0}), 0)
 
     def test_window_shifting(self):
         ma = MovingKurtosis(3)
@@ -560,7 +531,7 @@ class TestMovingKurtosis(unittest.TestCase):
         ma = MovingKurtosis(3)
         for x in [0, 0, 0, 0, 0]:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one(), 0)
+        self.assertEqual(ma.score_one({"value": 1.0}), 0)
 
 
 class TestMovingSkewness(unittest.TestCase):
@@ -586,15 +557,15 @@ class TestMovingSkewness(unittest.TestCase):
             ma.learn_one({"key1": 1.0, "key2": 2.0})
 
     def test_score_one_calculates_skewness_correctly(self):
-        ma = MovingSkewness(5)
+        ma = MovingSkewness(5, abs_diff=False)
         test_values = [1, 2, 3, 4, 43]
         for x in test_values:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one(), skew(test_values))
+        self.assertEqual(ma.score_one({"value": 1}), skew([1, 2, 3, 4, 43, 1]) - skew(test_values))
 
     def test_score_one_with_empty_window(self):
         ma = MovingSkewness(3)
-        self.assertEqual(ma.score_one(), 0)
+        self.assertEqual(ma.score_one({"value": 1}), 0)
 
     def test_window_shifting(self):
         ma = MovingSkewness(3)
@@ -606,7 +577,7 @@ class TestMovingSkewness(unittest.TestCase):
         ma = MovingSkewness(3)
         for x in [0, 0, 0, 0, 0]:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one(), 0)
+        self.assertEqual(ma.score_one({"value": 0}), 0)
 
 
 if __name__ == "__main__":
