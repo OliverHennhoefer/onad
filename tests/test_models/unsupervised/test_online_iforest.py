@@ -1,5 +1,4 @@
 import unittest
-import numpy as np
 from sklearn.metrics import roc_auc_score, average_precision_score, roc_curve
 
 from onad.model.unsupervised.forest.online_iforest import BoundedRandomProjectionOnlineIForest

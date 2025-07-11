@@ -11,7 +11,7 @@ def _covariance(x, y, ddof=1):
     Args:
         x (array-like): First dataset.
         y (array-like): Second dataset.
-        ddof int:  1/(n-ddof) for bessel correction.
+        ddof (int): 1/(n-ddof) for bessel correction.
 
     Returns:
         float: Covariance value
@@ -35,22 +35,22 @@ class MovingCovariance(BaseModel):
     def __init__(
         self,
         window_size: int,
-        bias=True,
+        bias: bool = True,
         keys: Optional[list[str]] = None,
-        abs_diff=True,
+        abs_diff: bool = True,
     ) -> None:
         """Initialize a new instance of MovingCovariance.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving covariance.
-            bias (bool): False (default) if bessel corrction should not be used.
-            keys (str): Keys for the moving window. If None, the first keys learned are used.
+            bias (bool): False if bessel correction should not be used.
+            keys (list[str]): Keys for the moving window. If None, the first keys learned are used.
             abs_diff (bool): If True absolute is given back, else covariance(window + score) - covariance(window)
         Raises:
             ValueError: If window_size is not a positive integer."""
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window_size = window_size
-        self.window: Dict = {}  # {key: deque([], maxlen=window_size)}
+        self.window: Dict = {}
         self.feature_names: Optional[list[str]] = keys
         self.bias = bias
         self.abs_diff = abs_diff
@@ -62,7 +62,7 @@ class MovingCovariance(BaseModel):
         Raises:
             AssertionError: If the input dictionary contains other than two key-value pairs.
         """
-        assert len(x) == 2, "Dictionary has other than two key-value pair."
+        assert len(x) == 2, "Dictionary has other than two key-value pairs."
         if self.feature_names is None:
             self.feature_names = list(x.keys())
             self.window[self.feature_names[0]] = deque([], maxlen=self.window_size)
@@ -77,9 +77,9 @@ class MovingCovariance(BaseModel):
         """Calculate and return the difference of the covariance of the values in the window with and without the new point.
             covariance(window + score) - covariance(window)
         Args:
-            x (Dict): Single Datapoint to added temporarily to calculate the Covariance.
+            x (Dict): Single datapoint to be added temporarily to calculate the covariance.
         Returns:
-            float: Difference in the windows. 0 if the window is empty or has less then 2 data points.
+            float: Difference in the windows. 0 if the window is empty or has less than 2 data points.
         """
         if self.feature_names is None:
             return 0
@@ -101,20 +101,13 @@ class MovingCovariance(BaseModel):
         if len_score_0 < 2:
             return 0
 
-        if self.bias:
-            score_cov = _covariance(score_window_0, score_window_1, ddof=0)
-            window_cov = _covariance(
-                self.window[self.feature_names[0]],
-                self.window[self.feature_names[1]],
-                ddof=0,
-            )
-        else:
-            score_cov = _covariance(score_window_0, score_window_1, ddof=1)
-            window_cov = _covariance(
-                self.window[self.feature_names[0]],
-                self.window[self.feature_names[1]],
-                ddof=1,
-            )
+        ddof = 0 if self.bias else 1
+        score_cov = _covariance(score_window_0, score_window_1, ddof=ddof)
+        window_cov = _covariance(
+            self.window[self.feature_names[0]],
+            self.window[self.feature_names[1]],
+            ddof=ddof,
+        )
 
         covariance_difference = score_cov - window_cov
         return abs(covariance_difference) if self.abs_diff else covariance_difference
@@ -129,22 +122,22 @@ class MovingCorrelationCoefficient(BaseModel):
     def __init__(
         self,
         window_size: int,
-        bias=True,
+        bias: bool = True,
         keys: Optional[list[str]] = None,
-        abs_diff=True,
+        abs_diff: bool = True,
     ) -> None:
         """Initialize a new instance of MovingCorrelationCoefficient.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving correlation coefficient.
-            bias (bool): False if bessel corrction should not be used.
-            keys (str): Keys for the moving window. If None, the first keys learned are used.
+            bias (bool): False if bessel correction should not be used.
+            keys (list[str]): Keys for the moving window. If None, the first keys learned are used.
             abs_diff (bool): If True absolute is given back, else covariance(window + score) - covariance(window)
         Raises:
             ValueError: If window_size is not a positive integer."""
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window_size = window_size
-        self.window: Dict = {}  # {key: deque([], maxlen=window_size)}
+        self.window: Dict = {}
         self.feature_names: Optional[list[str]] = keys
         self.bias = bias
         self.abs_diff = abs_diff
@@ -156,7 +149,7 @@ class MovingCorrelationCoefficient(BaseModel):
         Raises:
             AssertionError: If the input dictionary contains other than two key-value pairs.
         """
-        assert len(x) == 2, "Dictionary has other than two key-value pair."
+        assert len(x) == 2, "Dictionary has other than two key-value pairs."
         if self.feature_names is None:
             self.feature_names = list(x.keys())
             self.window[self.feature_names[0]] = deque([], maxlen=self.window_size)
@@ -174,10 +167,7 @@ class MovingCorrelationCoefficient(BaseModel):
             raise ValueError("Both windows must have the same length.")
         if len_0 < 2:
             return 0
-        if self.bias:
-            n = len_0
-        else:
-            n = len_0 - 1
+        n = len_0 if self.bias else len_0 - 1
         mean_0 = sum(window_0) / len_0
         mean_1 = sum(window_1) / len_1
         cov = _covariance(window_0, window_1, ddof=0 if self.bias else 1)
@@ -186,16 +176,14 @@ class MovingCorrelationCoefficient(BaseModel):
         if std_0 == 0 or std_1 == 0:
             return 0
         else:
-            return (
-                abs(cov / (std_0 * std_1)) if self.abs_diff else cov / (std_0 * std_1)
-            )
+            return cov / (std_0 * std_1)
 
     def score_one(self, x: Dict[str, float]) -> float:
-        """Calculate and return the covaricorrelation coefficientance of the values in the windows.
+        """Calculate and return the correlation coefficient difference of the values in the windows.
         Args:
-            x (Dict): Single Datapoint to added temporarily to calculate the correlation coefficient.
+            x (Dict): Single datapoint to be added temporarily to calculate the correlation coefficient.
         Returns:
-            float: The correlation coefficient differnce of the values in the window. 0 if the window is empty or has less then 2 data points.
+            float: The correlation coefficient difference of the values in the window. 0 if the window is empty or has less than 2 data points.
         """
         if self.feature_names is None:
             return 0
@@ -208,23 +196,23 @@ class MovingCorrelationCoefficient(BaseModel):
         ) - self._correlation_coefficient(
             self.window[self.feature_names[0]], self.window[self.feature_names[1]]
         )
-        return corr_coeff_diff if self.abs_diff else abs(corr_coeff_diff)
+        return abs(corr_coeff_diff) if self.abs_diff else corr_coeff_diff
 
 
 class MovingMahalanobisDistance(BaseModel):
     """
-    A simple moving model that calculates the mahalanobis distance of the last two values
-    and the corellation matrix of most recent values.
+    A simple moving model that calculates the mahalanobis distance of the last values
+    and the correlation matrix of most recent values.
     """
 
     def __init__(
-        self, window_size: int, bias=True, keys: Optional[list[str]] = None
+        self, window_size: int, bias: bool = True, keys: Optional[list[str]] = None
     ) -> None:
         """Initialize a new instance of MovingMahalanobisDistance.
         Args:
             window_size (int): The number of recent values to consider for calculating the mahalanobis distance.
-            bias (bool): False if bessel corrction should not be used.
-            keys (str): Keys for the moving window. If None, the first keys learned are used.
+            bias (bool): False if bessel correction should not be used.
+            keys (list[str]): Keys for the moving window. If None, the first keys learned are used.
         Raises:
             ValueError: If window_size is not a positive integer."""
         if window_size <= 0:
@@ -242,15 +230,15 @@ class MovingMahalanobisDistance(BaseModel):
         if self.feature_names is None:
             self.feature_names = list(x.keys())
         datapoint = [x[key] for key in self.feature_names]
-        if all([isinstance(x, (int, float)) for x in datapoint]):
+        if all([isinstance(val, (int, float)) for val in datapoint]):
             self.window.append(datapoint)
 
     def score_one(self, x: Dict[str, float]) -> float:
-        """Calculate and return the mahalanobis distance from one given point to the windows feature mean.
+        """Calculate and return the mahalanobis distance from one given point to the window's feature mean.
         Args:
-            x (Dict): Single Datapoint.
+            x (Dict): Single datapoint.
         Returns:
-            float: The mahalanobis distance. 0 if the window is empty or has less then 2 data points.
+            float: The mahalanobis distance. 0 if the window is empty or has less than 3 data points.
         """
         if self.feature_names is None or len(self.window) < 3:
             return 0
@@ -258,7 +246,7 @@ class MovingMahalanobisDistance(BaseModel):
         cov_matrix = np.cov(previous_points, rowvar=False)
         if (
             cov_matrix.shape[0] == cov_matrix.shape[1]
-        ):  # test for singular matrix and change diagonal by 0.1% of the minimum diagonal value
+        ):
             try:
                 inv_cov_matrix = np.linalg.inv(cov_matrix)
             except np.linalg.LinAlgError:

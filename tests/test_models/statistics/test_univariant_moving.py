@@ -31,11 +31,11 @@ class TestMovingAverage(unittest.TestCase):
         ma = MovingAverage(3)
         ma.learn_one({"value": 1.0})
         ma.learn_one({"value": 2.0})
-        self.assertEqual(ma.score_one({"key1": 3}), 0.5)
+        self.assertEqual(ma.score_one({"value": 3}), 0.5)
 
     def test_score_one_with_empty_window(self):
         ma = MovingAverage(3)
-        self.assertEqual(ma.score_one({"key1": 3}), 0)
+        self.assertEqual(ma.score_one({"value": 3}), 0)
 
     def test_window_shifting(self):
         ma = MovingAverage(3)
@@ -47,7 +47,7 @@ class TestMovingAverage(unittest.TestCase):
         ma = MovingAverage(3)
         for x in [0, 0, 0, 0, 0]:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one({"key1": 0}), 0)
+        self.assertEqual(ma.score_one({"value": 0}), 0)
 
 
 class TestMovingHarmonicAverage(unittest.TestCase):
@@ -157,7 +157,7 @@ class TestMovingGeometricAverage(unittest.TestCase):
         self.assertEqual(m.score_one({"value": 1}), 1)
 
     def test_score_one_with_multiple_values_absolute_values(self):
-        m = MovingGeometricAverage(window_size=5, abs_diff=False, absoluteValues=True)
+        m = MovingGeometricAverage(window_size=5, abs_diff=False, absolute_values=True)
         for point in [1, 1.5, 1.65]:
             m.learn_one({"feature": point})
         window_growth = [1.5, 1.1]
@@ -168,7 +168,7 @@ class TestMovingGeometricAverage(unittest.TestCase):
         self.assertAlmostEqual(m.score_one({"feature": 1.98}), expected_score)
     
     def test_score_one_with_multiple_values_relative_values(self):
-        m = MovingGeometricAverage(window_size=5, abs_diff=False, absoluteValues=False)
+        m = MovingGeometricAverage(window_size=5, abs_diff=False, absolute_values=False)
         for point in [1.5, 1.1]:
             m.learn_one({"feature": point})
         window_growth = [1.5, 1.1]
