@@ -149,19 +149,19 @@ class TestMovingGeometricAverage(unittest.TestCase):
 
     def test_score_one_with_empty_window(self):
         m = MovingGeometricAverage(window_size=3)
-        self.assertEqual(m.score_one({"value": 1}), 1)
+        self.assertEqual(m.score_one({"value": 1}), 0)
 
     def test_score_one_with_single_value_in_window(self):
         m = MovingGeometricAverage(window_size=3)
         m.learn_one({"feature": 2.0})
-        self.assertEqual(m.score_one({"value": 1}), 1)
+        self.assertEqual(m.score_one({"value": 1}), 0)
 
     def test_score_one_with_multiple_values_absolute_values(self):
         m = MovingGeometricAverage(window_size=5, abs_diff=False, absolute_values=True)
         for point in [1, 1.5, 1.65]:
             m.learn_one({"feature": point})
         window_growth = [1.5, 1.1]
-        score_factor = 1,98/1,65
+        score_factor = 1.98/1.65
         geo_window = (1.5 * 1.1)**(1/2)
         geo_score = (1.5 * 1.1*1.2)**(1/3)
         expected_score = geo_score - geo_window
@@ -172,7 +172,7 @@ class TestMovingGeometricAverage(unittest.TestCase):
         for point in [1.5, 1.1]:
             m.learn_one({"feature": point})
         window_growth = [1.5, 1.1]
-        score_factor = 1,98/1,65
+        score_factor = 1.98/1.65
         geo_window = (1.5 * 1.1)**(1/2)
         geo_score = (1.5 * 1.1*1.2)**(1/3)
         expected_score = geo_score - geo_window
@@ -188,7 +188,7 @@ class TestMovingGeometricAverage(unittest.TestCase):
         ma = MovingGeometricAverage(3)
         for x in [0, 0, 0, 0, 0]:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one({"value": 1}), 1)
+        self.assertEqual(ma.score_one({"value": 1}), 0)
 
 
 class TestMovingMedian(unittest.TestCase):

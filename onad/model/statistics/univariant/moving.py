@@ -102,7 +102,15 @@ class MovingHarmonicAverage(BaseModel):
         
         score_window = list(self.window)
         score_window.append(x[self.feature_name])
-        score =   len(score_window)/sum((1 /x for x in score_window)) - actual_window_length/sum(1 / x for x in self.window) 
+        
+        # Calculate harmonic means with zero-division protection
+        score_denominator = sum(1 / x for x in score_window if x != 0)
+        window_denominator = sum(1 / x for x in self.window if x != 0)
+        
+        if score_denominator == 0 or window_denominator == 0:
+            return 0
+            
+        score = len(score_window) / score_denominator - actual_window_length / window_denominator 
         return abs(score) if self.abs_diff else score
 
 
@@ -156,7 +164,7 @@ class MovingGeometricAverage(BaseModel):
         if actual_window_length <= 1 or (
             actual_window_length <= 2 and self.absolute_values
         ):
-            return 1
+            return 0
         else:
             if self.absolute_values:
                 window_growth = [self.window[i + 1] / self.window[i] for i in range(actual_window_length - 1)]

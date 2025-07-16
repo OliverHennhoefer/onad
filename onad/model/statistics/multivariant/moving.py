@@ -244,15 +244,15 @@ class MovingMahalanobisDistance(BaseModel):
             return 0
         previous_points = np.array(list(self.window))
         cov_matrix = np.cov(previous_points, rowvar=False)
-        if (
-            cov_matrix.shape[0] == cov_matrix.shape[1]
-        ):
+        if cov_matrix.shape[0] == cov_matrix.shape[1]:
             try:
                 inv_cov_matrix = np.linalg.inv(cov_matrix)
             except np.linalg.LinAlgError:
-                cov_matrix = cov_matrix + 0.001 * min(np.diag(cov_matrix)) * np.eye(
-                    cov_matrix.shape[0]
-                )
+                # Add regularization to handle singular matrices
+                regularization = 1e-6 * np.eye(cov_matrix.shape[0])
+                if np.trace(cov_matrix) > 0:
+                    regularization *= np.trace(cov_matrix) / cov_matrix.shape[0]
+                cov_matrix = cov_matrix + regularization
                 inv_cov_matrix = np.linalg.inv(cov_matrix)
 
         feature_mean = np.mean(previous_points, axis=0)
