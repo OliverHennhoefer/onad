@@ -1,7 +1,0 @@
-numpy>=2.2.3
-faiss-cpu>=1.10.0
-tqdm>=4.67.1
-scipy>=1.15.2
-torch>=2.6.0
-pyarrow>=19.0.1
-scikit-learn>=1.6.1
