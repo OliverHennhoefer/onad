@@ -1,6 +1,7 @@
 import math
 import numpy as np
 
+from collections import Counter, defaultdict
 from typing import Dict, Union
 
 from onad.base.transformer import BaseTransformer
@@ -69,3 +70,52 @@ class MinMaxScaler(BaseTransformer):
                 scaled_x[feature] = float(scaled_value)  # Ensure output is float
 
         return scaled_x
+
+
+class StandardScaler(BaseTransformer):
+    def __init__(self, with_std: bool=True)->None:
+        """
+        Initialize the StandardScaler.
+
+        Args:
+            with_std (bool): If the normalization should be divided by  standard deviation (default is True)
+        """
+        self.with_std = with_std
+        self.counts: Counter = Counter()
+        self.means: defaultdict = defaultdict(float)
+        self.vars: defaultdict = defaultdict(float)
+    
+    def learn_one(self, x: Dict[str, Union[float, np.float64]])->None:
+        """
+        Update the mean and standard deviation for each feature in the input resources.
+
+        Args:
+            x (Dict[str, float]): A dictionary of feature-value pairs.
+        """
+        for i, xi in x.items():
+            self.counts[i] += 1
+            old_mean = self.means[i]
+            self.means[i] += (xi - old_mean) / self.counts[i]
+            if self.with_std:
+                self.vars[i] += (
+                    (xi - old_mean) * (xi - self.means[i]) - self.vars[i]
+                ) / self.counts[i]
+
+    def _safe_div(self, a, b)->float:
+        """Returns a if b is False, else divides a by b.
+        """
+        return a / b if b else 0.0
+    
+    def transform_one(self, x: Dict[str, Union[float, np.float64]])-> Dict[str, float]:
+        """
+        Scale the input resources to standard score.
+
+        Args:
+            x (Dict[str, float]): A dictionary of feature-value pairs.
+
+        Returns:
+            Dict[str, float]: The scaled feature-value pairs.
+        """
+        if self.with_std:
+            return {i: self._safe_div(xi - self.means[i], self.vars[i] ** 0.5) for i, xi in x.items()}
+        return {i: xi - self.means[i] for i, xi in x.items()}
