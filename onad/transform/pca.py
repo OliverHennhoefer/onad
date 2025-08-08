@@ -1,9 +1,18 @@
 import numpy as np
-from typing import Dict, Union, Optional
-#from collections import deque
+from typing import Dict, Optional
 
 class IncrementalPCA:
     def __init__(self, n_components: int, center=False, n0: int=50, keys: Optional[list[str]] = None, tol=1e-7) -> None:
+        """
+        Initialize the IncrementalPCA transformer.
+
+        Args:
+            n_components (int): Number of principal components to keep.
+            center (bool): Whether to center data before applying PCA. Default is False.
+            n0 (int): Initial number of samples for warm-up phase before switching to online mode. Default is 50.
+            keys (Optional[list[str]]): List of feature names. If None, they will be inferred from the first sample. Default is None.
+            tol (float): Tolerance for considering whether a new data point contributes significantly. Default is 1e-7.
+        """
         self.n_components: int = n_components
         self.n0: int = n0
         self.center: bool = center  # not used yet
@@ -36,9 +45,12 @@ class IncrementalPCA:
     def learn_one(self, x: Dict[str, float]) -> None:
         """
         Update PCA components incrementally using a single sample.
-        
+
         Args:
             x (Dict[str, float]): A dictionary with feature names as keys and values as the data point dimensions.
+
+        Raises:
+            ValueError: If `n_components` is greater than the number of features in `x`.
         """
         if self.feature_names is None:
             self.feature_names = list(x.keys())
@@ -91,76 +103,24 @@ class IncrementalPCA:
                 #self.window =  []
         self.n_samples_seen += 1
 
-
-
     def transform_one(self, x: Dict[str, float]) -> Dict[str, float]:
         """
         Transform a single data point using the learned PCA components.
-        
+
         Args:
             x (Dict[str, float]): A dictionary with feature names as keys and values as the data point dimensions.
 
         Returns:
             Dict[int, float]: Transformed data point as a dictionary with reduced dimensions.
         """
-        
-        
-        # Convert input dictionary to NumPy array
-        
-
-        # handling missing values...
 
         if self.n0_reached:
-            datapoint = np.array(x[key] for key in self.vectors)
-            transformed_x = self.vectors.T @ datapoint # check if .T is appropriate
+            if self.feature_names is None:
+                raise RuntimeError("You can't call transform_one() before assigning feature names manually or at least once learn_one()")
+            else:
+                datapoint = np.array([x[key] for key in self.feature_names])
+                # handling missing values...?
+            transformed_x = self.vectors @ datapoint
             return {f'component_{i}': val for i, val in enumerate(transformed_x)}
-
         else:
             return {f'component_{i}': 0 for i in range(self.n_components)}
-
-
-
-
-        
-
-# Example usage
-if __name__ == "__main__":
-    ipca = IncrementalPCA(n_components=2)
-    
-    # Simulate streaming data (big)
-    '''
-    ipca = IncrementalPCA(n_components=2)
-    import test_data
-    data = test_data.data
-    '''
-
-    # small data
-    ipca = IncrementalPCA(n_components=2, n0=3)
-    data = data = np.array([[1, 2, 2.5, 5, 5], 
-                 [10, 10.5, 11, 8, 4], 
-                 [3, 3.5, 7, 10, 9]])
-    data_stream = [{f'feature_{i}': val for i, val in enumerate(dp)} for dp in data]
-    x = {f'feature_{i}': val for i, val in enumerate([2, 3, 3.5, 11, 5])}
-    y = {f'feature_{i}': val for i, val in enumerate([4, 3.4, 9.5, 1, 1])}
-
-
-    data_stream = [{f'feature_{i}': val for i, val in enumerate(dp)} for dp in data]
-    for data_point in data_stream:
-        ipca.learn_one(data_point)
-    print('init')
-    print(ipca.values)
-    print(ipca.vectors.T)
-    
-    print('learn x')
-    ipca.learn_one(x)
-    print(ipca.values)
-    print(ipca.vectors.T)
-
-    print('learn y')
-    ipca.learn_one(y)
-    print(ipca.values)
-    print(ipca.vectors.T)
-
-
-    #print(f"Values: {ipca.values}")
-    #print(f"Vectors: {ipca.vectors}")
