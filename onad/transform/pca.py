@@ -12,6 +12,14 @@ class IncrementalPCA:
             n0 (int): Initial number of samples for warm-up phase before switching to online mode. Default is 50.
             keys (Optional[list[str]]): List of feature names. If None, they will be inferred from the first sample. Default is None.
             tol (float): Tolerance for considering whether a new data point contributes significantly. Default is 1e-7.
+
+        Implements an online PCA algorithm similar to the 'incRpca' from the R Package 
+        'onlinePCA: Online Principal Component Analysis'. This method is based on the incremental Singular Value Decomposition (SVD) approach 
+        proposed by Brand (2002) and Arora et al. (2012).
+
+        The decision to adopt this algorithm was informed by insights from 
+        'Online Principal Component Analysis in High Dimension: Which Algorithm to Choose?'
+        by Hervé Cardot and David Degras (2015).
         """
         self.n_components: int = n_components
         self.n0: int = n0
@@ -100,7 +108,7 @@ class IncrementalPCA:
                 self.values = s[:self.n_components] ** 2
                 self.vectors = rotation[:self.n_components]
                 self.n0_reached = True
-                #self.window =  []
+                self.window =  []
         self.n_samples_seen += 1
 
     def transform_one(self, x: Dict[str, float]) -> Dict[str, float]:
@@ -123,4 +131,4 @@ class IncrementalPCA:
             transformed_x = self.vectors @ datapoint
             return {f'component_{i}': val for i, val in enumerate(transformed_x)}
         else:
-            return {f'component_{i}': 0 for i in range(self.n_components)}
+            return {f'component_{i}': 0.0 for i in range(self.n_components)}
