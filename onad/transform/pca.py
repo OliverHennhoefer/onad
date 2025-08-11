@@ -15,7 +15,6 @@ class IncrementalPCA:
 
         Args:
             n_components (int): Number of principal components to keep.
-            center (bool): Whether to center data before applying PCA. Default is False.
             n0 (int): Initial number of samples for warm-up phase before switching to online mode. Default is 50.
             keys (Optional[list[str]]): List of feature names. If None, they will be inferred from the first sample. Default is None.
             tol (float): Tolerance for considering whether a new data point contributes significantly. Default is 1e-7.
@@ -37,7 +36,6 @@ class IncrementalPCA:
         self.n0_reached: bool = False
         self.n_samples_seen = 0
         self.n_features: int = 0
-        self.dim_change = False
 
         self.values = np.array([])
         self.vectors = np.array([])
@@ -54,9 +52,6 @@ class IncrementalPCA:
                 raise ValueError(
                     "The number of primary components has to be less or equal to the number of features"
                 )
-
-    def _incPCA(self):
-        pass
 
     def learn_one(self, x: Dict[str, float]) -> None:
         """
