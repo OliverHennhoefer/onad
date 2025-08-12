@@ -106,6 +106,130 @@ class TestIncrementalPCA(unittest.TestCase):
         print(x_transformed)
         self.assertEqual(q, len(x_transformed))
 
+    def test_hardcoded_pca_exact_r_match(self):
+        """
+        Comprehensive test using exact hardcoded data from R reference
+        Tests for exact matching with R onlinePCA::incRpca implementation
+        """
+        # Hardcoded data for reproducible testing - matches R exactly
+        hardcoded_data = [
+            [5.74, 3.28, 5.25, 6.12, 5.34, 4.33, 7.33, 4.49],
+            [6.13, 5.11, 4.42, 5.08, 5.82, 5.08, 6.49, 4.38],
+            [3.16, 4.29, 5.49, 4.03, 3.48, 5.48, 2.82, 6.11],
+            [5.91, 5.76, 5.45, 6.88, 5.61, 5.03, 5.61, 4.22],
+            [5.94, 5.27, 4.16, 5.54, 4.21, 6.13, 2.44, 4.88],
+            [2.28, 5.68, 5.82, 5.56, 5.99, 4.41, 5.12, 4.84],
+            [7.02, 3.82, 3.32, 5.11, 6.51, 5.17, 4.79, 4.26],
+            [3.88, 4.43, 6.55, 4.58, 4.38, 4.22, 5.75, 4.41],
+            [2.89, 4.49, 4.59, 4.43, 3.42, 6.11, 4.29, 2.67],
+            [4.25, 4.78, 6.78, 4.22, 6.15, 4.43, 5.73, 5.08]
+        ]
+        
+        # Parameters matching R test
+        n = 10    # Total samples
+        d = 8     # Features
+        q = 2     # Components  
+        n0 = 5    # Initialization samples
+        
+        # Convert to stream format
+        data_stream = [
+            {f"feature_{i}": val for i, val in enumerate(sample)} 
+            for sample in hardcoded_data
+        ]
+        
+        # Initialize PCA
+        ipca = IncrementalPCA(q, n0=n0)
+        
+        # Learn first n0 samples (initialization phase)
+        for i in range(n0):
+            ipca.learn_one(data_stream[i])
+        
+        # Test initialization results against R
+        expected_init_values = np.array([258.355009, 6.026835])
+        expected_init_vectors = np.array([
+            [0.3781516,  0.14054882],
+            [0.3300961, -0.26010689],
+            [0.3431899, -0.13366177],
+            [0.3881459,  0.07745804],
+            [0.3441842,  0.20754754],
+            [0.3591014, -0.40351392],
+            [0.3513482,  0.72289789],
+            [0.3297563, -0.40030537],
+        ])
+        
+        self.assertTrue(
+            np.allclose(ipca.values, expected_init_values, rtol=1e-3),
+            f"Initialization values mismatch. Expected: {expected_init_values}, Got: {ipca.values}"
+        )
+        # Handle sign ambiguity for initialization vectors too
+        init_vectors_match = True
+        for i in range(expected_init_vectors.shape[1]):
+            col_expected = expected_init_vectors[:, i]
+            col_actual = ipca.vectors[:, i]
+            matches_positive = np.allclose(col_actual, col_expected, rtol=1e-3)
+            matches_negative = np.allclose(col_actual, -col_expected, rtol=1e-3)
+            if not (matches_positive or matches_negative):
+                init_vectors_match = False
+                break
+        self.assertTrue(init_vectors_match, "Initialization vectors mismatch.")
+        
+        # Learn remaining samples and test each step
+        expected_values_by_step = [
+            [245.926516, 4.844848],  # After sample 6
+            [238.546340, 4.314877],  # After sample 7  
+            [230.42418,  3.70013],   # After sample 8
+            [218.621707, 3.420312],  # After sample 9
+            [218.186016, 3.040879]   # After sample 10
+        ]
+        
+        for i in range(n0, n):
+            ipca.learn_one(data_stream[i])
+            step_idx = i - n0
+            expected_vals = np.array(expected_values_by_step[step_idx])
+            
+            self.assertTrue(
+                np.allclose(ipca.values, expected_vals, rtol=1e-3),
+                f"Step {i+1} values mismatch. Expected: {expected_vals}, Got: {ipca.values}"
+            )
+        
+        # Test final vectors against R
+        expected_final_vectors = np.array([
+            [0.3414534, -0.34029140],
+            [0.3346197,  0.32369498],
+            [0.3689964,  0.24539451],
+            [0.3700917, -0.04145283],
+            [0.3672606, -0.28126258],
+            [0.3561266,  0.42696108],
+            [0.3637972, -0.59785818],
+            [0.3228903,  0.31408234],
+        ])
+        
+        # Handle sign ambiguity in eigenvectors - they can be negated and still be correct
+        # Check if vectors match (allowing for sign flips)
+        vectors_match = True
+        for i in range(expected_final_vectors.shape[1]):  # For each component
+            # Check if column matches (positive or negative)
+            col_expected = expected_final_vectors[:, i]
+            col_actual = ipca.vectors[:, i]
+            
+            matches_positive = np.allclose(col_actual, col_expected, rtol=1e-4)
+            matches_negative = np.allclose(col_actual, -col_expected, rtol=1e-4)
+            
+            if not (matches_positive or matches_negative):
+                vectors_match = False
+                break
+                
+        self.assertTrue(
+            vectors_match,
+            f"Final vectors mismatch (accounting for sign ambiguity).\nExpected:\n{expected_final_vectors}\nGot:\n{ipca.vectors}"
+        )
+        
+        # Test transformation capability
+        test_sample = data_stream[0]
+        transformed = ipca.transform_one(test_sample)
+        self.assertEqual(len(transformed), q)
+        self.assertTrue(all(isinstance(v, float) for v in transformed.values()))
+
 
 if __name__ == "__main__":
     unittest.main()
