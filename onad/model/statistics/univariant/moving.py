@@ -1,5 +1,4 @@
 from typing import Dict, Optional
-import numpy as np
 from onad.base.model import BaseModel
 from collections import deque
 
@@ -7,7 +6,9 @@ from collections import deque
 class MovingAverage(BaseModel):
     """A simple moving model that calculates the difference between arithmetic average of a window + new value and the window."""
 
-    def __init__(self, window_size: int, key: Optional[str] = None, abs_diff: bool = True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingAverage.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving arithmetic average.
@@ -29,12 +30,13 @@ class MovingAverage(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name is None:
-            self.feature_name = next(iter(x.keys()))
-        self.window.append(x[self.feature_name])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
-    def score_one(self, x: Dict[str, float]) -> float:
-        """Calculate and return the difference between the moving average of the current window (including the new data point) 
+    def score_one(self, x) -> float:
+        """Calculate and return the difference between the moving average of the current window (including the new data point)
         and the moving average of the original window.
 
         Args:
@@ -47,17 +49,25 @@ class MovingAverage(BaseModel):
         """
         actual_window_length = len(self.window)
         if actual_window_length <= 0:
-            return 0 
+            return 0
         score_window = list(self.window)
-        score_window.append(x[self.feature_name])
-        score = sum(score_window) / len(score_window) - sum(self.window)/actual_window_length
+        score_window.append(list(x.values())[0])
+        score = (
+            sum(score_window) / len(score_window)
+            - sum(self.window) / actual_window_length
+        )
         return abs(score) if self.abs_diff else score
 
 
 class MovingHarmonicAverage(BaseModel):
-    """A simple moving model that calculates the difference between harmonic average of a window + new value and the window."""
+    """A simple moving model that calculates the difference between harmonic average of a window + new value and the window.
+    Attributes:
+        window (collections.deque): A fixed-size deque storing the most recent values.
+    """
 
-    def __init__(self, window_size: int, key: Optional[str] = None, abs_diff: bool = True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingHarmonicAverage.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving harmonic average.
@@ -74,18 +84,20 @@ class MovingHarmonicAverage(BaseModel):
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
-            x (Dict[str, float]): A dictionary representing a single resource point. 0 will be ignored. 
+            x (Dict[str, float]): A dictionary representing a single resource point. 0 will be ignored.
         Raises:
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name is None:
-            self.feature_name = next(iter(x.keys()))
-        if x[self.feature_name] != 0:
-            self.window.append(x[self.feature_name])
+        if self.feature_name == None:
+            if list(x.values())[0] != 0:
+                self.window.append(list(x.values())[0])
+        else:
+            if x[self.feature_name] != 0:
+                self.window.append(x[self.feature_name])
 
-    def score_one(self, x: Dict[str, float]) -> float:
-        """Calculate and return the difference between the harmonic average of the current window (including the new data point) 
+    def score_one(self, x) -> float:
+        """Calculate and return the difference between the harmonic average of the current window (including the new data point)
         and the moving average of the original window.
 
         Args:
@@ -99,31 +111,36 @@ class MovingHarmonicAverage(BaseModel):
         actual_window_length = len(self.window)
         if actual_window_length <= 0:
             return 0
-        
+
         score_window = list(self.window)
-        score_window.append(x[self.feature_name])
-        
-        # Calculate harmonic means with zero-division protection
-        score_denominator = sum(1 / x for x in score_window if x != 0)
-        window_denominator = sum(1 / x for x in self.window if x != 0)
-        
-        if score_denominator == 0 or window_denominator == 0:
-            return 0
-            
-        score = len(score_window) / score_denominator - actual_window_length / window_denominator 
+        score_window.append(list(x.values())[0])
+        score = len(score_window) / sum(
+            (1 / x for x in score_window)
+        ) - actual_window_length / sum(1 / x for x in self.window)
         return abs(score) if self.abs_diff else score
 
 
 class MovingGeometricAverage(BaseModel):
-    """A simple moving model that calculates the difference between geometric average of a window + new value and the window."""
+    """A simple moving model that calculates the difference between geometric average of a window + new value and the window.
+    Attributes:
+        window (collections.deque): A fixed-size deque storing the most recent values.
+            abs_diff (bool): When true (default) returns abs() from the difference
 
-    def __init__(self, window_size: int, key: Optional[str] = None, absolute_values: bool = False, abs_diff: bool = True) -> None:
+    """
+
+    def __init__(
+        self,
+        window_size: int,
+        key: Optional[str] = None,
+        absoluteValues=False,
+        abs_diff=True,
+    ) -> None:
         """Initialize a new instance of MovingGeometricAverage.
         Args:
             window_size (int): The number of recent absolute values to consider for calculating the moving geometric average.
             key (str): optional, if None is given, the first learned key-value pair will set the key
-            absolute_values (bool): Default is False. If True, the class calculates the growth between data points and then calculates 
-                the geometric average from window_size - 1 values.
+            absoluteValues (bool): Default is False. If True, the class is calculating the growth between the data point and then calculating
+                the geometric avarage from window_size - 1 values.
             abs_diff (bool): When true (default) returns abs() from the difference
         Raises:
             ValueError: If window_size is not a positive integer."""
@@ -131,7 +148,7 @@ class MovingGeometricAverage(BaseModel):
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
         self.feature_name: Optional[str] = key
-        self.absolute_values = absolute_values
+        self.absoluteValues = absoluteValues
         self.abs_diff: bool = abs_diff
 
     def learn_one(self, x: Dict[str, float]) -> None:
@@ -143,14 +160,16 @@ class MovingGeometricAverage(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name is None:
-            self.feature_name = next(iter(x.keys()))
-        if x[self.feature_name] > 0:
-            self.window.append(x[self.feature_name])
+        if self.feature_name == None:
+            if list(x.values())[0] > 0:
+                self.window.append(list(x.values())[0])
+        else:
+            if x[self.feature_name] > 0:
+                self.window.append(x[self.feature_name])
 
-    def score_one(self, x: Dict[str, float]) -> float:
-        """Calculate and return the difference between the geometric average of the current window (including the new data point) 
-        and the geometric average of the original window.
+    def score_one(self, x) -> float:
+        """Calculate and return the difference between the gemetric average of the current window (including the new data point)
+        and the gemotric average of the original window.
 
         Args:
             x (Dict[str, float]): A dictionary representing a single data point. It is expected to contain one key-value pair,
@@ -162,26 +181,40 @@ class MovingGeometricAverage(BaseModel):
         """
         actual_window_length = len(self.window)
         if actual_window_length <= 1 or (
-            actual_window_length <= 2 and self.absolute_values
+            actual_window_length <= 2 and self.absoluteValues
         ):
-            return 0
+            return 1
         else:
-            if self.absolute_values:
-                window_growth = [self.window[i + 1] / self.window[i] for i in range(actual_window_length - 1)]
-                score_factor = x[self.feature_name] / self.window[-1]
+            if self.absoluteValues:
+                window_growth = [
+                    self.window[i + 1] / self.window[i]
+                    for i in range(actual_window_length - 1)
+                ]
+                score_factor = list(x.values())[0] / self.window[-1]
             else:
-                window_growth = list(self.window)
-                score_factor = x[self.feature_name]
-            
-            window_geo = np.prod(window_growth) ** (1 / len(window_growth))
-            score_geo = (np.prod(window_growth) * score_factor) ** (1 / (len(window_growth) + 1))
-            return abs(score_geo - window_geo) if self.abs_diff else score_geo - window_geo
+                window_growth = self.window
+                score_factor = list(x.values())[0]
+            window_product = 1
+            for value in window_growth:
+                window_product *= value
+            window_geo = window_product ** (1 / (len(window_growth)))
+            score_geo = (window_product * score_factor) ** (
+                1 / (len(window_growth) + 1)
+            )
+            return (
+                abs(score_geo - window_geo) if self.abs_diff else score_geo - window_geo
+            )
 
 
 class MovingMedian(BaseModel):
-    """A simple moving model that calculates the difference between median of a window + new value and the window."""
+    """A simple moving model that calculates the difference between median of a window + new value and the window.
+    Attributes:
+        window (collections.deque): A fixed-size deque storing the most recent values.
+    """
 
-    def __init__(self, window_size: int, key: Optional[str] = None, abs_diff: bool = True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingMedian.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving median.
@@ -204,12 +237,13 @@ class MovingMedian(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name is None:
-            self.feature_name = next(iter(x.keys()))
-        self.window.append(x[self.feature_name])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
-    def score_one(self, x: Dict[str, float]) -> float:
-        """Calculate and return the difference between the median of the current window (including the new data point) 
+    def score_one(self, x) -> float:
+        """Calculate and return the difference between the median of the current window (including the new data point)
         and the median of the original window.
 
         Args:
@@ -225,30 +259,41 @@ class MovingMedian(BaseModel):
             return 0
         sorted_data = sorted(self.window)
         window_score = sorted_data.copy()
-        window_score.append(x[self.feature_name])
+        window_score.append(list(x.values())[0])
         window_score.sort()
 
         mid_index_old = actual_window_length // 2
         mid_index_new = len(window_score) // 2
 
         if actual_window_length % 2 == 1:
+            # If odd, return the middle element
             median_old = sorted_data[mid_index_old]
-            median_new = (window_score[mid_index_new - 1] + window_score[mid_index_new]) / 2
+            median_new = (
+                window_score[mid_index_new - 1] + window_score[mid_index_new]
+            ) / 2
         else:
-            median_old = (sorted_data[mid_index_old - 1] + sorted_data[mid_index_old]) / 2
+            # If even, return the average of the two middle elements
+            median_old = (
+                sorted_data[mid_index_old - 1] + sorted_data[mid_index_old]
+            ) / 2
             median_new = window_score[mid_index_new]
         score = median_new - median_old
         return abs(score) if self.abs_diff else score
 
 
 class MovingQuantile(BaseModel):
-    """A simple moving model that calculates the difference between quantile of a window + new value and the window."""
+    """A simple moving model that calculates the difference between quantile of a window + new value and the window.
+    Attributes:
+        window (collections.deque): A fixed-size deque storing the most recent values.
+    """
 
-    def __init__(self, window_size: int, key: Optional[str] = None, quantile: float = 0.5, abs_diff: bool = True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, quantile=0.5, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingQuantile.
         Args:
             window_size (int): The number of recent values to consider for calculating the
-                                moving quantile.
+                                moving quantle.
             key (str): optional, if None is given, the first learned key-value pair will set the key
             quantile (float): The quantile set for this instance. Default is 0.5
             abs_diff (bool): When true (default) returns abs() from the difference
@@ -270,25 +315,29 @@ class MovingQuantile(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name is None:
-            self.feature_name = next(iter(x.keys()))
-        self.window.append(x[self.feature_name])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
     def _quantile(self, sorted_list: list) -> float:
         window_length = len(sorted_list)
         rank = (
             window_length - 1
-        ) * self.quantile
+        ) * self.quantile  # Calculate the index of the quantile
         lower_index = int(rank)
         upper_index = min(lower_index + 1, window_length - 1)
-        fraction = rank - lower_index
+        fraction = rank - lower_index  # Calculate the fractional part
         if lower_index == upper_index:
             return sorted_list[lower_index]
         else:
-            return (1 - fraction) * sorted_list[lower_index] + fraction * sorted_list[upper_index]
+            # Interpolation is necessary
+            return (1 - fraction) * sorted_list[lower_index] + fraction * sorted_list[
+                upper_index
+            ]
 
-    def score_one(self, x: Dict[str, float]) -> float:
-        """Calculate and return the difference between the quantile of the current window (including the new data point) 
+    def score_one(self, x) -> float:
+        """Calculate and return the difference between the quantile of the current window (including the new data point)
         and the quantile of the original window.
 
         Args:
@@ -305,7 +354,7 @@ class MovingQuantile(BaseModel):
 
         sorted_window: list = sorted(self.window)
         score_data: list = sorted_window.copy()
-        score_data.append(x[self.feature_name])
+        score_data.append(list(x.values())[0])
         score_data.sort()
 
         score = self._quantile(score_data) - self._quantile(sorted_window)
@@ -315,7 +364,9 @@ class MovingQuantile(BaseModel):
 class MovingVariance(BaseModel):
     """A simple moving model that calculates the difference between variance of a window + new value and the window."""
 
-    def __init__(self, window_size: int, key: Optional[str] = None, abs_diff: bool = True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingVariance.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving variance.
@@ -337,12 +388,13 @@ class MovingVariance(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name is None:
-            self.feature_name = next(iter(x.keys()))
-        self.window.append(x[self.feature_name])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
-    def score_one(self, x: Dict[str, float]) -> float:
-        """Calculate and return the difference between the moving variance of the current window (including the new data point) 
+    def score_one(self, x) -> float:
+        """Calculate and return the difference between the moving variance of the current window (including the new data point)
         and the moving variance of the original window.
 
         Args:
@@ -358,7 +410,7 @@ class MovingVariance(BaseModel):
             return 0
         else:
             score_window = list(self.window)
-            score_window.append(x[self.feature_name])
+            score_window.append(list(x.values())[0])
 
             mean_window = sum(self.window) / actual_window_length
             mean_score = sum(score_window) / len(score_window)
@@ -375,11 +427,13 @@ class MovingVariance(BaseModel):
 class MovingInterquartileRange(BaseModel):
     """A simple moving model that calculates the difference between interquartile range of a window + new value and the window."""
 
-    def __init__(self, window_size: int, key: Optional[str] = None, abs_diff: bool = True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingInterquartileRange.
         Args:
             window_size (int): The number of recent values to consider for calculating the
-                                moving interquartile range.
+                                moving median.
             key (str): optional, if None is given, the first learned key-value pair will set the key
             abs_diff (bool): When true (default) returns abs() from the difference
         Raises:
@@ -399,30 +453,30 @@ class MovingInterquartileRange(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name is None:
-            self.feature_name = next(iter(x.keys()))
-        self.window.append(x[self.feature_name])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
-    def _score_one_quantile(self, sorted_list: list, quantile: float) -> float:
+    def __score_one_quantile(self, sorted_list, quantile) -> float:
         """Calculate and return the value of a quantile of the values in the window.
         Returns:
             float: The quantile of the values in the window. 0 if the window is empty"""
         list_len = len(sorted_list)
-        rank = (
-            list_len - 1
-        ) * quantile
+        rank = (list_len - 1) * quantile  # Calculate the index of the quantile
         lower_index = int(rank)
         upper_index = min(lower_index + 1, list_len - 1)
         fraction = rank - lower_index
         if lower_index == upper_index:
             return sorted_list[lower_index]
         else:
-            return (1 - fraction) * sorted_list[
-                lower_index
-            ] + fraction * sorted_list[upper_index]
+            # Interpolation is necessary
+            return (1 - fraction) * sorted_list[lower_index] + fraction * sorted_list[
+                upper_index
+            ]
 
-    def score_one(self, x: Dict[str, float]) -> float:
-        """Calculate and return the difference between the interquartile range of the current window (including the new data point) 
+    def score_one(self, x) -> float:
+        """Calculate and return the difference between the interquartile range of the current window (including the new data point)
         and the moving interquartile range of the original window.
 
         Args:
@@ -433,16 +487,20 @@ class MovingInterquartileRange(BaseModel):
             float: The difference between the new moving interquartile range (including `x`) and the current moving average of the window.
             If the original window has zero or fewer elements, returns 0.
         """
-        actual_window_length = len(self.window)
-        if actual_window_length <= 0:
+        self.actual_window_length = len(self.window)
+        if self.actual_window_length <= 0:
             return 0
-        
+
         sorted_data = sorted(self.window)
         score_window = sorted_data.copy()
-        score_window.append(x[self.feature_name])
+        score_window.append(list(x.values())[0])
         score_window.sort()
-        iqr_window = self._score_one_quantile(sorted_data, 0.75) - self._score_one_quantile(sorted_data, 0.25)
-        iqr_score = self._score_one_quantile(score_window, 0.75) - self._score_one_quantile(score_window, 0.25)
+        iqr_window = self.__score_one_quantile(
+            sorted_data, 0.75
+        ) - self.__score_one_quantile(sorted_data, 0.25)
+        iqr_score = self.__score_one_quantile(
+            score_window, 0.75
+        ) - self.__score_one_quantile(score_window, 0.25)
         score = iqr_score - iqr_window
         return abs(score) if self.abs_diff else score
 
@@ -450,7 +508,9 @@ class MovingInterquartileRange(BaseModel):
 class MovingAverageAbsoluteDeviation(BaseModel):
     """A simple moving model that calculates the difference between absolute deviation of a window + new value and the window."""
 
-    def __init__(self, window_size: int, key: Optional[str] = None, abs_diff: bool = True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingAverageAbsoluteDeviation.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving average absolute deviation.
@@ -472,12 +532,13 @@ class MovingAverageAbsoluteDeviation(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name is None:
-            self.feature_name = next(iter(x.keys()))
-        self.window.append(x[self.feature_name])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
-    def score_one(self, x: Dict[str, float]) -> float:
-        """Calculate and return the difference between the moving average absolute deviation of the current window (including the new data point) 
+    def score_one(self, x) -> float:
+        """Calculate and return the difference between the moving average absolute deviation of the current window (including the new data point)
         and the moving average absolute deviation of the original window.
 
         Args:
@@ -493,11 +554,16 @@ class MovingAverageAbsoluteDeviation(BaseModel):
             return 0
         else:
             score_window = list(self.window)
-            score_window.append(x[self.feature_name])
+            score_window.append(list(x.values())[0])
             mean_window = sum(self.window) / actual_window_length
             mean_score = sum(score_window) / len(score_window)
-            dev_window = sum(abs(value - mean_window) for value in self.window) / actual_window_length
-            dev_score = sum(abs(value - mean_score) for value in score_window) / len(score_window)
+            dev_window = (
+                sum(abs(value - mean_window) for value in self.window)
+                / actual_window_length
+            )
+            dev_score = sum(abs(value - mean_score) for value in score_window) / len(
+                score_window
+            )
 
             score = dev_score - dev_window
             return abs(score) if self.abs_diff else score
@@ -506,7 +572,9 @@ class MovingAverageAbsoluteDeviation(BaseModel):
 class MovingKurtosis(BaseModel):
     """A simple moving model that calculates the difference between kurtosis of a window + new value and the window."""
 
-    def __init__(self, window_size: int, key: Optional[str] = None, abs_diff: bool = True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingKurtosis.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving kurtosis.
@@ -524,16 +592,18 @@ class MovingKurtosis(BaseModel):
         """Update the model with a single resource point.
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point.
+            abs_diff (bool): When true (default) returns abs() from the difference.
         Raises:
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name is None:
-            self.feature_name = next(iter(x.keys()))
-        self.window.append(x[self.feature_name])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
-    def score_one(self, x: Dict[str, float]) -> float:
-        """Calculate and return the difference between the kurtosis of the current window (including the new data point) 
+    def score_one(self, x) -> float:
+        """Calculate and return the difference between the kurtosis of the current window (including the new data point)
         and the kurtosis of the original window.
 
         Args:
@@ -549,15 +619,26 @@ class MovingKurtosis(BaseModel):
             return 0
         else:
             score_window = list(self.window)
-            score_window.append(x[self.feature_name])
+            score_window.append(list(x.values())[0])
             mean_window = sum(self.window) / actual_window_length
             mean_score = sum(score_window) / len(score_window)
 
-            central_moment_4_window = (sum((value - mean_window) ** 4 for value in self.window) / actual_window_length)
-            central_moment_4_score = (sum((value - mean_score) ** 4 for value in score_window) / len(score_window))
+            central_moment_4_window = (
+                sum((value - mean_window) ** 4 for value in self.window)
+                / actual_window_length
+            )
+            central_moment_4_score = sum(
+                (value - mean_score) ** 4 for value in score_window
+            ) / len(score_window)
 
-            std_4_window = (sum((value - mean_window) ** 2 for value in self.window) / actual_window_length) ** 2
-            std_4_score = (sum((value - mean_score) ** 2 for value in score_window) / len(score_window)) ** 2
+            std_4_window = (
+                sum((value - mean_window) ** 2 for value in self.window)
+                / actual_window_length
+            ) ** 2
+            std_4_score = (
+                sum((value - mean_score) ** 2 for value in score_window)
+                / len(score_window)
+            ) ** 2
 
             if std_4_window == 0 or std_4_score == 0:
                 return 0
@@ -571,7 +652,9 @@ class MovingKurtosis(BaseModel):
 class MovingSkewness(BaseModel):
     """A simple moving model that calculates the difference between skewness of a window + new value and the window."""
 
-    def __init__(self, window_size: int, key: Optional[str] = None, abs_diff: bool = True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingSkewness.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving skewness.
@@ -593,12 +676,13 @@ class MovingSkewness(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name is None:
-            self.feature_name = next(iter(x.keys()))
-        self.window.append(x[self.feature_name])
+        if self.feature_name == None:
+            self.window.append(list(x.values())[0])
+        else:
+            self.window.append(x[self.feature_name])
 
-    def score_one(self, x: Dict[str, float]) -> float:
-        """Calculate and return the difference between the skewness of the current window (including the new data point) 
+    def score_one(self, x) -> float:
+        """Calculate and return the difference between the skewness of the current window (including the new data point)
         and the skewness of the original window.
 
         Args:
@@ -614,16 +698,27 @@ class MovingSkewness(BaseModel):
             return 0
         else:
             score_window = list(self.window)
-            score_window.append(x[self.feature_name])
+            score_window.append(list(x.values())[0])
 
             mean_window = sum(self.window) / actual_window_length
             mean_score = sum(score_window) / len(score_window)
 
-            central_moment_3_window = (sum((value - mean_window) ** 3 for value in self.window) / actual_window_length)
-            central_moment_3_score = (sum((value - mean_score) ** 3 for value in score_window) / len(score_window))
+            central_moment_3_window = (
+                sum((value - mean_window) ** 3 for value in self.window)
+                / actual_window_length
+            )
+            central_moment_3_score = sum(
+                (value - mean_score) ** 3 for value in score_window
+            ) / len(score_window)
 
-            std_3_window = (sum((value - mean_window) ** 2 for value in self.window) / actual_window_length) ** (3 / 2)
-            std_3_score = (sum((value - mean_score) ** 2 for value in score_window) / len(score_window)) ** (3 / 2)
+            std_3_window = (
+                sum((value - mean_window) ** 2 for value in self.window)
+                / actual_window_length
+            ) ** (3 / 2)
+            std_3_score = (
+                sum((value - mean_score) ** 2 for value in score_window)
+                / len(score_window)
+            ) ** (3 / 2)
             if std_3_score == 0 or std_3_window == 0:
                 return 0
             else:

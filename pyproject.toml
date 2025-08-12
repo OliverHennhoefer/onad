@@ -21,15 +21,14 @@ dependencies = [
     "numpy>=2.2.3",
     "faiss-cpu>=1.10.0",
     "tqdm>=4.67.1",
-    "scipy>=1.15.2",
-    "pyarrow>=19.0.1"
+    "scipy>=1.15.2"
 ]
 
 [project.optional-dependencies]
-dev = ["black>=25.1.0", "river>=0.22.0"]
+dev = ["black", "ruff", "river>=0.22.0"]
 eval = ["scikit-learn>=1.6.1"]
 dl = ["torch>=2.6.0"]
-all = ["black>=25.1.0", "river>=0.22.0", "scikit-learn>=1.6.1", "torch>=2.6.0", "pyarrow>=19.0.1"]
+all = ["black", "ruff", "river>=0.22.0", "scikit-learn>=1.6.1", "torch>=2.6.0"]
 
 [project.urls]
 "Homepage" = "https://github.com/OliverHennhoefer/onad"
