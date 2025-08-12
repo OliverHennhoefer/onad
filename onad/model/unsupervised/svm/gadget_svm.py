@@ -10,7 +10,9 @@ class IncrementalOneClassSVM:
     Incremental One-Class SVM with corrected gradient calculation and regularization.
     """
 
-    def __init__(self, learning_rate: float = 0.01, nu: float = 0.5, lambda_reg: float = 0.01):
+    def __init__(
+        self, learning_rate: float = 0.01, nu: float = 0.5, lambda_reg: float = 0.01
+    ):
         self.w = None  # Weight vector
         self.rho = 0.0  # Bias term
         self.learning_rate = learning_rate
@@ -46,8 +48,14 @@ class GADGETSVM(BaseModel):
     and correct graph node initialization.
     """
 
-    def __init__(self, graph: Dict[int, List[int]] = {0: [1], 1: [2], 2: []}, threshold: float = 0.0,
-                 learning_rate: float = 0.01, nu: float = 0.5, lambda_reg: float = 0.01):
+    def __init__(
+        self,
+        graph: Dict[int, List[int]] = {0: [1], 1: [2], 2: []},
+        threshold: float = 0.0,
+        learning_rate: float = 0.01,
+        nu: float = 0.5,
+        lambda_reg: float = 0.01,
+    ):
         # Collect all unique nodes from graph
         all_nodes: Set[int] = set()
         for node, neighbors in graph.items():
@@ -64,8 +72,10 @@ class GADGETSVM(BaseModel):
         self.feature_order = None  # Tuple for fast comparisons
 
         # Initialize SVMs for all nodes
-        self.svms = {node: IncrementalOneClassSVM(learning_rate, nu, lambda_reg)
-                     for node in all_nodes}
+        self.svms = {
+            node: IncrementalOneClassSVM(learning_rate, nu, lambda_reg)
+            for node in all_nodes
+        }
 
         # Precompute root nodes (nodes with no incoming edges)
         child_nodes = set()

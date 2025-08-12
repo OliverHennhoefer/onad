@@ -3,10 +3,8 @@ import numpy as np
 import unittest
 
 
-class TestIncPCA(unittest.TestCase):
-    data = data = np.array(
-        [[1, 2, 2.5, 5, 5], [10, 10.5, 11, 8, 4], [3, 3.5, 7, 10, 9]]
-    )
+class TestIncrementalPCA(unittest.TestCase):
+    data = np.array([[1, 2, 2.5, 5, 5], [10, 10.5, 11, 8, 4], [3, 3.5, 7, 10, 9]])
     x = {f"feature_{i}": val for i, val in enumerate([2, 3, 3.5, 11, 5])}
     y = {f"feature_{i}": val for i, val in enumerate([4, 3.4, 9.5, 1, 1])}
 
@@ -19,9 +17,9 @@ class TestIncPCA(unittest.TestCase):
 
     def test_q_greater_d_init(self):
         with self.assertRaises(ValueError):
-            ipca = IncrementalPCA(
-                7, keys=["key_01", "key_02", "key_03", "key_04", "key_05"]
-            )
+            ipca = IncrementalPCA(  # noqa
+                7, keys=["key_01", "key_02", "key_03", "key_04", "key_05"]  # noqa
+            )  # noqa
 
     def test_q_greater_d_dict(self):
         x = {f"feature_{i}": val for i, val in enumerate([2, 3, 3.5, 11, 5])}
@@ -54,13 +52,14 @@ class TestIncPCA(unittest.TestCase):
         ipca = IncrementalPCA(2, n0=3)
         for data_point in data_stream:
             ipca.learn_one(data_point)
-        # print(ipca.values)
+
         self.assertTrue(np.allclose(ipca.values, [325.52805, 35.94132]))
-        # print(ipca.vectors)
-        vectors_R = [
+
+        # R vectors are stored as columns, so transpose them to match our format (features x components)
+        vectors_R = np.array([
             [-0.3792350, -0.4164001, -0.5165665, -0.5218317, -0.3790019],
             [-0.4771219, -0.4290828, -0.1729495, 0.4036324, 0.6288179],
-        ]
+        ]).T
         self.assertTrue(np.allclose(ipca.vectors, vectors_R))
 
     def test_learn_after_initialization(
@@ -76,21 +75,21 @@ class TestIncPCA(unittest.TestCase):
         # learn x
         ipca.learn_one(x)
         self.assertTrue(np.allclose(ipca.values, [263.20439, 31.11496]))
-        # print(ipca.vectors)
-        vectors_R = [
+
+        vectors_R = np.array([
             [-0.3380927, -0.3841677, -0.4758005, -0.5986203, -0.3916327],
             [0.5038719, 0.4439442, 0.2912170, -0.4938852, -0.4693579],
-        ]
+        ]).T
         self.assertTrue(np.allclose(ipca.vectors, vectors_R))
 
         # learn y
         ipca.learn_one(y)
         self.assertTrue(np.allclose(ipca.values, [215.25829, 31.20006]))
-        # print(ipca.vectors)
-        vectors_R = [
+
+        vectors_R = np.array([
             [-0.3528824, -0.3885382, -0.5330556, -0.5541488, -0.3650793],
             [-0.3990229, -0.3074019, -0.4358383, 0.5795662, 0.4695027],
-        ]
+        ]).T
         self.assertTrue(np.allclose(ipca.vectors, vectors_R))
 
     def test_transform_one(self):

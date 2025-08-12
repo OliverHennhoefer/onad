@@ -10,10 +10,7 @@ from onad.utils.architecture.loss_fnc import LossFunction
 
 class Autoencoder(BaseModel):
     def __init__(
-        self,
-        model: Architecture,
-        optimizer: optim.Optimizer,
-        criterion: LossFunction
+        self, model: Architecture, optimizer: optim.Optimizer, criterion: LossFunction
     ):
         self.model = model
         self.criterion = criterion

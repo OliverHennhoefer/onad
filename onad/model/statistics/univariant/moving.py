@@ -1,13 +1,14 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from onad.base.model import BaseModel
 from collections import deque
 
 
 class MovingAverage(BaseModel):
-    """A simple moving model that calculates the difference between arithmetic average of a window + new value and the window.
-    """
+    """A simple moving model that calculates the difference between arithmetic average of a window + new value and the window."""
 
-    def __init__(self, window_size: int, key: Optional[str]=None, abs_diff=True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingAverage.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving arithmetic average.
@@ -35,7 +36,7 @@ class MovingAverage(BaseModel):
             self.window.append(x[self.feature_name])
 
     def score_one(self, x) -> float:
-        """Calculate and return the difference between the moving average of the current window (including the new data point) 
+        """Calculate and return the difference between the moving average of the current window (including the new data point)
         and the moving average of the original window.
 
         Args:
@@ -48,10 +49,13 @@ class MovingAverage(BaseModel):
         """
         actual_window_length = len(self.window)
         if actual_window_length <= 0:
-            return 0 
+            return 0
         score_window = list(self.window)
         score_window.append(list(x.values())[0])
-        score = sum(score_window) / len(score_window) - sum(self.window)/actual_window_length
+        score = (
+            sum(score_window) / len(score_window)
+            - sum(self.window) / actual_window_length
+        )
         return abs(score) if self.abs_diff else score
 
 
@@ -61,7 +65,9 @@ class MovingHarmonicAverage(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int, key: Optional[str]=None, abs_diff=True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingHarmonicAverage.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving harmonic average.
@@ -78,7 +84,7 @@ class MovingHarmonicAverage(BaseModel):
     def learn_one(self, x: Dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
-            x (Dict[str, float]): A dictionary representing a single resource point. 0 will be ignored. 
+            x (Dict[str, float]): A dictionary representing a single resource point. 0 will be ignored.
         Raises:
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
@@ -91,7 +97,7 @@ class MovingHarmonicAverage(BaseModel):
                 self.window.append(x[self.feature_name])
 
     def score_one(self, x) -> float:
-        """Calculate and return the difference between the harmonic average of the current window (including the new data point) 
+        """Calculate and return the difference between the harmonic average of the current window (including the new data point)
         and the moving average of the original window.
 
         Args:
@@ -105,10 +111,12 @@ class MovingHarmonicAverage(BaseModel):
         actual_window_length = len(self.window)
         if actual_window_length <= 0:
             return 0
-        
+
         score_window = list(self.window)
         score_window.append(list(x.values())[0])
-        score =   len(score_window)/sum((1 /x for x in score_window)) - actual_window_length/sum(1 / x for x in self.window) 
+        score = len(score_window) / sum(
+            (1 / x for x in score_window)
+        ) - actual_window_length / sum(1 / x for x in self.window)
         return abs(score) if self.abs_diff else score
 
 
@@ -120,12 +128,18 @@ class MovingGeometricAverage(BaseModel):
 
     """
 
-    def __init__(self, window_size: int, key: Optional[str]=None, absoluteValues=False, abs_diff=True) -> None:
+    def __init__(
+        self,
+        window_size: int,
+        key: Optional[str] = None,
+        absoluteValues=False,
+        abs_diff=True,
+    ) -> None:
         """Initialize a new instance of MovingGeometricAverage.
         Args:
             window_size (int): The number of recent absolute values to consider for calculating the moving geometric average.
             key (str): optional, if None is given, the first learned key-value pair will set the key
-            absoluteValues (bool): Default is False. If True, the class is calculating the growth between the data point and then calculating 
+            absoluteValues (bool): Default is False. If True, the class is calculating the growth between the data point and then calculating
                 the geometric avarage from window_size - 1 values.
             abs_diff (bool): When true (default) returns abs() from the difference
         Raises:
@@ -154,7 +168,7 @@ class MovingGeometricAverage(BaseModel):
                 self.window.append(x[self.feature_name])
 
     def score_one(self, x) -> float:
-        """Calculate and return the difference between the gemetric average of the current window (including the new data point) 
+        """Calculate and return the difference between the gemetric average of the current window (including the new data point)
         and the gemotric average of the original window.
 
         Args:
@@ -172,7 +186,9 @@ class MovingGeometricAverage(BaseModel):
             return 1
         else:
             if self.absoluteValues:
-                window_growth = [self.window[i + 1] / self.window[i]for i in range(actual_window_length - 1)
+                window_growth = [
+                    self.window[i + 1] / self.window[i]
+                    for i in range(actual_window_length - 1)
                 ]
                 score_factor = list(x.values())[0] / self.window[-1]
             else:
@@ -182,8 +198,12 @@ class MovingGeometricAverage(BaseModel):
             for value in window_growth:
                 window_product *= value
             window_geo = window_product ** (1 / (len(window_growth)))
-            score_geo = (window_product * score_factor) ** (1 / (len(window_growth) + 1))
-            return abs(score_geo - window_geo) if self.abs_diff else score_geo - window_geo
+            score_geo = (window_product * score_factor) ** (
+                1 / (len(window_growth) + 1)
+            )
+            return (
+                abs(score_geo - window_geo) if self.abs_diff else score_geo - window_geo
+            )
 
 
 class MovingMedian(BaseModel):
@@ -192,7 +212,9 @@ class MovingMedian(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int, key: Optional[str]=None, abs_diff=True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingMedian.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving median.
@@ -221,7 +243,7 @@ class MovingMedian(BaseModel):
             self.window.append(x[self.feature_name])
 
     def score_one(self, x) -> float:
-        """Calculate and return the difference between the median of the current window (including the new data point) 
+        """Calculate and return the difference between the median of the current window (including the new data point)
         and the median of the original window.
 
         Args:
@@ -246,10 +268,14 @@ class MovingMedian(BaseModel):
         if actual_window_length % 2 == 1:
             # If odd, return the middle element
             median_old = sorted_data[mid_index_old]
-            median_new = (window_score[mid_index_new - 1] + window_score[mid_index_new]) / 2
+            median_new = (
+                window_score[mid_index_new - 1] + window_score[mid_index_new]
+            ) / 2
         else:
             # If even, return the average of the two middle elements
-            median_old = (sorted_data[mid_index_old - 1] + sorted_data[mid_index_old]) / 2
+            median_old = (
+                sorted_data[mid_index_old - 1] + sorted_data[mid_index_old]
+            ) / 2
             median_new = window_score[mid_index_new]
         score = median_new - median_old
         return abs(score) if self.abs_diff else score
@@ -261,7 +287,9 @@ class MovingQuantile(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(self, window_size: int, key: Optional[str]=None, quantile=0.5, abs_diff=True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, quantile=0.5, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingQuantile.
         Args:
             window_size (int): The number of recent values to consider for calculating the
@@ -292,7 +320,7 @@ class MovingQuantile(BaseModel):
         else:
             self.window.append(x[self.feature_name])
 
-    def _quantile(self, sorted_list: list)->float:
+    def _quantile(self, sorted_list: list) -> float:
         window_length = len(sorted_list)
         rank = (
             window_length - 1
@@ -304,10 +332,12 @@ class MovingQuantile(BaseModel):
             return sorted_list[lower_index]
         else:
             # Interpolation is necessary
-            return (1 - fraction) * sorted_list[lower_index] + fraction * sorted_list[upper_index]
+            return (1 - fraction) * sorted_list[lower_index] + fraction * sorted_list[
+                upper_index
+            ]
 
     def score_one(self, x) -> float:
-        """Calculate and return the difference between the quantile of the current window (including the new data point) 
+        """Calculate and return the difference between the quantile of the current window (including the new data point)
         and the quantile of the original window.
 
         Args:
@@ -332,10 +362,11 @@ class MovingQuantile(BaseModel):
 
 
 class MovingVariance(BaseModel):
-    """A simple moving model that calculates the difference between variance of a window + new value and the window.
-    """
+    """A simple moving model that calculates the difference between variance of a window + new value and the window."""
 
-    def __init__(self, window_size: int, key: Optional[str]=None, abs_diff=True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingVariance.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving variance.
@@ -363,7 +394,7 @@ class MovingVariance(BaseModel):
             self.window.append(x[self.feature_name])
 
     def score_one(self, x) -> float:
-        """Calculate and return the difference between the moving variance of the current window (including the new data point) 
+        """Calculate and return the difference between the moving variance of the current window (including the new data point)
         and the moving variance of the original window.
 
         Args:
@@ -394,10 +425,11 @@ class MovingVariance(BaseModel):
 
 
 class MovingInterquartileRange(BaseModel):
-    """A simple moving model that calculates the difference between interquartile range of a window + new value and the window.
-    """
+    """A simple moving model that calculates the difference between interquartile range of a window + new value and the window."""
 
-    def __init__(self, window_size: int, key: Optional[str]=None, abs_diff=True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingInterquartileRange.
         Args:
             window_size (int): The number of recent values to consider for calculating the
@@ -431,9 +463,7 @@ class MovingInterquartileRange(BaseModel):
         Returns:
             float: The quantile of the values in the window. 0 if the window is empty"""
         list_len = len(sorted_list)
-        rank = (
-            list_len - 1
-        ) * quantile  # Calculate the index of the quantile
+        rank = (list_len - 1) * quantile  # Calculate the index of the quantile
         lower_index = int(rank)
         upper_index = min(lower_index + 1, list_len - 1)
         fraction = rank - lower_index
@@ -441,12 +471,12 @@ class MovingInterquartileRange(BaseModel):
             return sorted_list[lower_index]
         else:
             # Interpolation is necessary
-            return (1 - fraction) * sorted_list[
-                lower_index
-            ] + fraction * sorted_list[upper_index]
+            return (1 - fraction) * sorted_list[lower_index] + fraction * sorted_list[
+                upper_index
+            ]
 
     def score_one(self, x) -> float:
-        """Calculate and return the difference between the interquartile range of the current window (including the new data point) 
+        """Calculate and return the difference between the interquartile range of the current window (including the new data point)
         and the moving interquartile range of the original window.
 
         Args:
@@ -460,22 +490,27 @@ class MovingInterquartileRange(BaseModel):
         self.actual_window_length = len(self.window)
         if self.actual_window_length <= 0:
             return 0
-        
+
         sorted_data = sorted(self.window)
         score_window = sorted_data.copy()
         score_window.append(list(x.values())[0])
         score_window.sort()
-        iqr_window = self.__score_one_quantile(sorted_data, 0.75) - self.__score_one_quantile(sorted_data, 0.25)
-        iqr_score = self.__score_one_quantile(score_window, 0.75) - self.__score_one_quantile(score_window, 0.25)
+        iqr_window = self.__score_one_quantile(
+            sorted_data, 0.75
+        ) - self.__score_one_quantile(sorted_data, 0.25)
+        iqr_score = self.__score_one_quantile(
+            score_window, 0.75
+        ) - self.__score_one_quantile(score_window, 0.25)
         score = iqr_score - iqr_window
         return abs(score) if self.abs_diff else score
 
 
 class MovingAverageAbsoluteDeviation(BaseModel):
-    """A simple moving model that calculates the difference between absolute deviation of a window + new value and the window.
-    """
+    """A simple moving model that calculates the difference between absolute deviation of a window + new value and the window."""
 
-    def __init__(self, window_size: int, key: Optional[str]=None, abs_diff=True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingAverageAbsoluteDeviation.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving average absolute deviation.
@@ -503,7 +538,7 @@ class MovingAverageAbsoluteDeviation(BaseModel):
             self.window.append(x[self.feature_name])
 
     def score_one(self, x) -> float:
-        """Calculate and return the difference between the moving average absolute deviation of the current window (including the new data point) 
+        """Calculate and return the difference between the moving average absolute deviation of the current window (including the new data point)
         and the moving average absolute deviation of the original window.
 
         Args:
@@ -522,18 +557,24 @@ class MovingAverageAbsoluteDeviation(BaseModel):
             score_window.append(list(x.values())[0])
             mean_window = sum(self.window) / actual_window_length
             mean_score = sum(score_window) / len(score_window)
-            dev_window = sum(abs(value - mean_window) for value in self.window) / actual_window_length
-            dev_score = sum(abs(value - mean_score) for value in score_window) / len(score_window)
+            dev_window = (
+                sum(abs(value - mean_window) for value in self.window)
+                / actual_window_length
+            )
+            dev_score = sum(abs(value - mean_score) for value in score_window) / len(
+                score_window
+            )
 
             score = dev_score - dev_window
             return abs(score) if self.abs_diff else score
 
 
 class MovingKurtosis(BaseModel):
-    """A simple moving model that calculates the difference between kurtosis of a window + new value and the window.
-    """
+    """A simple moving model that calculates the difference between kurtosis of a window + new value and the window."""
 
-    def __init__(self, window_size: int, key: Optional[str]=None, abs_diff=True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingKurtosis.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving kurtosis.
@@ -562,7 +603,7 @@ class MovingKurtosis(BaseModel):
             self.window.append(x[self.feature_name])
 
     def score_one(self, x) -> float:
-        """Calculate and return the difference between the kurtosis of the current window (including the new data point) 
+        """Calculate and return the difference between the kurtosis of the current window (including the new data point)
         and the kurtosis of the original window.
 
         Args:
@@ -582,11 +623,22 @@ class MovingKurtosis(BaseModel):
             mean_window = sum(self.window) / actual_window_length
             mean_score = sum(score_window) / len(score_window)
 
-            central_moment_4_window = (sum((value - mean_window) ** 4 for value in self.window) / actual_window_length)
-            central_moment_4_score = (sum((value - mean_score) ** 4 for value in score_window) / len(score_window))
+            central_moment_4_window = (
+                sum((value - mean_window) ** 4 for value in self.window)
+                / actual_window_length
+            )
+            central_moment_4_score = sum(
+                (value - mean_score) ** 4 for value in score_window
+            ) / len(score_window)
 
-            std_4_window = (sum((value - mean_window) ** 2 for value in self.window) / actual_window_length) ** 2
-            std_4_score = (sum((value - mean_score) ** 2 for value in score_window) / len(score_window)) ** 2
+            std_4_window = (
+                sum((value - mean_window) ** 2 for value in self.window)
+                / actual_window_length
+            ) ** 2
+            std_4_score = (
+                sum((value - mean_score) ** 2 for value in score_window)
+                / len(score_window)
+            ) ** 2
 
             if std_4_window == 0 or std_4_score == 0:
                 return 0
@@ -598,10 +650,11 @@ class MovingKurtosis(BaseModel):
 
 
 class MovingSkewness(BaseModel):
-    """A simple moving model that calculates the difference between skewness of a window + new value and the window.
-    """
+    """A simple moving model that calculates the difference between skewness of a window + new value and the window."""
 
-    def __init__(self, window_size: int, key: Optional[str]=None, abs_diff=True) -> None:
+    def __init__(
+        self, window_size: int, key: Optional[str] = None, abs_diff=True
+    ) -> None:
         """Initialize a new instance of MovingSkewness.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving skewness.
@@ -629,7 +682,7 @@ class MovingSkewness(BaseModel):
             self.window.append(x[self.feature_name])
 
     def score_one(self, x) -> float:
-        """Calculate and return the difference between the skewness of the current window (including the new data point) 
+        """Calculate and return the difference between the skewness of the current window (including the new data point)
         and the skewness of the original window.
 
         Args:
@@ -650,11 +703,22 @@ class MovingSkewness(BaseModel):
             mean_window = sum(self.window) / actual_window_length
             mean_score = sum(score_window) / len(score_window)
 
-            central_moment_3_window = (sum((value - mean_window) ** 3 for value in self.window) / actual_window_length)
-            central_moment_3_score = (sum((value - mean_score) ** 3 for value in score_window) / len(score_window))
+            central_moment_3_window = (
+                sum((value - mean_window) ** 3 for value in self.window)
+                / actual_window_length
+            )
+            central_moment_3_score = sum(
+                (value - mean_score) ** 3 for value in score_window
+            ) / len(score_window)
 
-            std_3_window = (sum((value - mean_window) ** 2 for value in self.window) / actual_window_length) ** (3 / 2)
-            std_3_score = (sum((value - mean_score) ** 2 for value in score_window) / len(score_window)) ** (3 / 2)
+            std_3_window = (
+                sum((value - mean_window) ** 2 for value in self.window)
+                / actual_window_length
+            ) ** (3 / 2)
+            std_3_score = (
+                sum((value - mean_score) ** 2 for value in score_window)
+                / len(score_window)
+            ) ** (3 / 2)
             if std_3_score == 0 or std_3_window == 0:
                 return 0
             else:

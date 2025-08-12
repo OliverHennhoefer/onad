@@ -20,5 +20,5 @@ LossFunction = Union[
     nn.MultiMarginLoss,
     nn.CosineEmbeddingLoss,
     nn.TripletMarginLoss,
-    nn.TripletMarginWithDistanceLoss
+    nn.TripletMarginWithDistanceLoss,
 ]
