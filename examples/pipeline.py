@@ -2,7 +2,7 @@ from sklearn.metrics import average_precision_score
 
 from onad.model.unsupervised.distance.knn import KNN
 from onad.stream.streamer import ParquetStreamer, Dataset
-from onad.transform.scale import MinMaxScaler
+from onad.transform.scale import MinMaxScaler, StandardScaler
 from onad.transform.pca import IncrementalPCA
 from onad.utils.similarity.faiss_engine import FaissSimilaritySearchEngine
 
@@ -13,7 +13,7 @@ model = KNN(k=55, similarity_engine=engine)
 pipeline1 = scaler | model
 
 # PCA pipeline: scaler | pca | model (with dimensionality reduction)
-scaler2 = MinMaxScaler()
+scaler2 = StandardScaler()
 pca = IncrementalPCA(n_components=3, n0=100)  # Reduce to 3 components, warmup with 100 samples
 engine2 = FaissSimilaritySearchEngine(window_size=250, warm_up=50)
 model2 = KNN(k=55, similarity_engine=engine2)
