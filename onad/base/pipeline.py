@@ -37,3 +37,7 @@ class Pipeline:
             raise AttributeError(
                 f"The second component ({self.second.__class__.__name__}) does not have a 'score_one' method."
             )
+
+    def __or__(self, other):
+        """Overload the | operator to allow further chaining of pipelines."""
+        return Pipeline(self, other)
