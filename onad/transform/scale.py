@@ -6,6 +6,7 @@ from typing import Dict, Union
 
 from onad.base.transformer import BaseTransformer
 
+
 class MinMaxScaler(BaseTransformer):
     def __init__(self, feature_range: tuple[float, float] = (0, 1)):
         """
@@ -83,7 +84,7 @@ class StandardScaler(BaseTransformer):
         self.counts: Counter = Counter()
         self.means: defaultdict = defaultdict(float)
         self.sum_sq_diffs: defaultdict = defaultdict(float)
-    
+
     def learn_one(self, x: Dict[str, Union[float, np.float64]]) -> None:
         """
         Update the mean and standard deviation for each feature in the input resources.
@@ -97,13 +98,14 @@ class StandardScaler(BaseTransformer):
             old_mean = self.means[feature]
             self.means[feature] += (value - old_mean) / self.counts[feature]
             if self.with_std:
-                self.sum_sq_diffs[feature] += (value - old_mean) * (value - self.means[feature])
+                self.sum_sq_diffs[feature] += (value - old_mean) * (
+                    value - self.means[feature]
+                )
 
     def _safe_div(self, a, b) -> float:
-        """Returns 0.0 if b is zero or False, else divides a by b.
-        """
+        """Returns 0.0 if b is zero or False, else divides a by b."""
         return a / b if b else 0.0
-    
+
     def transform_one(self, x: Dict[str, Union[float, np.float64]]) -> Dict[str, float]:
         """
         Scale the input resources to standard score.
@@ -120,13 +122,17 @@ class StandardScaler(BaseTransformer):
                 raise ValueError(
                     f"Feature '{feature}' has not been seen during learning."
                 )
-            
+
             value = float(value)
             if self.with_std:
-                variance = self.sum_sq_diffs[feature] / self.counts[feature] if self.counts[feature] > 0 else 0.0
-                std_dev = variance ** 0.5
+                variance = (
+                    self.sum_sq_diffs[feature] / self.counts[feature]
+                    if self.counts[feature] > 0
+                    else 0.0
+                )
+                std_dev = variance**0.5
                 scaled_x[feature] = self._safe_div(value - self.means[feature], std_dev)
             else:
                 scaled_x[feature] = value - self.means[feature]
-        
+
         return scaled_x
