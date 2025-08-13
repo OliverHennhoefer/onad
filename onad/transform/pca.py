@@ -9,6 +9,7 @@ class IncrementalPCA:
         n0: int = 50,
         keys: Optional[list[str]] = None,
         tol: float = 1e-7,
+        forgetting_factor = None
     ) -> None:
         """
         Initialize the IncrementalPCA transformer.
@@ -18,6 +19,7 @@ class IncrementalPCA:
             n0 (int): Initial number of samples for warm-up phase before switching to online mode. Default is 50.
             keys (Optional[list[str]]): List of feature names. If None, they will be inferred from the first sample. Default is None.
             tol (float): Tolerance for considering whether a new data point contributes significantly to the subspace. Default is 1e-7.
+            forgetting_factor (Optional[float]): If None (default) it is a stationary process. Larger f will give new values more weight. Must be in the interval ]0, 1[.
 
         Implements an online PCA algorithm based on the incremental SVD approach from:
         - Brand, M. (2002). "Incremental Singular Value Decomposition of Uncertain Data with Missing Values"
@@ -42,6 +44,9 @@ class IncrementalPCA:
         self.n0: int = n0
         self.feature_names: Optional[list[str]] = keys
         self.tol: float = tol
+        if forgetting_factor is not None and not (0 < forgetting_factor < 1):
+            raise ValueError("forgetting_factor has to be 0 < forgetting_factor < 1")
+        self.forgetting_factor = forgetting_factor
 
         # State variables
         self.window: list = []  # Store data points during initialization phase
@@ -85,7 +90,10 @@ class IncrementalPCA:
         # handling missing data ...
 
         if self.n0_reached:  # online PCA
-            f = 1.0 / self.n_samples_seen
+            if self.forgetting_factor is None:
+                f = 1.0 / self.n_samples_seen
+            else:
+                f = self.forgetting_factor
             
             # Update eigenvalues with forgetting factor
             lambda_updated = (1 - f) * self.values
