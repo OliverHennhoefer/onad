@@ -10,10 +10,7 @@ class TestCaseStreamRandomHistogramForest(unittest.TestCase):
     def test_shuttle(self):
 
         model = StreamRandomHistogramForest(
-            n_estimators=25,
-            max_bins=10,
-            window_size=256,
-            seed=1
+            n_estimators=25, max_bins=10, window_size=256, seed=1
         )
 
         labels, scores = [], []

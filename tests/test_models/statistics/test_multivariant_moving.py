@@ -1,7 +1,6 @@
 import unittest
 import numpy as np
 from collections import deque
-from scipy.stats import kurtosis, skew
 from onad.model.statistics.multivariant.moving import *
 
 

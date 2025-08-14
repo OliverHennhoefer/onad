@@ -8,8 +8,9 @@ model = MondrianForest(n_estimators=250, subspace_size=500, random_state=1)
 labels, scores = [], []
 with ParquetStreamer(dataset=Dataset.SHUTTLE) as streamer:
     for i, (x, y) in enumerate(streamer):
-        if y == 0 and i < 10_000:
-            model.learn_one(x)
+        if i < 10_000:
+            if y == 0:
+                model.learn_one(x)
             continue
         model.learn_one(x)
         score = model.score_one(x)

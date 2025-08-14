@@ -25,7 +25,7 @@ class KNN(BaseModel):
             k (int): The number of nearest neighbors to consider. Must be positive.
             similarity_engine (BaseSimilaritySearchEngine): An instance of a similarity search engine
                 that will be used to compute nearest neighbors.
-                
+
         Raises:
             ValueError: If k is not a positive integer.
         """
@@ -54,7 +54,7 @@ class KNN(BaseModel):
 
         Returns:
             float: A score representing the similarity of the resources point to its nearest neighbors.
-                The exact interpretation of the score (distance, similarity, etc.) depends on the 
+                The exact interpretation of the score (distance, similarity, etc.) depends on the
                 underlying similarity engine implementation.
         """
         return self.engine.search(x, n_neighbors=self.k)
