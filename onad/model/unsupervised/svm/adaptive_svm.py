@@ -10,14 +10,14 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
     """
 
     def __init__(
-            self,
-            nu: float = 0.1,
-            initial_gamma: float = 1.0,
-            gamma_bounds: Tuple[float, float] = (0.001, 100.0),
-            adaptation_rate: float = 0.1,
-            buffer_size: int = 200,
-            sv_budget: int = 100,
-            tolerance: float = 1e-6,
+        self,
+        nu: float = 0.1,
+        initial_gamma: float = 1.0,
+        gamma_bounds: Tuple[float, float] = (0.001, 100.0),
+        adaptation_rate: float = 0.1,
+        buffer_size: int = 200,
+        sv_budget: int = 100,
+        tolerance: float = 1e-6,
     ):
         self.nu = nu
         self.gamma = initial_gamma
@@ -77,7 +77,7 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
             new_mean = old_mean + (value - old_mean) / (n + 1)
             if n > 0:
                 new_std = np.sqrt(
-                    (n * old_std ** 2 + (value - old_mean) * (value - new_mean)) / (n + 1)
+                    (n * old_std**2 + (value - old_mean) * (value - new_mean)) / (n + 1)
                 )
             else:
                 new_std = 1.0
@@ -103,7 +103,9 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
 
         if new_sv is not None:
             # Compute kernel values between new_sv and all existing SVs (including itself)
-            new_row = np.array([self._rbf_kernel(new_sv, sv) for sv in self.support_vectors])
+            new_row = np.array(
+                [self._rbf_kernel(new_sv, sv) for sv in self.support_vectors]
+            )
 
             if self.K_sv is None:
                 # First support vector
@@ -135,7 +137,6 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
                     self.K_sv[i, j] = k_val
                     self.K_sv[j, i] = k_val
 
-
     def _update_rho(self):
         """Recalculate rho as median decision value of support vectors."""
         if not self.support_vectors or self.K_sv is None:
@@ -144,7 +145,6 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
 
         decision_values = self.K_sv @ np.array(self.alpha)
         self.rho = np.median(decision_values)
-
 
     def _estimate_optimal_gamma(self) -> float:
         """Estimate optimal gamma based on standardized data distribution."""
@@ -175,9 +175,8 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
 
         # Use median distance for robust estimation
         median_distance = np.median(distances)
-        optimal_gamma = 1.0 / (2.0 * median_distance ** 2)
+        optimal_gamma = 1.0 / (2.0 * median_distance**2)
         return np.clip(optimal_gamma, self.gamma_min, self.gamma_max)
-
 
     def _adapt_gamma(self):
         """Adapt gamma parameter based on recent data."""
@@ -192,7 +191,6 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
             self.gamma = np.clip(self.gamma, self.gamma_min, self.gamma_max)
             self._update_kernel_matrix()  # Full recompute
             self._update_rho()
-
 
     def _manage_support_vectors(self, x: np.ndarray, alpha_new: float):
         """Add new support vector and manage budget using combined criteria."""
@@ -228,7 +226,6 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
 
         self._update_rho()
 
-
     def _decision_function(self, x: np.ndarray) -> float:
         """Compute decision function value with stability checks."""
         if not self.support_vectors:
@@ -236,7 +233,6 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
 
         kernel_values = self._compute_kernel_row(x)
         return np.dot(self.alpha, kernel_values) - self.rho
-
 
     def learn_one(self, x: Dict[str, float]):
         """Incrementally learn from one sample."""
@@ -262,7 +258,6 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
         # Perform gamma adaptation
         self._adapt_gamma()
 
-
     def predict_one(self, x: Dict[str, float]) -> int:
         """Predict if sample is normal (1) or anomaly (-1)."""
         if not self.support_vectors:
@@ -272,7 +267,6 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
         decision_value = self._decision_function(x_vec)
         return 1 if decision_value >= -self.tolerance else -1
 
-
     def score_one(self, x: Dict[str, float]) -> float:
         """Compute anomaly score (higher = more anomalous)."""
         if not self.support_vectors:
@@ -281,7 +275,6 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
         x_vec = self._get_feature_vector(x)
         decision_value = self._decision_function(x_vec)
         return -decision_value
-
 
     def get_model_info(self) -> Dict:
         """Get current model information."""
