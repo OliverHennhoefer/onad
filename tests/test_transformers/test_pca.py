@@ -125,10 +125,10 @@ class TestIncrementalPCA(unittest.TestCase):
         x_transformed = ipca.transform_one(x)
         print(x_transformed)
         self.assertEqual(q, len(x_transformed))
-    
+
     def test_init_with_wrong_f(self):
         with self.assertRaises(ValueError):
-            ipca = IncrementalPCA(2, n0=3, forgetting_factor=-0.5)
+            ipca = IncrementalPCA(2, n0=3, forgetting_factor=-0.5)  # noqa
 
     def test_hardcoded_pca_exact_r_match(self):
         """

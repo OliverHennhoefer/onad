@@ -2,7 +2,18 @@ import unittest
 import numpy as np
 from collections import deque
 from scipy.stats import kurtosis, skew
-from onad.model.statistics.univariant.moving import *
+from onad.model.statistics.univariant.moving import (
+    MovingAverage,
+    MovingHarmonicAverage,
+    MovingGeometricAverage,
+    MovingMedian,
+    MovingQuantile,
+    MovingVariance,
+    MovingInterquartileRange,
+    MovingAverageAbsoluteDeviation,
+    MovingKurtosis,
+    MovingSkewness,
+)
 
 
 class TestMovingAverage(unittest.TestCase):
@@ -160,8 +171,6 @@ class TestMovingGeometricAverage(unittest.TestCase):
         m = MovingGeometricAverage(window_size=5, abs_diff=False, absoluteValues=True)
         for point in [1, 1.5, 1.65]:
             m.learn_one({"feature": point})
-        window_growth = [1.5, 1.1]
-        score_factor = 1, 98 / 1, 65
         geo_window = (1.5 * 1.1) ** (1 / 2)
         geo_score = (1.5 * 1.1 * 1.2) ** (1 / 3)
         expected_score = geo_score - geo_window
@@ -171,8 +180,6 @@ class TestMovingGeometricAverage(unittest.TestCase):
         m = MovingGeometricAverage(window_size=5, abs_diff=False, absoluteValues=False)
         for point in [1.5, 1.1]:
             m.learn_one({"feature": point})
-        window_growth = [1.5, 1.1]
-        score_factor = 1, 98 / 1, 65
         geo_window = (1.5 * 1.1) ** (1 / 2)
         geo_score = (1.5 * 1.1 * 1.2) ** (1 / 3)
         expected_score = geo_score - geo_window
@@ -391,13 +398,13 @@ class TestMovingVariance(unittest.TestCase):
         for value in values:
             mv.learn_one({"value": value})
         # Expect variance of window [10, 12, 23]
-        expected_variance1 = np.var([10, 12, 23])
+        np.var([10, 12, 23])
         self.assertAlmostEqual(
             mv.score_one({"value": 10}), np.var([10, 12, 23, 10]) - np.var(values)
         )
         mv.learn_one({"value": 18})
         # Expect variance of window [12, 23, 18]
-        expected_variance2 = np.var([12, 23, 18])
+        np.var([12, 23, 18])
         self.assertAlmostEqual(
             mv.score_one({"value": 10}), np.var([12, 23, 18, 10]) - np.var([12, 23, 18])
         )

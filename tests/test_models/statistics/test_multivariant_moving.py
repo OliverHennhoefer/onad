@@ -1,7 +1,11 @@
 import unittest
 import numpy as np
 from collections import deque
-from onad.model.statistics.multivariant.moving import *
+from onad.model.statistics.multivariant.moving import (
+    MovingCovariance,
+    MovingCorrelationCoefficient,
+    MovingMahalanobisDistance,
+)
 
 
 class TestMovingCovariance(unittest.TestCase):

@@ -9,7 +9,7 @@ class IncrementalPCA:
         n0: int = 50,
         keys: Optional[list[str]] = None,
         tol: float = 1e-7,
-        forgetting_factor = None
+        forgetting_factor: float | None = None,
     ) -> None:
         """
         Initialize the IncrementalPCA transformer.
@@ -24,16 +24,16 @@ class IncrementalPCA:
         Implements an online PCA algorithm based on the incremental SVD approach from:
         - Brand, M. (2002). "Incremental Singular Value Decomposition of Uncertain Data with Missing Values"
         - Arora, R., Cotter, A., Livescu, K., & Srebro, N. (2012). "Stochastic optimization for PCA and PLS"
-        
+
         The implementation follows the 'incRpca' function from the R package 'onlinePCA: Online Principal Component Analysis'
         and uses the mathematical framework described in:
         - Cardot, H. & Degras, D. (2015). "Online Principal Component Analysis in High Dimension: Which Algorithm to Choose?"
-        
+
         Algorithm Steps:
         1. Initialization phase: Collect n0 samples and perform standard PCA
         2. Online phase: For each new sample x_t at time t:
            - Apply forgetting factor: λ ← (1-f)λ where f = 1/t
-           - Scale new sample: x ← √f * x_t  
+           - Scale new sample: x ← √f * x_t
            - Project onto current subspace: x̂ = U^T x
            - Compute residual: r = x - U x̂
            - If ||r|| > tol, expand subspace with normalized residual
@@ -94,57 +94,57 @@ class IncrementalPCA:
                 f = 1.0 / self.n_samples_seen
             else:
                 f = self.forgetting_factor
-            
+
             # Update eigenvalues with forgetting factor
             lambda_updated = (1 - f) * self.values
-            
+
             # Scale new data point
             x_scaled = np.sqrt(f) * data_vector
-            
+
             # Project onto current subspace
             xhat = self.vectors.T @ x_scaled
-            
+
             # Compute residual
             residual = x_scaled - self.vectors @ xhat
             norm_residual = np.linalg.norm(residual)
-            
+
             k = len(lambda_updated)
-            
+
             if norm_residual >= self.tol:
                 # Expand subspace
                 k += 1
                 lambda_extended = np.zeros(k)
-                lambda_extended[:len(lambda_updated)] = lambda_updated
-                
+                lambda_extended[: len(lambda_updated)] = lambda_updated
+
                 xhat_extended = np.zeros(k)
-                xhat_extended[:len(xhat)] = xhat
+                xhat_extended[: len(xhat)] = xhat
                 xhat_extended[-1] = norm_residual
-                
+
                 U_extended = np.zeros((self.n_features, k))
-                U_extended[:, :self.vectors.shape[1]] = self.vectors
+                U_extended[:, : self.vectors.shape[1]] = self.vectors
                 U_extended[:, -1] = residual / norm_residual
-                
+
                 lambda_updated = lambda_extended
                 xhat = xhat_extended
                 self.vectors = U_extended
-            
+
             # Compute eigendecomposition of updated covariance matrix
             diag_lambda = np.diag(lambda_updated)
             outer_xhat = np.outer(xhat, xhat)
             matrix_to_decompose = diag_lambda + outer_xhat
-            
+
             eigenvalues, eigenvectors = np.linalg.eig(matrix_to_decompose)
-            
+
             # Sort eigenvalues and eigenvectors in descending order
             idx = np.argsort(eigenvalues)[::-1]
             eigenvalues = eigenvalues[idx]
             eigenvectors = eigenvectors[:, idx]
-            
+
             # Keep only top n_components
             if k > self.n_components:
-                eigenvalues = eigenvalues[:self.n_components]
-                eigenvectors = eigenvectors[:, :self.n_components]
-            
+                eigenvalues = eigenvalues[: self.n_components]
+                eigenvectors = eigenvectors[:, : self.n_components]
+
             # Update stored eigenvalues and eigenvectors
             self.values = eigenvalues
             self.vectors = self.vectors @ eigenvectors

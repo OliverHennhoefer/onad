@@ -30,7 +30,7 @@ class MovingAverage(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name == None:
+        if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:
             self.window.append(x[self.feature_name])
@@ -89,7 +89,7 @@ class MovingHarmonicAverage(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name == None:
+        if self.feature_name is None:
             if list(x.values())[0] != 0:
                 self.window.append(list(x.values())[0])
         else:
@@ -160,7 +160,7 @@ class MovingGeometricAverage(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name == None:
+        if self.feature_name is None:
             if list(x.values())[0] > 0:
                 self.window.append(list(x.values())[0])
         else:
@@ -237,7 +237,7 @@ class MovingMedian(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name == None:
+        if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:
             self.window.append(x[self.feature_name])
@@ -315,7 +315,7 @@ class MovingQuantile(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name == None:
+        if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:
             self.window.append(x[self.feature_name])
@@ -388,7 +388,7 @@ class MovingVariance(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name == None:
+        if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:
             self.window.append(x[self.feature_name])
@@ -453,7 +453,7 @@ class MovingInterquartileRange(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name == None:
+        if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:
             self.window.append(x[self.feature_name])
@@ -532,7 +532,7 @@ class MovingAverageAbsoluteDeviation(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name == None:
+        if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:
             self.window.append(x[self.feature_name])
@@ -597,7 +597,7 @@ class MovingKurtosis(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name == None:
+        if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:
             self.window.append(x[self.feature_name])
@@ -676,7 +676,7 @@ class MovingSkewness(BaseModel):
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
         assert len(x) == 1, "Dictionary has more than one key-value pair."
-        if self.feature_name == None:
+        if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:
             self.window.append(x[self.feature_name])
