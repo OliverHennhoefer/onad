@@ -81,9 +81,3 @@ class RandomProjections:
             data_vector = np.array([x[key] for key in self.feature_names])
         transformed_x = self.random_matrix.T @ data_vector
         return {f"component_{i}": val for i, val in enumerate(transformed_x)}
-
-
-if __name__ == "__main__":
-    rp = RandomProjections(4)
-    print(rp.feature_names)
-    rp.learn_one({})
