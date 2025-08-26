@@ -3,6 +3,7 @@ import numpy as np
 
 from onad.stream.streamer import ParquetStreamer, Dataset
 from onad.transform.scale import MinMaxScaler, StandardScaler
+from onad.transform.randprojections import RandomProjections
 
 
 class TestMinMaxScaler(unittest.TestCase):
@@ -367,6 +368,97 @@ class TestScalersIntegration(unittest.TestCase):
                     value, float, f"Sample {i}, feature {feature}: {value} is not float"
                 )
 
+class TestRandomProjections(unittest.TestCase):
+    def setUp(self):
+        self.n_components = 4
+        self.feature_keys = [f'feature_{i}' for i in range(10)]
+
+    def test_initialization_without_keys(self):
+        rp = RandomProjections(n_components=self.n_components)
+        self.assertIsNone(rp.feature_names, "Feature names should be None when initialized without keys.")
+        self.assertEqual(rp.random_matrix.size, 0, "Random matrix should not be initialized.")
+
+    def test_initialization_with_keys(self):
+        rp = RandomProjections(n_components=self.n_components, keys=self.feature_keys)
+        np.testing.assert_array_equal(rp.feature_names, self.feature_keys,
+                                      "Feature names do not match the provided keys.")
+        expected_shape = (len(self.feature_keys), self.n_components)
+        self.assertEqual(rp.random_matrix.shape, expected_shape,
+                         f"Random matrix shape should be {expected_shape}, got {rp.random_matrix.shape}.")
+
+    def test_initialization_learn_one_without_keys(self):
+        rp = RandomProjections(n_components=self.n_components)
+        sample_data = {f'feature_{i}': np.random.rand() for i in range(10)}
+        rp.learn_one(sample_data)
+
+        expected_feature_names = list(sample_data.keys())
+        np.testing.assert_array_equal(rp.feature_names, expected_feature_names,
+                                      "Feature names should be set to the keys of the first learned sample.")
+        
+        expected_shape = (len(expected_feature_names), self.n_components)
+        self.assertEqual(rp.random_matrix.shape, expected_shape,
+                         f"Random matrix shape should be {expected_shape}, got {rp.random_matrix.shape}.")
+
+    def test_transform_one(self):
+        rp = RandomProjections(n_components=self.n_components)
+        sample_data = {f'feature_{i}': np.random.rand() for i in range(10)}
+        rp.learn_one(sample_data)
+
+        transformed_data = rp.transform_one(sample_data)
+        self.assertEqual(len(transformed_data), self.n_components,
+                         "Transformed data should have the same number of components as n_components.")
+        
+    def test_error_with_too_many_n_components(self):
+        with self.assertRaises(ValueError) as context:
+            RandomProjections(n_components=15, keys=self.feature_keys[:10])
+
+        expected_msg = "The number of n_components (15) has to be less or equal to the number of features (10)"
+        self.assertTrue(expected_msg in str(context.exception),
+                        f"Expected error message '{expected_msg}' but got {context.exception}")
+
+    def test_transform_one_with_none_feature_names(self):
+        rp = RandomProjections(n_components=self.n_components)
+        with self.assertRaises(RuntimeError) as context:
+            sample_data = {f'feature_{i}': np.random.rand() for i in range(10)}
+            rp.transform_one(sample_data)
+
+        expected_msg = "You can't call transform_one() before assigning feature names manually or at least once learn_one()"
+        self.assertTrue(expected_msg in str(context.exception),
+                        f"Expected error message '{expected_msg}' but got {context.exception}")
+    def test_error_with_zero_or_negative_n_components(self):
+        with self.assertRaises(ValueError) as context:
+            RandomProjections(n_components=0, keys=self.feature_keys[:5])
+
+        expected_msg_zero = "n_components has to be greater then 0"
+        self.assertTrue(expected_msg_zero in str(context.exception),
+                        f"Expected error message '{expected_msg_zero}' but got {context.exception}")
+
+        with self.assertRaises(ValueError) as context:
+            RandomProjections(n_components=-3, keys=self.feature_keys[:5])
+
+        expected_msg_negative = "n_components has to be greater then 0"
+        self.assertTrue(expected_msg_negative in str(context.exception),
+                        f"Expected error message '{expected_msg_negative}' but got {context.exception}")
+
+    def test_duplicate_feature_names_initialization(self):
+        duplicate_keys = ['feature_1', 'feature_1']
+        with self.assertRaises(ValueError) as context:
+            RandomProjections(n_components=self.n_components, keys=duplicate_keys)
+
+        expected_msg = "keys contains duplicates"
+        self.assertTrue(expected_msg in str(context.exception),
+                        f"Expected error message '{expected_msg}' but got {context.exception}")
+
+    def test_empty_data_point_in_learn_one(self):
+        rp = RandomProjections(n_components=self.n_components)
+        
+        # The following line should raise an AssertionError due to the assert statement in learn_one
+        with self.assertRaises(AssertionError) as context:
+            rp.learn_one({})
+        
+        expected_msg = "empty datapoint"
+        self.assertTrue(expected_msg in str(context.exception),
+                        f"Expected assertion error '{expected_msg}' but got {context.exception}")
 
 if __name__ == "__main__":
     unittest.main()
