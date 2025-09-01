@@ -451,14 +451,36 @@ class TestRandomProjections(unittest.TestCase):
 
     def test_empty_data_point_in_learn_one(self):
         rp = RandomProjections(n_components=self.n_components)
+        rp.learn_one({})
+        self.assertEqual(rp.random_matrix.size, 0)
+
+        rp.learn_one({f'feature_{i}': np.random.rand() for i in range(5)})
+        self.assertEqual(rp.random_matrix.shape, (5,4))
+
+        rp.learn_one({})
+        self.assertEqual(rp.random_matrix.shape, (5,4))
+    
+    def test_random_state(self):
+        rp = RandomProjections(3, seed=42)
+        np.random.seed(42)
+        datapoint = {f'feature_{i}': np.random.rand() for i in range(5)}
+        rp.learn_one(datapoint)
+        expected_random_matrix = np.array([[ 0.        ,  1.73205081, 0.        ],
+                                           [ 0.        , -1.73205081,-1.73205081],
+                                           [-1.73205081,  1.73205081, 0.        ],
+                                           [ 0.        , -1.73205081, 1.73205081],
+                                           [ 0.        ,  0.        , 0.        ]])
+        expected_random_matrix = np.round(expected_random_matrix, 7)
+        random_matrix = np.round(rp.random_matrix, 7)
+        random_matrix_equal = expected_random_matrix == random_matrix
+        self.assertTrue(random_matrix_equal.all())  # test creating random matrix (alomost equal)
         
-        # The following line should raise an AssertionError due to the assert statement in learn_one
-        with self.assertRaises(AssertionError) as context:
-            rp.learn_one({})
-        
-        expected_msg = "empty datapoint"
-        self.assertTrue(expected_msg in str(context.exception),
-                        f"Expected assertion error '{expected_msg}' but got {context.exception}")
+        dict_values = rp.transform_one(datapoint)
+        expectation_transformed = [np.float64(-1.26785069804997), np.float64(-0.76701917982953), np.float64(-0.609778571173143)]
+        transformed_values = [dict_values['component_0'], dict_values['component_1'], dict_values['component_2']]
+        transformed_equal = expectation_transformed == transformed_values
+        self.assertTrue(transformed_equal)  # test transforming point
+
 
 if __name__ == "__main__":
     unittest.main()

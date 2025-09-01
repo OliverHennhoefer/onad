@@ -2,7 +2,7 @@ import numpy as np
 from typing import Dict, Optional
 
 class RandomProjections:
-    def __init__(self, n_components: int, keys: Optional[list[str]] = None,) -> None:
+    def __init__(self, n_components: int, keys: Optional[list[str]] = None, seed=None) -> None:
         """
     Initialize the RandomProjections transformer.
 
@@ -17,6 +17,7 @@ class RandomProjections:
 
         keys (Optional[list[str]]): An optional list of strings representing the
             initial set of feature names.
+        seed (Optional[int]): Optional seed for random matrix
 
     Raises:
         ValueError: If `n_components` is greater than the number of features when
@@ -26,10 +27,10 @@ class RandomProjections:
             raise ValueError("n_components has to be greater then 0")
         self.n_components = n_components
         self.feature_names = keys
+        self.seed = seed
 
         self.n_dimensions = 0
         self.random_matrix = np.array([])
-
 
         if self.feature_names is not None:
             if len(self.feature_names) != len(set(self.feature_names)):
@@ -44,6 +45,7 @@ class RandomProjections:
                 f"The number of n_components ({self.n_components}) has to be less or equal to the number of features ({self.n_dimensions})"
             )
         else:
+            np.random.seed(self.seed)
             self.random_matrix = 3**(0.5) * np.random.choice([-1, 0, 1], size=(self.n_dimensions,self.n_components), p = [1/6, 2/3, 1/6])
 
     def learn_one(self, x: Dict[str, float]) -> None:
@@ -56,9 +58,7 @@ class RandomProjections:
         Raises:
             ValueError: If `n_components` is greater than the number of features in `x`.
         """
-        assert len(x) >= 1 , 'empty datapoint'
         if self.feature_names is None and len(x) >= 1:
-            print(len(x))
             self.feature_names = list(x.keys())
             self._initialize_random_matrix()
     
