@@ -3,8 +3,8 @@ import unittest
 import numpy as np
 from sklearn.metrics import average_precision_score, roc_auc_score, roc_curve
 
+from onad.dataset import Dataset, load
 from onad.model.unsupervised.forest.online_iforest import OnlineIsolationForest
-from onad.stream.streamer import Dataset, ParquetStreamer
 
 
 class TestTrueOnlineIForest(unittest.TestCase):
@@ -23,18 +23,20 @@ class TestTrueOnlineIForest(unittest.TestCase):
 
         labels, scores = [], []
 
-        with ParquetStreamer(dataset=Dataset.SHUTTLE) as streamer:
-            for i, (x, y) in enumerate(streamer):
-                # Train only on normal data (Label 0) at the beginning
-                if y == 0 and i < 1000:
-                    model.learn_one(x)
-                    continue
+        # Load dataset using new API
+        dataset = load(Dataset.SHUTTLE)
 
+        for i, (x, y) in enumerate(dataset.stream()):
+            # Train only on normal data (Label 0) at the beginning
+            if y == 0 and i < 1000:
                 model.learn_one(x)
-                score = model.score_one(x)
+                continue
 
-                labels.append(y)
-                scores.append(score)
+            model.learn_one(x)
+            score = model.score_one(x)
+
+            labels.append(y)
+            scores.append(score)
 
         # Calculate and check metrics
         roc_auc = round(roc_auc_score(labels, scores), 3)

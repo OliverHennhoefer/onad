@@ -1,9 +1,9 @@
 from sklearn.metrics import average_precision_score
 
+from onad.dataset import Dataset, load
 from onad.model.unsupervised.svm.adaptive_svm import (
     IncrementalOneClassSVMAdaptiveKernel,
 )
-from onad.stream.streamer import Dataset, ParquetStreamer
 from onad.transform.scale import StandardScaler
 
 scaler = StandardScaler()
@@ -18,17 +18,19 @@ model = IncrementalOneClassSVMAdaptiveKernel(
 pipeline = scaler | model
 labels, scores = [], []
 
-with ParquetStreamer(dataset=Dataset.SHUTTLE) as streamer:
-    for i, (x, y) in enumerate(streamer):
-        if i < 2_000:
-            if y == 0:
-                pipeline.learn_one(x)
-            continue
+# Load dataset using new API
+dataset = load(Dataset.SHUTTLE)
 
-        score = pipeline.score_one(x)
-        pipeline.learn_one(x)
+for i, (x, y) in enumerate(dataset.stream()):
+    if i < 2_000:
+        if y == 0:
+            pipeline.learn_one(x)
+        continue
 
-        labels.append(y)
-        scores.append(score)
+    score = pipeline.score_one(x)
+    pipeline.learn_one(x)
+
+    labels.append(y)
+    scores.append(score)
 
 print(f"PR_AUC: {round(average_precision_score(labels, scores), 3)}")  # 0.154

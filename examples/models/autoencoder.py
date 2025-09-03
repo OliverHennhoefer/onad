@@ -1,8 +1,8 @@
 from sklearn.metrics import average_precision_score
 from torch import nn, optim
 
+from onad.dataset import Dataset, load
 from onad.model.unsupervised.deep.autoencoder import Autoencoder
-from onad.stream.streamer import Dataset, ParquetStreamer
 from onad.transform.scale import MinMaxScaler
 from onad.utils.architecture.autoencoder import VanillaAutoencoder
 
@@ -18,16 +18,18 @@ scaler = MinMaxScaler()
 model = scaler | autoencoder
 labels, scores = [], []
 
-with ParquetStreamer(dataset=Dataset.SHUTTLE) as streamer:
-    for i, (x, y) in enumerate(streamer):
-        if i < 10_000:
-            if y == 0:
-                model.learn_one(x)
-            continue
-        model.learn_one(x)
-        score = model.score_one(x)
+# Load dataset using new API
+dataset = load(Dataset.SHUTTLE)
 
-        labels.append(y)
-        scores.append(score)
+for i, (x, y) in enumerate(dataset.stream()):
+    if i < 10_000:
+        if y == 0:
+            model.learn_one(x)
+        continue
+    model.learn_one(x)
+    score = model.score_one(x)
+
+    labels.append(y)
+    scores.append(score)
 
 print(f"PR_AUC: {round(average_precision_score(labels, scores), 3)}")  # 0.298

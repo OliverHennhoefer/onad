@@ -49,8 +49,8 @@ class RandomProjections:
                 f"The number of n_components ({self.n_components}) has to be less or equal to the number of features ({self.n_dimensions})"
             )
         else:
-            np.random.seed(self.seed)
-            self.random_matrix = 3 ** (0.5) * np.random.choice(
+            rng = np.random.default_rng(self.seed)
+            self.random_matrix = 3 ** (0.5) * rng.choice(
                 [-1, 0, 1],
                 size=(self.n_dimensions, self.n_components),
                 p=[1 / 6, 2 / 3, 1 / 6],

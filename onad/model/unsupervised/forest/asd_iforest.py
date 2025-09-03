@@ -32,14 +32,16 @@ class ASDIsolationForest(BaseModel):
         self.trees: deque = deque()
         self.c_n: float = self._compute_c(max_samples)
         self.seed = seed
-
-        if self.seed is not None:
-            self._set_seed(seed)
+        
+        # Initialize random number generator
+        self.rng = np.random.default_rng(seed)
+        if seed is not None:
+            random.seed(seed)
 
     def _set_seed(self, seed: int) -> None:
-        """Set random seed for reproducibility."""
+        """Set random seed for reproducibility (deprecated - use rng instead)."""
         random.seed(seed)
-        np.random.seed(seed)
+        self.rng = np.random.default_rng(seed)
 
     @staticmethod
     def _compute_c(n: int) -> float:

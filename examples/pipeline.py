@@ -1,7 +1,7 @@
 from sklearn.metrics import average_precision_score
 
+from onad.dataset import Dataset, load
 from onad.model.unsupervised.distance.knn import KNN
-from onad.stream.streamer import Dataset, ParquetStreamer
 from onad.transform.pca import IncrementalPCA
 from onad.transform.scale import MinMaxScaler, StandardScaler
 from onad.utils.similarity.faiss_engine import FaissSimilaritySearchEngine
@@ -23,24 +23,26 @@ pipeline2 = scaler2 | pca | model2
 
 labels, scores1, scores2 = [], [], []
 
-with ParquetStreamer(dataset=Dataset.SHUTTLE) as streamer:
-    for i, (x, y) in enumerate(streamer):
-        if i < 2_000:
-            if y == 0:
-                pipeline1.learn_one(x)
-                pipeline2.learn_one(x)
-            continue
+# Load dataset using new API
+dataset = load(Dataset.SHUTTLE)
 
-        pipeline1.learn_one(x)
-        pipeline2.learn_one(x)
+for i, (x, y) in enumerate(dataset.stream()):
+    if i < 2_000:
+        if y == 0:
+            pipeline1.learn_one(x)
+            pipeline2.learn_one(x)
+        continue
 
-        score1 = pipeline1.score_one(x)  # Simple pipeline
-        score2 = pipeline2.score_one(x)  # PCA pipeline
+    pipeline1.learn_one(x)
+    pipeline2.learn_one(x)
 
-        if score1 is not None and score2 is not None:
-            labels.append(y)
-            scores1.append(score1)
-            scores2.append(score2)
+    score1 = pipeline1.score_one(x)  # Simple pipeline
+    score2 = pipeline2.score_one(x)  # PCA pipeline
+
+    if score1 is not None and score2 is not None:
+        labels.append(y)
+        scores1.append(score1)
+        scores2.append(score2)
 
 pr_auc1 = average_precision_score(labels, scores1)
 pr_auc2 = average_precision_score(labels, scores2)

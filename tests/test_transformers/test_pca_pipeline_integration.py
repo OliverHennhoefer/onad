@@ -3,8 +3,8 @@ import unittest
 import numpy as np
 from sklearn.metrics import average_precision_score
 
+from onad.dataset import Dataset, load
 from onad.model.unsupervised.distance.knn import KNN
-from onad.stream.streamer import Dataset, ParquetStreamer
 from onad.transform.pca import IncrementalPCA
 from onad.transform.scale import StandardScaler
 from onad.utils.similarity.faiss_engine import FaissSimilaritySearchEngine
@@ -101,36 +101,38 @@ class TestPCAPipelineIntegration(unittest.TestCase):
         # Track PCA state evolution
         pca_values_evolution = []
 
-        with ParquetStreamer(dataset=Dataset.SHUTTLE) as streamer:
-            for i, (x, y) in enumerate(streamer):
-                if processed_samples >= max_samples:
-                    break
+        # Load dataset using new API
+        dataset = load(Dataset.SHUTTLE)
 
-                # Learn from normal samples initially (similar to examples pattern)
-                if y == 0 and i < 100:
-                    self.pipeline_full.learn_one(x)
-                    processed_samples += 1
+        for i, (x, y) in enumerate(dataset.stream()):
+            if processed_samples >= max_samples:
+                break
 
-                    # Track PCA evolution during learning
-                    if self.pca.n0_reached and len(self.pca.values) > 0:
-                        pca_values_evolution.append(self.pca.values.copy())
-                    continue
-
-                # Learn and score
+            # Learn from normal samples initially (similar to examples pattern)
+            if y == 0 and i < 100:
                 self.pipeline_full.learn_one(x)
-                score = self.pipeline_full.score_one(x)
-
-                # Skip if score is None (happens during warm-up phase)
-                if score is not None:
-                    labels.append(y)
-                    scores.append(score)
-
-                    # Validate score is reasonable
-                    self.assertIsInstance(score, (int, float, np.floating))
-                    self.assertFalse(np.isnan(score))
-                    self.assertFalse(np.isinf(score))
-
                 processed_samples += 1
+
+                # Track PCA evolution during learning
+                if self.pca.n0_reached and len(self.pca.values) > 0:
+                    pca_values_evolution.append(self.pca.values.copy())
+                continue
+
+            # Learn and score
+            self.pipeline_full.learn_one(x)
+            score = self.pipeline_full.score_one(x)
+
+            # Skip if score is None (happens during warm-up phase)
+            if score is not None:
+                labels.append(y)
+                scores.append(score)
+
+                # Validate score is reasonable
+                self.assertIsInstance(score, (int, float, np.floating))
+                self.assertFalse(np.isnan(score))
+                self.assertFalse(np.isinf(score))
+
+            processed_samples += 1
 
         # Validate we processed data
         self.assertGreater(processed_samples, 100)
@@ -157,22 +159,24 @@ class TestPCAPipelineIntegration(unittest.TestCase):
         """Test that PCA maintains consistent state during streaming."""
         eigenvalue_snapshots = []
 
-        with ParquetStreamer(dataset=Dataset.SHUTTLE) as streamer:
-            for i, (x, _) in enumerate(streamer):
-                if (i + 1) >= 150:
-                    break
+        # Load dataset using new API
+        dataset = load(Dataset.SHUTTLE)
 
-                self.pipeline_scale_pca.learn_one(x)
+        for i, (x, _) in enumerate(dataset.stream()):
+            if (i + 1) >= 150:
+                break
 
-                # Take snapshots after PCA initialization
-                if self.pca.n0_reached and (i + 1) % 20 == 0:
-                    eigenvalue_snapshots.append(
-                        {
-                            "sample_count": (i + 1),
-                            "values": self.pca.values.copy(),
-                            "n_components": len(self.pca.values),
-                        }
-                    )
+            self.pipeline_scale_pca.learn_one(x)
+
+            # Take snapshots after PCA initialization
+            if self.pca.n0_reached and (i + 1) % 20 == 0:
+                eigenvalue_snapshots.append(
+                    {
+                        "sample_count": (i + 1),
+                        "values": self.pca.values.copy(),
+                        "n_components": len(self.pca.values),
+                    }
+                )
 
         # Validate PCA state evolution
         self.assertGreater(len(eigenvalue_snapshots), 3)
@@ -214,11 +218,13 @@ class TestPCAPipelineIntegration(unittest.TestCase):
         initial_pca_samples = self.pca.n_samples_seen
 
         # Process some samples
-        with ParquetStreamer(dataset=Dataset.SHUTTLE) as streamer:
-            for i, (x, _) in enumerate(streamer):
-                if i >= 200:
-                    break
-                self.pipeline_full.learn_one(x)
+        # Load dataset using new API
+        dataset = load(Dataset.SHUTTLE)
+
+        for i, (x, _) in enumerate(dataset.stream()):
+            if i >= 200:
+                break
+            self.pipeline_full.learn_one(x)
 
         # PCA should have learned incrementally (samples seen should increase)
         self.assertGreater(self.pca.n_samples_seen, initial_pca_samples)

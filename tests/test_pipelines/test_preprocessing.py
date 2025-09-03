@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from onad.stream.streamer import Dataset, ParquetStreamer
+from onad.dataset import Dataset, load
 from onad.transform.randprojections import RandomProjections
 from onad.transform.scale import MinMaxScaler, StandardScaler
 
@@ -316,17 +316,17 @@ class TestScalersIntegration(unittest.TestCase):
         scaler = MinMaxScaler()
 
         normalized_vals = []
-        sample_count = 0
 
-        with ParquetStreamer(dataset=Dataset.FRAUD) as streamer:
-            for x, _ in streamer:
-                scaler.learn_one(x)
-                scaled_x = scaler.transform_one(x)
-                normalized_vals.append(scaled_x)
+        # Load dataset using new API
+        dataset = load(Dataset.FRAUD)
 
-                sample_count += 1
-                if sample_count >= 100:  # Limit for faster testing
-                    break
+        for sample_count, (x, _) in enumerate(dataset.stream()):
+            scaler.learn_one(x)
+            scaled_x = scaler.transform_one(x)
+            normalized_vals.append(scaled_x)
+
+            if sample_count >= 99:  # Limit for faster testing (0-based indexing)
+                break
 
         # Verify all values are in [0, 1] range with tight validation
         for i, scaled_dict in enumerate(normalized_vals):
@@ -346,17 +346,17 @@ class TestScalersIntegration(unittest.TestCase):
         scaler = StandardScaler()
 
         scaled_vals = []
-        sample_count = 0
 
-        with ParquetStreamer(dataset=Dataset.FRAUD) as streamer:
-            for x, _ in streamer:
-                scaler.learn_one(x)
-                scaled_x = scaler.transform_one(x)
-                scaled_vals.append(scaled_x)
+        # Load dataset using new API
+        dataset = load(Dataset.FRAUD)
 
-                sample_count += 1
-                if sample_count >= 100:  # Limit for faster testing
-                    break
+        for sample_count, (x, _) in enumerate(dataset.stream()):
+            scaler.learn_one(x)
+            scaled_x = scaler.transform_one(x)
+            scaled_vals.append(scaled_x)
+
+            if sample_count >= 99:  # Limit for faster testing (0-based indexing)
+                break
 
         # Verify all values are finite and properly typed
         for i, scaled_dict in enumerate(scaled_vals):
@@ -495,15 +495,15 @@ class TestRandomProjections(unittest.TestCase):
 
     def test_random_state(self):
         rp = RandomProjections(3, seed=42)
-        np.random.seed(42)
-        datapoint = {f"feature_{i}": np.random.rand() for i in range(5)}
+        rng = np.random.default_rng(42)
+        datapoint = {f"feature_{i}": rng.random() for i in range(5)}
         rp.learn_one(datapoint)
         expected_random_matrix = np.array(
             [
-                [0.0, 1.73205081, 0.0],
-                [0.0, -1.73205081, -1.73205081],
-                [-1.73205081, 1.73205081, 0.0],
+                [0.0, 0.0, 1.73205081],
                 [0.0, -1.73205081, 1.73205081],
+                [0.0, 0.0, -1.73205081],
+                [0.0, 0.0, 1.73205081],
                 [0.0, 0.0, 0.0],
             ]
         )
@@ -516,17 +516,18 @@ class TestRandomProjections(unittest.TestCase):
 
         dict_values = rp.transform_one(datapoint)
         expectation_transformed = [
-            np.float64(-1.26785069804997),
-            np.float64(-0.76701917982953),
-            np.float64(-0.609778571173143),
+            0.0,
+            -0.760159755997111,
+            1.8214325922668038,
         ]
         transformed_values = [
             dict_values["component_0"],
             dict_values["component_1"],
             dict_values["component_2"],
         ]
-        transformed_equal = expectation_transformed == transformed_values
-        self.assertTrue(transformed_equal)  # test transforming point
+        np.testing.assert_allclose(
+            expectation_transformed, transformed_values, rtol=1e-14, atol=1e-14
+        )  # test transforming point with proper floating-point comparison
 
 
 if __name__ == "__main__":

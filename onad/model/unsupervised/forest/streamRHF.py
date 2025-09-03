@@ -31,12 +31,16 @@ class StreamRandomHistogramForest(BaseModel):
         self.seed = seed
         self.feature_names: list[str] | None = None
         self.histograms: deque = deque()
-        if self.seed is not None:
-            self._set_seed(seed)
+        
+        # Initialize random number generator
+        self.rng = np.random.default_rng(seed)
+        if seed is not None:
+            random.seed(seed)
 
     def _set_seed(self, seed: int) -> None:
+        """Set random seed for reproducibility (deprecated - use rng instead)."""
         random.seed(seed)
-        np.random.seed(seed)
+        self.rng = np.random.default_rng(seed)
 
     def learn_one(self, x: dict[str, float]) -> None:
         if self.feature_names is None:

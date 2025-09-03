@@ -19,6 +19,7 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
         buffer_size: int = 200,
         sv_budget: int = 100,
         tolerance: float = 1e-6,
+        seed: int | None = None,
     ):
         self.nu = nu
         self.gamma = initial_gamma
@@ -44,6 +45,9 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
         # Feature handling
         self.feature_order: tuple[str, ...] | None = None
         self.feature_stats: dict[str, tuple[float, float]] = {}  # For standardization
+        
+        # Random number generator
+        self.rng = np.random.default_rng(seed)
 
     def _get_feature_vector(self, x: dict[str, float]) -> np.ndarray:
         """Convert feature dictionary to standardized numpy array."""
@@ -160,7 +164,7 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
 
         # Sample random pairs
         n_samples = min(50, len(data_array))
-        indices = np.random.choice(len(data_array), size=n_samples, replace=False)
+        indices = self.rng.choice(len(data_array), size=n_samples, replace=False)
         sampled_data = data_array[indices]
 
         # Compute pairwise distances

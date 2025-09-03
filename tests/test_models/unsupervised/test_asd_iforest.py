@@ -2,8 +2,8 @@ import unittest
 
 from sklearn.metrics import average_precision_score, roc_auc_score, roc_curve
 
+from onad.dataset import Dataset, load
 from onad.model.unsupervised.forest.asd_iforest import ASDIsolationForest
-from onad.stream.streamer import Dataset, ParquetStreamer
 
 
 class TestCaseASDIsolationForest(unittest.TestCase):
@@ -11,16 +11,18 @@ class TestCaseASDIsolationForest(unittest.TestCase):
         model = ASDIsolationForest(n_estimators=750, max_samples=2750, seed=1)
 
         labels, scores = [], []
-        with ParquetStreamer(dataset=Dataset.SHUTTLE) as streamer:
-            for i, (x, y) in enumerate(streamer):
-                if y == 0 and i < 10_000:
-                    model.learn_one(x)
-                    continue
-                model.learn_one(x)
-                score = model.score_one(x)
+        # Load dataset using new API
+        dataset = load(Dataset.SHUTTLE)
 
-                labels.append(y)
-                scores.append(score)
+        for i, (x, y) in enumerate(dataset.stream()):
+            if y == 0 and i < 10_000:
+                model.learn_one(x)
+                continue
+            model.learn_one(x)
+            score = model.score_one(x)
+
+            labels.append(y)
+            scores.append(score)
 
         roc_auc = round(roc_auc_score(labels, scores), 3)
         self.assertEqual(roc_auc, 0.908)
