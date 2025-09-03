@@ -1,6 +1,5 @@
 import random
 from collections import deque
-from typing import Dict, Optional, List
 
 import numpy as np
 
@@ -23,14 +22,14 @@ class StreamRandomHistogramForest(BaseModel):
         n_estimators: int = 25,
         max_bins: int = 10,
         window_size: int = 256,
-        seed: Optional[int] = None,
+        seed: int | None = None,
     ):
         super().__init__()
         self.n_estimators = n_estimators
         self.max_bins = max_bins
         self.window_size = window_size
         self.seed = seed
-        self.feature_names: Optional[List[str]] = None
+        self.feature_names: list[str] | None = None
         self.histograms: deque = deque()
         if self.seed is not None:
             self._set_seed(seed)
@@ -39,7 +38,7 @@ class StreamRandomHistogramForest(BaseModel):
         random.seed(seed)
         np.random.seed(seed)
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         if self.feature_names is None:
             self.feature_names = list(x.keys())
             for _ in range(self.n_estimators):
@@ -48,7 +47,7 @@ class StreamRandomHistogramForest(BaseModel):
         for histogram in self.histograms:
             self._update_histogram(histogram, x)
 
-    def _init_histogram(self) -> Dict:
+    def _init_histogram(self) -> dict:
         """Initialize a random histogram tree."""
         bins = {}
         for feature in self.feature_names:
@@ -63,7 +62,7 @@ class StreamRandomHistogramForest(BaseModel):
             }
         return {"bins": bins, "count": 0}
 
-    def _update_histogram(self, histogram: Dict, x: Dict[str, float]) -> None:
+    def _update_histogram(self, histogram: dict, x: dict[str, float]) -> None:
         for feature in self.feature_names:
             value = x.get(feature, 0.0)
             bin_data = histogram["bins"][feature]
@@ -77,7 +76,7 @@ class StreamRandomHistogramForest(BaseModel):
                 histogram["bins"][feature]["counts"] *= 0.9  # exponential decay
             histogram["count"] = int(histogram["count"] * 0.9)
 
-    def score_one(self, x: Dict[str, float]) -> float:
+    def score_one(self, x: dict[str, float]) -> float:
         if not self.histograms:
             return 0.0
 
@@ -88,7 +87,7 @@ class StreamRandomHistogramForest(BaseModel):
 
         return float(np.mean(scores))
 
-    def _estimate_density(self, histogram: Dict, x: Dict[str, float]) -> float:
+    def _estimate_density(self, histogram: dict, x: dict[str, float]) -> float:
         prob = 1.0
         for feature in self.feature_names:
             value = x.get(feature, 0.0)

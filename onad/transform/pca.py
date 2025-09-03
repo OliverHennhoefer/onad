@@ -1,5 +1,4 @@
 import numpy as np
-from typing import Dict, Optional
 
 
 class IncrementalPCA:
@@ -7,7 +6,7 @@ class IncrementalPCA:
         self,
         n_components: int,
         n0: int = 50,
-        keys: Optional[list[str]] = None,
+        keys: list[str] | None = None,
         tol: float = 1e-7,
         forgetting_factor: float | None = None,
     ) -> None:
@@ -42,7 +41,7 @@ class IncrementalPCA:
         """
         self.n_components: int = n_components
         self.n0: int = n0
-        self.feature_names: Optional[list[str]] = keys
+        self.feature_names: list[str] | None = keys
         self.tol: float = tol
         if forgetting_factor is not None and not (0 < forgetting_factor < 1):
             raise ValueError("forgetting_factor has to be 0 < forgetting_factor < 1")
@@ -71,7 +70,100 @@ class IncrementalPCA:
                     "The number of primary components has to be less or equal to the number of features"
                 )
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def _update_online_pca(self, data_vector: np.ndarray) -> None:
+        """Update PCA components using online algorithm."""
+        # Compute forgetting factor
+        f = (
+            1.0 / self.n_samples_seen
+            if self.forgetting_factor is None
+            else self.forgetting_factor
+        )
+
+        # Update eigenvalues with forgetting factor
+        lambda_updated = (1 - f) * self.values
+
+        # Scale new data point and project onto current subspace
+        x_scaled = np.sqrt(f) * data_vector
+        xhat = self.vectors.T @ x_scaled
+
+        # Compute residual and check if subspace expansion is needed
+        residual = x_scaled - self.vectors @ xhat
+        norm_residual = np.linalg.norm(residual)
+
+        if norm_residual >= self.tol:
+            lambda_updated, xhat = self._expand_subspace(
+                lambda_updated, xhat, residual, norm_residual
+            )
+
+        # Update eigendecomposition and store results
+        self._update_eigendecomposition(lambda_updated, xhat)
+
+    def _expand_subspace(
+        self,
+        lambda_updated: np.ndarray,
+        xhat: np.ndarray,
+        residual: np.ndarray,
+        norm_residual: float,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Expand subspace when residual is significant."""
+        k = len(lambda_updated) + 1
+
+        # Extend eigenvalues
+        lambda_extended = np.zeros(k)
+        lambda_extended[: len(lambda_updated)] = lambda_updated
+
+        # Extend projection
+        xhat_extended = np.zeros(k)
+        xhat_extended[: len(xhat)] = xhat
+        xhat_extended[-1] = norm_residual
+
+        # Extend vector matrix
+        U_extended = np.zeros((self.n_features, k))
+        U_extended[:, : self.vectors.shape[1]] = self.vectors
+        U_extended[:, -1] = residual / norm_residual
+
+        self.vectors = U_extended
+        return lambda_extended, xhat_extended
+
+    def _update_eigendecomposition(
+        self, lambda_updated: np.ndarray, xhat: np.ndarray
+    ) -> None:
+        """Compute and apply eigendecomposition update."""
+        # Compute eigendecomposition of updated covariance matrix
+        matrix_to_decompose = np.diag(lambda_updated) + np.outer(xhat, xhat)
+        eigenvalues, eigenvectors = np.linalg.eig(matrix_to_decompose)
+
+        # Sort in descending order
+        idx = np.argsort(eigenvalues)[::-1]
+        eigenvalues = eigenvalues[idx]
+        eigenvectors = eigenvectors[:, idx]
+
+        # Keep only top n_components
+        if len(eigenvalues) > self.n_components:
+            eigenvalues = eigenvalues[: self.n_components]
+            eigenvectors = eigenvectors[:, : self.n_components]
+
+        # Update stored values
+        self.values = eigenvalues
+        self.vectors = self.vectors @ eigenvectors
+
+    def _initialize_pca(self, data_vector: np.ndarray) -> None:
+        """Handle initialization phase by collecting data until n0 samples."""
+        self.window.append(data_vector)
+        if len(self.window) >= self.n0:
+            # Perform initial full PCA and switch to online mode
+            initial_data = np.array(self.window)
+            u, s, vt = np.linalg.svd(initial_data, full_matrices=False)
+            s = s / np.sqrt(max(1, initial_data.shape[0] - 1))
+
+            # Store vectors as (n_features, n_components) to match online phase
+            rotation = vt.T  # Transpose to get (n_features, n_components)
+            self.values = s[: self.n_components] ** 2
+            self.vectors = rotation[:, : self.n_components]
+            self.n0_reached = True
+            self.window = []
+
+    def learn_one(self, x: dict[str, float]) -> None:
         """
         Update PCA components incrementally using a single sample.
 
@@ -87,84 +179,15 @@ class IncrementalPCA:
 
         # Convert input dictionary to NumPy array
         data_vector = np.array([x[key] for key in self.feature_names])
-        # handling missing data ...
 
-        if self.n0_reached:  # online PCA
-            if self.forgetting_factor is None:
-                f = 1.0 / self.n_samples_seen
-            else:
-                f = self.forgetting_factor
+        if self.n0_reached:
+            self._update_online_pca(data_vector)
+        else:
+            self._initialize_pca(data_vector)
 
-            # Update eigenvalues with forgetting factor
-            lambda_updated = (1 - f) * self.values
-
-            # Scale new data point
-            x_scaled = np.sqrt(f) * data_vector
-
-            # Project onto current subspace
-            xhat = self.vectors.T @ x_scaled
-
-            # Compute residual
-            residual = x_scaled - self.vectors @ xhat
-            norm_residual = np.linalg.norm(residual)
-
-            k = len(lambda_updated)
-
-            if norm_residual >= self.tol:
-                # Expand subspace
-                k += 1
-                lambda_extended = np.zeros(k)
-                lambda_extended[: len(lambda_updated)] = lambda_updated
-
-                xhat_extended = np.zeros(k)
-                xhat_extended[: len(xhat)] = xhat
-                xhat_extended[-1] = norm_residual
-
-                U_extended = np.zeros((self.n_features, k))
-                U_extended[:, : self.vectors.shape[1]] = self.vectors
-                U_extended[:, -1] = residual / norm_residual
-
-                lambda_updated = lambda_extended
-                xhat = xhat_extended
-                self.vectors = U_extended
-
-            # Compute eigendecomposition of updated covariance matrix
-            diag_lambda = np.diag(lambda_updated)
-            outer_xhat = np.outer(xhat, xhat)
-            matrix_to_decompose = diag_lambda + outer_xhat
-
-            eigenvalues, eigenvectors = np.linalg.eig(matrix_to_decompose)
-
-            # Sort eigenvalues and eigenvectors in descending order
-            idx = np.argsort(eigenvalues)[::-1]
-            eigenvalues = eigenvalues[idx]
-            eigenvectors = eigenvectors[:, idx]
-
-            # Keep only top n_components
-            if k > self.n_components:
-                eigenvalues = eigenvalues[: self.n_components]
-                eigenvectors = eigenvectors[:, : self.n_components]
-
-            # Update stored eigenvalues and eigenvectors
-            self.values = eigenvalues
-            self.vectors = self.vectors @ eigenvectors
-
-        else:  # initialisation phase
-            self.window.append(data_vector)
-            if len(self.window) >= self.n0:
-                # initial full pca and switching to online mode
-                initial_data = np.array(self.window)
-                u, s, vt = np.linalg.svd(initial_data, full_matrices=False)
-                s = s / np.sqrt(max(1, initial_data.shape[0] - 1))
-                # Store vectors as (n_features, n_components) to match online phase
-                rotation = vt.T  # Transpose to get (n_features, n_components)
-                self.values = s[: self.n_components] ** 2
-                self.vectors = rotation[:, : self.n_components]
-                self.n0_reached = True
-                self.window = []
         self.n_samples_seen += 1
 
-    def transform_one(self, x: Dict[str, float]) -> Dict[str, float]:
+    def transform_one(self, x: dict[str, float]) -> dict[str, float]:
         """
         Transform a single data point using the learned PCA components.
 

@@ -1,5 +1,3 @@
-from typing import Dict
-
 from onad.base.model import BaseModel
 from onad.base.similarity import BaseSimilaritySearchEngine
 
@@ -34,7 +32,7 @@ class KNN(BaseModel):
         self.k: int = k
         self.engine: BaseSimilaritySearchEngine = similarity_engine
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """
         Adds a new resources point to the model for future similarity searches.
 
@@ -44,7 +42,7 @@ class KNN(BaseModel):
         """
         self.engine.append(x)
 
-    def score_one(self, x: Dict[str, float]) -> float:
+    def score_one(self, x: dict[str, float]) -> float:
         """
         Computes a score for the given resources point based on its nearest neighbors.
 

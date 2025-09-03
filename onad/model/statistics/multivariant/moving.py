@@ -1,7 +1,8 @@
-from typing import Dict, Optional
-from onad.base.model import BaseModel
 from collections import deque
+
 import numpy as np
+
+from onad.base.model import BaseModel
 
 
 def _covariance(x, y, ddof=1):
@@ -36,7 +37,7 @@ class MovingCovariance(BaseModel):
         self,
         window_size: int,
         bias: bool = True,
-        keys: Optional[list[str]] = None,
+        keys: list[str] | None = None,
         abs_diff: bool = True,
     ) -> None:
         """Initialize a new instance of MovingCovariance.
@@ -50,12 +51,12 @@ class MovingCovariance(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window_size = window_size
-        self.window: Dict = {}
-        self.feature_names: Optional[list[str]] = keys
+        self.window: dict = {}
+        self.feature_names: list[str] | None = keys
         self.bias = bias
         self.abs_diff = abs_diff
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point.
@@ -67,13 +68,13 @@ class MovingCovariance(BaseModel):
             self.feature_names = list(x.keys())
             self.window[self.feature_names[0]] = deque([], maxlen=self.window_size)
             self.window[self.feature_names[1]] = deque([], maxlen=self.window_size)
-        if isinstance(x[self.feature_names[0]], (int, float)) and isinstance(
-            x[self.feature_names[1]], (int, float)
+        if isinstance(x[self.feature_names[0]], int | float) and isinstance(
+            x[self.feature_names[1]], int | float
         ):
             self.window[self.feature_names[0]].append(x[self.feature_names[0]])
             self.window[self.feature_names[1]].append(x[self.feature_names[1]])
 
-    def score_one(self, x: Dict[str, float]) -> float:
+    def score_one(self, x: dict[str, float]) -> float:
         """Calculate and return the difference of the covariance of the values in the window with and without the new point.
             covariance(window + score) - covariance(window)
         Args:
@@ -123,7 +124,7 @@ class MovingCorrelationCoefficient(BaseModel):
         self,
         window_size: int,
         bias: bool = True,
-        keys: Optional[list[str]] = None,
+        keys: list[str] | None = None,
         abs_diff: bool = True,
     ) -> None:
         """Initialize a new instance of MovingCorrelationCoefficient.
@@ -137,12 +138,12 @@ class MovingCorrelationCoefficient(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window_size = window_size
-        self.window: Dict = {}
-        self.feature_names: Optional[list[str]] = keys
+        self.window: dict = {}
+        self.feature_names: list[str] | None = keys
         self.bias = bias
         self.abs_diff = abs_diff
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point.
@@ -154,8 +155,8 @@ class MovingCorrelationCoefficient(BaseModel):
             self.feature_names = list(x.keys())
             self.window[self.feature_names[0]] = deque([], maxlen=self.window_size)
             self.window[self.feature_names[1]] = deque([], maxlen=self.window_size)
-        if isinstance(x[self.feature_names[0]], (int, float)) and isinstance(
-            x[self.feature_names[1]], (int, float)
+        if isinstance(x[self.feature_names[0]], int | float) and isinstance(
+            x[self.feature_names[1]], int | float
         ):
             self.window[self.feature_names[0]].append(x[self.feature_names[0]])
             self.window[self.feature_names[1]].append(x[self.feature_names[1]])
@@ -178,7 +179,7 @@ class MovingCorrelationCoefficient(BaseModel):
         else:
             return cov / (std_0 * std_1)
 
-    def score_one(self, x: Dict[str, float]) -> float:
+    def score_one(self, x: dict[str, float]) -> float:
         """Calculate and return the correlation coefficient difference of the values in the windows.
         Args:
             x (Dict): Single datapoint to be added temporarily to calculate the correlation coefficient.
@@ -206,7 +207,7 @@ class MovingMahalanobisDistance(BaseModel):
     """
 
     def __init__(
-        self, window_size: int, bias: bool = True, keys: Optional[list[str]] = None
+        self, window_size: int, bias: bool = True, keys: list[str] | None = None
     ) -> None:
         """Initialize a new instance of MovingMahalanobisDistance.
         Args:
@@ -219,10 +220,10 @@ class MovingMahalanobisDistance(BaseModel):
             raise ValueError("Window size must be a positive integer.")
         self.window_size = window_size
         self.window: deque[list[float]] = deque([], maxlen=window_size)
-        self.feature_names: Optional[list[str]] = keys
+        self.feature_names: list[str] | None = keys
         self.bias = bias
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point.
@@ -230,10 +231,10 @@ class MovingMahalanobisDistance(BaseModel):
         if self.feature_names is None:
             self.feature_names = list(x.keys())
         datapoint = [x[key] for key in self.feature_names]
-        if all([isinstance(val, (int, float)) for val in datapoint]):
+        if all(isinstance(val, int | float) for val in datapoint):
             self.window.append(datapoint)
 
-    def score_one(self, x: Dict[str, float]) -> float:
+    def score_one(self, x: dict[str, float]) -> float:
         """Calculate and return the mahalanobis distance from one given point to the window's feature mean.
         Args:
             x (Dict): Single datapoint.

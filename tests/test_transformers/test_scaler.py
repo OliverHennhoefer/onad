@@ -1,17 +1,16 @@
 import unittest
 
-from onad.stream.streamer import ParquetStreamer, Dataset
+from onad.stream.streamer import Dataset, ParquetStreamer
 from onad.transform.scale import MinMaxScaler
 
 
 class MyTestCase(unittest.TestCase):
     def test_min_max_scaler(self):
-
         scaler = MinMaxScaler()
 
         normalized_vals = []
         with ParquetStreamer(dataset=Dataset.FRAUD) as streamer:
-            for x, y in streamer:
+            for x, _ in streamer:
                 scaler.learn_one(x)
                 scaled_x = scaler.transform_one(x)
                 normalized_vals.append(scaled_x)

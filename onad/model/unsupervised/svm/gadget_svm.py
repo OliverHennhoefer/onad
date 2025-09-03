@@ -1,6 +1,6 @@
-import numpy as np
-from typing import Dict, List, Set
 from collections import deque
+
+import numpy as np
 
 from onad.base.model import BaseModel
 
@@ -50,14 +50,18 @@ class GADGETSVM(BaseModel):
 
     def __init__(
         self,
-        graph: Dict[int, List[int]] = {0: [1], 1: [2], 2: []},
+        graph: dict[int, list[int]] | None = None,
         threshold: float = 0.0,
         learning_rate: float = 0.01,
         nu: float = 0.5,
         lambda_reg: float = 0.01,
     ):
+        # Set default graph if None provided
+        if graph is None:
+            graph = {0: [1], 1: [2], 2: []}
+
         # Collect all unique nodes from graph
-        all_nodes: Set[int] = set()
+        all_nodes: set[int] = set()
         for node, neighbors in graph.items():
             all_nodes.add(node)
             all_nodes.update(neighbors)
@@ -86,7 +90,7 @@ class GADGETSVM(BaseModel):
         if not self.root_nodes and all_nodes:
             self.root_nodes = [min(all_nodes)]
 
-    def _get_feature_vector(self, x: Dict[str, float]) -> np.ndarray:
+    def _get_feature_vector(self, x: dict[str, float]) -> np.ndarray:
         """Efficient feature vector conversion with tuple-based order tracking."""
         if self.feature_order is None:
             self.feature_order = tuple(sorted(x.keys()))
@@ -96,7 +100,7 @@ class GADGETSVM(BaseModel):
 
         return np.fromiter((x[k] for k in self.feature_order), dtype=np.float64)
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         x_vec = self._get_feature_vector(x)
         visited = set()
         # Use deque for efficient BFS
@@ -116,7 +120,7 @@ class GADGETSVM(BaseModel):
                 # Add neighbors to queue
                 queue.extend(self.graph[node])
 
-    def score_one(self, x: Dict[str, float]) -> float:
+    def score_one(self, x: dict[str, float]) -> float:
         if self.feature_order is None:
             return 0.0
 

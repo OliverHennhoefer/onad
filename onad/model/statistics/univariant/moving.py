@@ -1,14 +1,12 @@
-from typing import Dict, Optional
-from onad.base.model import BaseModel
 from collections import deque
+
+from onad.base.model import BaseModel
 
 
 class MovingAverage(BaseModel):
     """A simple moving model that calculates the difference between arithmetic average of a window + new value and the window."""
 
-    def __init__(
-        self, window_size: int, key: Optional[str] = None, abs_diff=True
-    ) -> None:
+    def __init__(self, window_size: int, key: str | None = None, abs_diff=True) -> None:
         """Initialize a new instance of MovingAverage.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving arithmetic average.
@@ -19,10 +17,10 @@ class MovingAverage(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_name: Optional[str] = key
+        self.feature_name: str | None = key
         self.abs_diff = abs_diff
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point.
@@ -65,9 +63,7 @@ class MovingHarmonicAverage(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(
-        self, window_size: int, key: Optional[str] = None, abs_diff=True
-    ) -> None:
+    def __init__(self, window_size: int, key: str | None = None, abs_diff=True) -> None:
         """Initialize a new instance of MovingHarmonicAverage.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving harmonic average.
@@ -78,10 +74,10 @@ class MovingHarmonicAverage(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_name: Optional[str] = key
+        self.feature_name: str | None = key
         self.abs_diff = abs_diff
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point. 0 will be ignored.
@@ -92,9 +88,8 @@ class MovingHarmonicAverage(BaseModel):
         if self.feature_name is None:
             if list(x.values())[0] != 0:
                 self.window.append(list(x.values())[0])
-        else:
-            if x[self.feature_name] != 0:
-                self.window.append(x[self.feature_name])
+        elif x[self.feature_name] != 0:
+            self.window.append(x[self.feature_name])
 
     def score_one(self, x) -> float:
         """Calculate and return the difference between the harmonic average of the current window (including the new data point)
@@ -115,7 +110,7 @@ class MovingHarmonicAverage(BaseModel):
         score_window = list(self.window)
         score_window.append(list(x.values())[0])
         score = len(score_window) / sum(
-            (1 / x for x in score_window)
+            1 / x for x in score_window
         ) - actual_window_length / sum(1 / x for x in self.window)
         return abs(score) if self.abs_diff else score
 
@@ -131,7 +126,7 @@ class MovingGeometricAverage(BaseModel):
     def __init__(
         self,
         window_size: int,
-        key: Optional[str] = None,
+        key: str | None = None,
         absoluteValues=False,
         abs_diff=True,
     ) -> None:
@@ -147,11 +142,11 @@ class MovingGeometricAverage(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_name: Optional[str] = key
+        self.feature_name: str | None = key
         self.absoluteValues = absoluteValues
         self.abs_diff: bool = abs_diff
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point. The keys are feature names,
@@ -163,9 +158,8 @@ class MovingGeometricAverage(BaseModel):
         if self.feature_name is None:
             if list(x.values())[0] > 0:
                 self.window.append(list(x.values())[0])
-        else:
-            if x[self.feature_name] > 0:
-                self.window.append(x[self.feature_name])
+        elif x[self.feature_name] > 0:
+            self.window.append(x[self.feature_name])
 
     def score_one(self, x) -> float:
         """Calculate and return the difference between the gemetric average of the current window (including the new data point)
@@ -212,9 +206,7 @@ class MovingMedian(BaseModel):
         window (collections.deque): A fixed-size deque storing the most recent values.
     """
 
-    def __init__(
-        self, window_size: int, key: Optional[str] = None, abs_diff=True
-    ) -> None:
+    def __init__(self, window_size: int, key: str | None = None, abs_diff=True) -> None:
         """Initialize a new instance of MovingMedian.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving median.
@@ -225,10 +217,10 @@ class MovingMedian(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window = deque([], maxlen=window_size)
-        self.feature_name: Optional[str] = key
+        self.feature_name: str | None = key
         self.abs_diff = abs_diff
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point. The keys are feature names,
@@ -288,7 +280,7 @@ class MovingQuantile(BaseModel):
     """
 
     def __init__(
-        self, window_size: int, key: Optional[str] = None, quantile=0.5, abs_diff=True
+        self, window_size: int, key: str | None = None, quantile=0.5, abs_diff=True
     ) -> None:
         """Initialize a new instance of MovingQuantile.
         Args:
@@ -302,11 +294,11 @@ class MovingQuantile(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_name: Optional[str] = key
+        self.feature_name: str | None = key
         self.quantile = quantile
         self.abs_diff = abs_diff
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point. The keys are feature names,
@@ -364,9 +356,7 @@ class MovingQuantile(BaseModel):
 class MovingVariance(BaseModel):
     """A simple moving model that calculates the difference between variance of a window + new value and the window."""
 
-    def __init__(
-        self, window_size: int, key: Optional[str] = None, abs_diff=True
-    ) -> None:
+    def __init__(self, window_size: int, key: str | None = None, abs_diff=True) -> None:
         """Initialize a new instance of MovingVariance.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving variance.
@@ -377,10 +367,10 @@ class MovingVariance(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_name: Optional[str] = key
+        self.feature_name: str | None = key
         self.abs_diff = abs_diff
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point.
@@ -427,9 +417,7 @@ class MovingVariance(BaseModel):
 class MovingInterquartileRange(BaseModel):
     """A simple moving model that calculates the difference between interquartile range of a window + new value and the window."""
 
-    def __init__(
-        self, window_size: int, key: Optional[str] = None, abs_diff=True
-    ) -> None:
+    def __init__(self, window_size: int, key: str | None = None, abs_diff=True) -> None:
         """Initialize a new instance of MovingInterquartileRange.
         Args:
             window_size (int): The number of recent values to consider for calculating the
@@ -441,10 +429,10 @@ class MovingInterquartileRange(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_name: Optional[str] = key
+        self.feature_name: str | None = key
         self.abs_diff = abs_diff
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point. The keys are feature names,
@@ -508,9 +496,7 @@ class MovingInterquartileRange(BaseModel):
 class MovingAverageAbsoluteDeviation(BaseModel):
     """A simple moving model that calculates the difference between absolute deviation of a window + new value and the window."""
 
-    def __init__(
-        self, window_size: int, key: Optional[str] = None, abs_diff=True
-    ) -> None:
+    def __init__(self, window_size: int, key: str | None = None, abs_diff=True) -> None:
         """Initialize a new instance of MovingAverageAbsoluteDeviation.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving average absolute deviation.
@@ -521,10 +507,10 @@ class MovingAverageAbsoluteDeviation(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_name: Optional[str] = key
+        self.feature_name: str | None = key
         self.abs_diff = abs_diff
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point.
@@ -572,9 +558,7 @@ class MovingAverageAbsoluteDeviation(BaseModel):
 class MovingKurtosis(BaseModel):
     """A simple moving model that calculates the difference between kurtosis of a window + new value and the window."""
 
-    def __init__(
-        self, window_size: int, key: Optional[str] = None, abs_diff=True
-    ) -> None:
+    def __init__(self, window_size: int, key: str | None = None, abs_diff=True) -> None:
         """Initialize a new instance of MovingKurtosis.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving kurtosis.
@@ -585,10 +569,10 @@ class MovingKurtosis(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_name: Optional[str] = key
+        self.feature_name: str | None = key
         self.abs_diff = abs_diff
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point.
@@ -652,9 +636,7 @@ class MovingKurtosis(BaseModel):
 class MovingSkewness(BaseModel):
     """A simple moving model that calculates the difference between skewness of a window + new value and the window."""
 
-    def __init__(
-        self, window_size: int, key: Optional[str] = None, abs_diff=True
-    ) -> None:
+    def __init__(self, window_size: int, key: str | None = None, abs_diff=True) -> None:
         """Initialize a new instance of MovingSkewness.
         Args:
             window_size (int): The number of recent values to consider for calculating the moving skewness.
@@ -665,10 +647,10 @@ class MovingSkewness(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_name: Optional[str] = key
+        self.feature_name: str | None = key
         self.abs_diff = abs_diff
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single resource point.
         Args:
             x (Dict[str, float]): A dictionary representing a single resource point.

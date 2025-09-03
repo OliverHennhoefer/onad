@@ -1,23 +1,24 @@
 import unittest
-import numpy as np
 from collections import deque
+
+import numpy as np
 from scipy.stats import kurtosis, skew
+
 from onad.model.statistics.univariant.moving import (
     MovingAverage,
-    MovingHarmonicAverage,
+    MovingAverageAbsoluteDeviation,
     MovingGeometricAverage,
+    MovingHarmonicAverage,
+    MovingInterquartileRange,
+    MovingKurtosis,
     MovingMedian,
     MovingQuantile,
-    MovingVariance,
-    MovingInterquartileRange,
-    MovingAverageAbsoluteDeviation,
-    MovingKurtosis,
     MovingSkewness,
+    MovingVariance,
 )
 
 
 class TestMovingAverage(unittest.TestCase):
-
     def test_initialization_with_positive_window_size(self):
         ma = MovingAverage(3)
         self.assertEqual(ma.window.maxlen, 3)
@@ -62,7 +63,6 @@ class TestMovingAverage(unittest.TestCase):
 
 
 class TestMovingHarmonicAverage(unittest.TestCase):
-
     def test_initialization_with_positive_window_size(self):
         mah = MovingHarmonicAverage(3)
         self.assertEqual(len(mah.window), 0)
@@ -131,7 +131,6 @@ class TestMovingHarmonicAverage(unittest.TestCase):
 
 
 class TestMovingGeometricAverage(unittest.TestCase):
-
     def test_initialization_with_positive_window_size(self):
         m = MovingGeometricAverage(window_size=5)
         self.assertEqual(len(m.window), 0)
@@ -199,7 +198,6 @@ class TestMovingGeometricAverage(unittest.TestCase):
 
 
 class TestMovingMedian(unittest.TestCase):
-
     def test_initialization_invalid(self):
         # Testing if ValueError is raised for non-positive window size
         with self.assertRaises(ValueError):
@@ -267,7 +265,6 @@ class TestMovingMedian(unittest.TestCase):
 
 
 class TestMovingQuantile(unittest.TestCase):
-
     def test_initialization(self):
         with self.assertRaises(ValueError):
             MovingQuantile(window_size=0)
@@ -353,7 +350,6 @@ class TestMovingQuantile(unittest.TestCase):
 
 
 class TestMovingVariance(unittest.TestCase):
-
     def test_initialization_with_valid_size(self):
         mv = MovingVariance(window_size=5)
         self.assertEqual(len(mv.window), 0)
@@ -417,7 +413,6 @@ class TestMovingVariance(unittest.TestCase):
 
 
 class TestMovingInterquartileRange(unittest.TestCase):
-
     def test_initialization_with_positive_window_size(self):
         ma = MovingInterquartileRange(3)
         self.assertEqual(ma.window.maxlen, 3)
@@ -466,7 +461,6 @@ class TestMovingInterquartileRange(unittest.TestCase):
 
 
 class TestMovingAverageAbsoluteDeviation(unittest.TestCase):
-
     def test_initialization_with_positive_window_size(self):
         ma = MovingAverageAbsoluteDeviation(3)
         self.assertEqual(ma.window.maxlen, 3)
@@ -519,7 +513,6 @@ class TestMovingAverageAbsoluteDeviation(unittest.TestCase):
 
 
 class TestMovingKurtosis(unittest.TestCase):
-
     def test_initialization_with_positive_window_size(self):
         ma = MovingKurtosis(3)
         self.assertEqual(ma.window.maxlen, 3)
@@ -572,7 +565,6 @@ class TestMovingKurtosis(unittest.TestCase):
 
 
 class TestMovingSkewness(unittest.TestCase):
-
     def test_initialization_with_positive_window_size(self):
         ma = MovingSkewness(3)
         self.assertEqual(ma.window.maxlen, 3)

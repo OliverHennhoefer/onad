@@ -3,7 +3,7 @@ from sklearn.metrics import average_precision_score
 from onad.model.unsupervised.svm.adaptive_svm import (
     IncrementalOneClassSVMAdaptiveKernel,
 )
-from onad.stream.streamer import ParquetStreamer, Dataset
+from onad.stream.streamer import Dataset, ParquetStreamer
 from onad.transform.scale import StandardScaler
 
 scaler = StandardScaler()

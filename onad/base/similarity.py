@@ -1,13 +1,11 @@
 import abc
-from typing import Dict
 
 
 class BaseSimilaritySearchEngine(abc.ABC):
-
     @abc.abstractmethod
-    def append(self, x: Dict[str, float]) -> None:
+    def append(self, x: dict[str, float]) -> None:
         pass
 
     @abc.abstractmethod
-    def search(self, x: Dict[str, float], n_neighbors: int) -> float:
+    def search(self, x: dict[str, float], n_neighbors: int) -> float:
         pass
