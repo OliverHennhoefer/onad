@@ -38,10 +38,15 @@ dev = [
     "pytest-cov>=6.0.0,<7.0.0",
     "mypy>=1.13.0,<2.0.0",
 ]
+docs = [
+    "mkdocs",
+    "mkdocs-material[imaging]",
+    "mkdocstrings[python]",
+]
 eval = ["scikit-learn>=1.6.1,<2.0.0"]
 dl = ["torch>=2.6.0,<3.0.0"]
 benchmark = ["river>=0.22.0,<1.0.0"]
-all = ["onad[dev,eval,dl,benchmark]"]
+all = ["onad[dev,docs,eval,dl,benchmark]"]
 
 [project.urls]
 "Homepage" = "https://github.com/OliverHennhoefer/onad"
