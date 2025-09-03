@@ -7,6 +7,12 @@ name = "onad"
 version = "0.1.0"
 description = "Online Anomaly Detection Toolkit"
 authors = [
+    { name = "Oliver Hennhoefer", email = "oliver.hennhoefer@mail.de" },
+    { name = "Pascal Heinzelmann" },
+    { name = "Marius Höll" },
+    { name = "Marco Catoir" }
+]
+maintainers = [
   { name = "Oliver Hennhoefer", email = "oliver.hennhoefer@mail.de" }
 ]
 license = { file = "LICENSE" }

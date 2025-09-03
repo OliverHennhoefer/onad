@@ -26,8 +26,6 @@ class MinMaxScaler(BaseTransformer):
             x (Dict[str, float]): A dictionary of feature-value pairs.
         """
         for feature, value in x.items():
-            value = float(value)  # Convert np.float64 to float explicitly
-
             if feature not in self.min:
                 self.min[feature] = math.inf
                 self.max[feature] = -math.inf
@@ -51,8 +49,6 @@ class MinMaxScaler(BaseTransformer):
                 raise ValueError(
                     f"Feature '{feature}' has not been seen during learning."
                 )
-
-            value = float(value)  # Ensure value is a native Python float
 
             if self.min[feature] == self.max[feature]:
                 scaled_x[feature] = float(
@@ -92,13 +88,12 @@ class StandardScaler(BaseTransformer):
             x (Dict[str, float]): A dictionary of feature-value pairs.
         """
         for feature, value in x.items():
-            val = float(value)
             self.counts[feature] += 1
             old_mean = self.means[feature]
-            self.means[feature] += (val - old_mean) / self.counts[feature]
+            self.means[feature] += (value - old_mean) / self.counts[feature]
             if self.with_std:
-                self.sum_sq_diffs[feature] += (val - old_mean) * (
-                    val - self.means[feature]
+                self.sum_sq_diffs[feature] += (value - old_mean) * (
+                    value - self.means[feature]
                 )
 
     def _safe_div(self, a, b) -> float:
@@ -122,7 +117,6 @@ class StandardScaler(BaseTransformer):
                     f"Feature '{feature}' has not been seen during learning."
                 )
 
-            val = float(value)
             if self.with_std:
                 variance = (
                     self.sum_sq_diffs[feature] / self.counts[feature]
@@ -130,8 +124,8 @@ class StandardScaler(BaseTransformer):
                     else 0.0
                 )
                 std_dev = variance**0.5
-                scaled_x[feature] = self._safe_div(val - self.means[feature], std_dev)
+                scaled_x[feature] = self._safe_div(value - self.means[feature], std_dev)
             else:
-                scaled_x[feature] = val - self.means[feature]
+                scaled_x[feature] = value - self.means[feature]
 
         return scaled_x

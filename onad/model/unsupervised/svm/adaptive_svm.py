@@ -207,9 +207,7 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
             max_age = self.n_samples - min(self.birth_sample)
 
             scores = []
-            for i, (alpha_val, birth) in enumerate(
-                zip(self.alpha, self.birth_sample, strict=False)
-            ):
+            for alpha_val, birth in zip(self.alpha, self.birth_sample, strict=False):
                 age = self.n_samples - birth
                 norm_alpha = alpha_val / (max_alpha + 1e-8)
                 norm_age = age / (max_age + 1e-8)

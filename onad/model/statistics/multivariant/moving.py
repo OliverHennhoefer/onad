@@ -68,8 +68,8 @@ class MovingCovariance(BaseModel):
             self.feature_names = list(x.keys())
             self.window[self.feature_names[0]] = deque([], maxlen=self.window_size)
             self.window[self.feature_names[1]] = deque([], maxlen=self.window_size)
-        if isinstance(x[self.feature_names[0]], (int, float)) and isinstance(
-            x[self.feature_names[1]], (int, float)
+        if isinstance(x[self.feature_names[0]], int | float) and isinstance(
+            x[self.feature_names[1]], int | float
         ):
             self.window[self.feature_names[0]].append(x[self.feature_names[0]])
             self.window[self.feature_names[1]].append(x[self.feature_names[1]])
@@ -155,8 +155,8 @@ class MovingCorrelationCoefficient(BaseModel):
             self.feature_names = list(x.keys())
             self.window[self.feature_names[0]] = deque([], maxlen=self.window_size)
             self.window[self.feature_names[1]] = deque([], maxlen=self.window_size)
-        if isinstance(x[self.feature_names[0]], (int, float)) and isinstance(
-            x[self.feature_names[1]], (int, float)
+        if isinstance(x[self.feature_names[0]], int | float) and isinstance(
+            x[self.feature_names[1]], int | float
         ):
             self.window[self.feature_names[0]].append(x[self.feature_names[0]])
             self.window[self.feature_names[1]].append(x[self.feature_names[1]])
@@ -231,7 +231,7 @@ class MovingMahalanobisDistance(BaseModel):
         if self.feature_names is None:
             self.feature_names = list(x.keys())
         datapoint = [x[key] for key in self.feature_names]
-        if all([isinstance(val, (int, float)) for val in datapoint]):
+        if all(isinstance(val, int | float) for val in datapoint):
             self.window.append(datapoint)
 
     def score_one(self, x: dict[str, float]) -> float:

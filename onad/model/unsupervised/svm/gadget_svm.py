@@ -50,12 +50,16 @@ class GADGETSVM(BaseModel):
 
     def __init__(
         self,
-        graph: dict[int, list[int]] = {0: [1], 1: [2], 2: []},
+        graph: dict[int, list[int]] | None = None,
         threshold: float = 0.0,
         learning_rate: float = 0.01,
         nu: float = 0.5,
         lambda_reg: float = 0.01,
     ):
+        # Set default graph if None provided
+        if graph is None:
+            graph = {0: [1], 1: [2], 2: []}
+
         # Collect all unique nodes from graph
         all_nodes: set[int] = set()
         for node, neighbors in graph.items():
