@@ -1,15 +1,16 @@
 import unittest
-import numpy as np
 from collections import deque
+
+import numpy as np
+
 from onad.model.statistics.multivariant.moving import (
-    MovingCovariance,
     MovingCorrelationCoefficient,
+    MovingCovariance,
     MovingMahalanobisDistance,
 )
 
 
 class TestMovingCovariance(unittest.TestCase):
-
     def test_initialization_with_positive_window_size(self):
         model = MovingCovariance(window_size=5)
         self.assertEqual(model.window_size, 5)
@@ -65,7 +66,6 @@ class TestMovingCovariance(unittest.TestCase):
 
 
 class TestMovingCorrelationCoefficient(unittest.TestCase):
-
     def test_initialization_with_positive_window_size(self):
         model = MovingCorrelationCoefficient(window_size=5)
         self.assertEqual(model.window_size, 5)
@@ -137,7 +137,6 @@ class TestMovingCorrelationCoefficient(unittest.TestCase):
 
 
 class TestMovingMahalanobisDistance(unittest.TestCase):
-
     def test_initialization(self):
         # Test valid initialization
         mmd = MovingMahalanobisDistance(window_size=3)

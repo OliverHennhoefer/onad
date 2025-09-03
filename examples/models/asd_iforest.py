@@ -1,7 +1,7 @@
 from sklearn.metrics import average_precision_score
 
 from onad.model.unsupervised.forest.asd_iforest import ASDIsolationForest
-from onad.stream.streamer import ParquetStreamer, Dataset
+from onad.stream.streamer import Dataset, ParquetStreamer
 
 model = ASDIsolationForest(n_estimators=750, max_samples=2750, seed=1)
 labels, scores = [], []

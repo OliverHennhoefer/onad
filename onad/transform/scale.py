@@ -1,8 +1,7 @@
 import math
-import numpy as np
-
 from collections import Counter, defaultdict
-from typing import Dict, Union
+
+import numpy as np
 
 from onad.base.transformer import BaseTransformer
 
@@ -16,10 +15,10 @@ class MinMaxScaler(BaseTransformer):
             feature_range (tuple): The desired range of transformed resources (default is (0, 1)).
         """
         self.feature_range = feature_range
-        self.min: Dict[str, float] = {}
-        self.max: Dict[str, float] = {}
+        self.min: dict[str, float] = {}
+        self.max: dict[str, float] = {}
 
-    def learn_one(self, x: Dict[str, Union[float, np.float64]]) -> None:
+    def learn_one(self, x: dict[str, float | np.float64]) -> None:
         """
         Update the min and max values for each feature in the input resources.
 
@@ -36,7 +35,7 @@ class MinMaxScaler(BaseTransformer):
             self.min[feature] = min(self.min[feature], value)
             self.max[feature] = max(self.max[feature], value)
 
-    def transform_one(self, x: Dict[str, Union[float, np.float64]]) -> Dict[str, float]:
+    def transform_one(self, x: dict[str, float | np.float64]) -> dict[str, float]:
         """
         Scale the input resources to the specified feature range.
 
@@ -85,7 +84,7 @@ class StandardScaler(BaseTransformer):
         self.means: defaultdict = defaultdict(float)
         self.sum_sq_diffs: defaultdict = defaultdict(float)
 
-    def learn_one(self, x: Dict[str, Union[float, np.float64]]) -> None:
+    def learn_one(self, x: dict[str, float | np.float64]) -> None:
         """
         Update the mean and standard deviation for each feature in the input resources.
 
@@ -93,20 +92,20 @@ class StandardScaler(BaseTransformer):
             x (Dict[str, float]): A dictionary of feature-value pairs.
         """
         for feature, value in x.items():
-            value = float(value)
+            val = float(value)
             self.counts[feature] += 1
             old_mean = self.means[feature]
-            self.means[feature] += (value - old_mean) / self.counts[feature]
+            self.means[feature] += (val - old_mean) / self.counts[feature]
             if self.with_std:
-                self.sum_sq_diffs[feature] += (value - old_mean) * (
-                    value - self.means[feature]
+                self.sum_sq_diffs[feature] += (val - old_mean) * (
+                    val - self.means[feature]
                 )
 
     def _safe_div(self, a, b) -> float:
         """Returns 0.0 if b is zero or False, else divides a by b."""
         return a / b if b else 0.0
 
-    def transform_one(self, x: Dict[str, Union[float, np.float64]]) -> Dict[str, float]:
+    def transform_one(self, x: dict[str, float | np.float64]) -> dict[str, float]:
         """
         Scale the input resources to standard score.
 
@@ -123,7 +122,7 @@ class StandardScaler(BaseTransformer):
                     f"Feature '{feature}' has not been seen during learning."
                 )
 
-            value = float(value)
+            val = float(value)
             if self.with_std:
                 variance = (
                     self.sum_sq_diffs[feature] / self.counts[feature]
@@ -131,8 +130,8 @@ class StandardScaler(BaseTransformer):
                     else 0.0
                 )
                 std_dev = variance**0.5
-                scaled_x[feature] = self._safe_div(value - self.means[feature], std_dev)
+                scaled_x[feature] = self._safe_div(val - self.means[feature], std_dev)
             else:
-                scaled_x[feature] = value - self.means[feature]
+                scaled_x[feature] = val - self.means[feature]
 
         return scaled_x

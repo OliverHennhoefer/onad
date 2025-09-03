@@ -1,5 +1,4 @@
 import abc
-from typing import Dict
 
 
 class BaseModel(abc.ABC):
@@ -14,7 +13,7 @@ class BaseModel(abc.ABC):
     """
 
     @abc.abstractmethod
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """
         Update the model with a single resources point.
 
@@ -28,7 +27,7 @@ class BaseModel(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def score_one(self, x: Dict[str, float]) -> float:
+    def score_one(self, x: dict[str, float]) -> float:
         """
         Compute the anomaly score for a single resources point.
 

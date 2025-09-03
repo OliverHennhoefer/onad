@@ -1,0 +1,46 @@
+# This file configures the pre-commit hooks for the project.
+# For more information, see https://pre-commit.com
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace # Trims trailing whitespace.
+      - id: end-of-file-fixer # Ensures files end with a single newline.
+      - id: check-yaml # Checks YAML files for parseable syntax.
+      - id: check-toml # Checks TOML files for parseable syntax.
+      - id: check-json # Checks JSON files for parseable syntax.
+      - id: check-added-large-files # Prevents committing large files.
+      - id: check-case-conflict # Checks for files that would conflict on case-insensitive filesystems.
+      - id: check-merge-conflict # Checks for files that contain merge conflict strings.
+      - id: debug-statements # Checks for leftover debugger imports and calls (e.g., pdb, breakpoint()).
+
+  # Ruff for linting and formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Check for updates: https://github.com/astral-sh/ruff-pre-commit/releases
+    rev: v0.8.5
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: [--fix]
+      # Run the formatter (replaces Black)
+      - id: ruff-format
+
+  # Type checking with mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-all]
+        args: [--ignore-missing-imports, --strict]
+
+  # Optional: Run tests before commit
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: Run tests
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+        args: [tests/, -v, --tb=short]

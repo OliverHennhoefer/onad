@@ -1,23 +1,20 @@
-from typing import Dict
-
-
 class Pipeline:
     def __init__(self, first, second):
         self.first = first
         self.second = second
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Learn from the input resources."""
         self.first.learn_one(x)
         transformed_x = self.first.transform_one(x)
         self.second.learn_one(transformed_x)
 
-    def transform_one(self, x: Dict[str, float]) -> Dict[str, float]:
+    def transform_one(self, x: dict[str, float]) -> dict[str, float]:
         """Transform the input resources."""
         transformed_x = self.first.transform_one(x)
         return self.second.transform_one(transformed_x)
 
-    def score_one(self, x: Dict[str, float]) -> float:
+    def score_one(self, x: dict[str, float]) -> float:
         """
         Score the input resources using the model in the pipeline.
 

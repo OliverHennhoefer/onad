@@ -1,7 +1,7 @@
 from sklearn.metrics import average_precision_score
 
 from onad.model.unsupervised.svm.gadget_svm import GADGETSVM
-from onad.stream.streamer import ParquetStreamer, Dataset
+from onad.stream.streamer import Dataset, ParquetStreamer
 from onad.transform.scale import MinMaxScaler
 
 scaler = MinMaxScaler()

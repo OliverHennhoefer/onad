@@ -3,12 +3,11 @@ import unittest
 from sklearn.metrics import average_precision_score, roc_auc_score, roc_curve
 
 from onad.model.unsupervised.forest.streamRHF import StreamRandomHistogramForest
-from onad.stream.streamer import ParquetStreamer, Dataset
+from onad.stream.streamer import Dataset, ParquetStreamer
 
 
 class TestCaseStreamRandomHistogramForest(unittest.TestCase):
     def test_shuttle(self):
-
         model = StreamRandomHistogramForest(
             n_estimators=25, max_bins=10, window_size=256, seed=1
         )

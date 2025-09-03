@@ -1,7 +1,7 @@
 from sklearn.metrics import average_precision_score
 
 from onad.model.unsupervised.distance.knn import KNN
-from onad.stream.streamer import ParquetStreamer, Dataset
+from onad.stream.streamer import Dataset, ParquetStreamer
 from onad.transform.scale import MinMaxScaler
 from onad.utils.similarity.faiss_engine import FaissSimilaritySearchEngine
 

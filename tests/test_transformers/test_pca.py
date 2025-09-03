@@ -1,6 +1,8 @@
-from onad.transform.pca import IncrementalPCA
-import numpy as np
 import unittest
+
+import numpy as np
+
+from onad.transform.pca import IncrementalPCA
 
 
 class TestIncrementalPCA(unittest.TestCase):
@@ -18,7 +20,8 @@ class TestIncrementalPCA(unittest.TestCase):
     def test_q_greater_d_init(self):
         with self.assertRaises(ValueError):
             ipca = IncrementalPCA(  # noqa
-                7, keys=["key_01", "key_02", "key_03", "key_04", "key_05"]  # noqa
+                7,
+                keys=["key_01", "key_02", "key_03", "key_04", "key_05"],  # noqa
             )  # noqa
 
     def test_q_greater_d_dict(self):
@@ -214,7 +217,7 @@ class TestIncrementalPCA(unittest.TestCase):
 
             self.assertTrue(
                 np.allclose(ipca.values, expected_vals, rtol=1e-3),
-                f"Step {i+1} values mismatch. Expected: {expected_vals}, Got: {ipca.values}",
+                f"Step {i + 1} values mismatch. Expected: {expected_vals}, Got: {ipca.values}",
             )
 
         # Test final vectors against R

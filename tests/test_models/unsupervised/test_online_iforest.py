@@ -1,9 +1,10 @@
 import unittest
+
 import numpy as np
-from sklearn.metrics import roc_auc_score, average_precision_score, roc_curve
+from sklearn.metrics import average_precision_score, roc_auc_score, roc_curve
 
 from onad.model.unsupervised.forest.online_iforest import OnlineIsolationForest
-from onad.stream.streamer import ParquetStreamer, Dataset
+from onad.stream.streamer import Dataset, ParquetStreamer
 
 
 class TestTrueOnlineIForest(unittest.TestCase):

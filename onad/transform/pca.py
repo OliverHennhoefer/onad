@@ -1,5 +1,4 @@
 import numpy as np
-from typing import Dict, Optional
 
 
 class IncrementalPCA:
@@ -7,7 +6,7 @@ class IncrementalPCA:
         self,
         n_components: int,
         n0: int = 50,
-        keys: Optional[list[str]] = None,
+        keys: list[str] | None = None,
         tol: float = 1e-7,
         forgetting_factor: float | None = None,
     ) -> None:
@@ -42,7 +41,7 @@ class IncrementalPCA:
         """
         self.n_components: int = n_components
         self.n0: int = n0
-        self.feature_names: Optional[list[str]] = keys
+        self.feature_names: list[str] | None = keys
         self.tol: float = tol
         if forgetting_factor is not None and not (0 < forgetting_factor < 1):
             raise ValueError("forgetting_factor has to be 0 < forgetting_factor < 1")
@@ -71,7 +70,7 @@ class IncrementalPCA:
                     "The number of primary components has to be less or equal to the number of features"
                 )
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """
         Update PCA components incrementally using a single sample.
 
@@ -164,7 +163,7 @@ class IncrementalPCA:
                 self.window = []
         self.n_samples_seen += 1
 
-    def transform_one(self, x: Dict[str, float]) -> Dict[str, float]:
+    def transform_one(self, x: dict[str, float]) -> dict[str, float]:
         """
         Transform a single data point using the learned PCA components.
 

@@ -1,11 +1,12 @@
 import unittest
-from sklearn.metrics import average_precision_score
-import numpy as np
 
-from onad.stream.streamer import ParquetStreamer, Dataset
-from onad.transform.scale import StandardScaler
-from onad.transform.pca import IncrementalPCA
+import numpy as np
+from sklearn.metrics import average_precision_score
+
 from onad.model.unsupervised.distance.knn import KNN
+from onad.stream.streamer import Dataset, ParquetStreamer
+from onad.transform.pca import IncrementalPCA
+from onad.transform.scale import StandardScaler
 from onad.utils.similarity.faiss_engine import FaissSimilaritySearchEngine
 
 
@@ -154,22 +155,20 @@ class TestPCAPipelineIntegration(unittest.TestCase):
 
     def test_pca_state_consistency(self):
         """Test that PCA maintains consistent state during streaming."""
-        sample_count = 0
         eigenvalue_snapshots = []
 
         with ParquetStreamer(dataset=Dataset.SHUTTLE) as streamer:
-            for i, (x, y) in enumerate(streamer):
-                if sample_count >= 150:
+            for i, (x, _) in enumerate(streamer):
+                if (i + 1) >= 150:
                     break
 
                 self.pipeline_scale_pca.learn_one(x)
-                sample_count += 1
 
                 # Take snapshots after PCA initialization
-                if self.pca.n0_reached and sample_count % 20 == 0:
+                if self.pca.n0_reached and (i + 1) % 20 == 0:
                     eigenvalue_snapshots.append(
                         {
-                            "sample_count": sample_count,
+                            "sample_count": (i + 1),
                             "values": self.pca.values.copy(),
                             "n_components": len(self.pca.values),
                         }
@@ -216,7 +215,7 @@ class TestPCAPipelineIntegration(unittest.TestCase):
 
         # Process some samples
         with ParquetStreamer(dataset=Dataset.SHUTTLE) as streamer:
-            for i, (x, y) in enumerate(streamer):
+            for i, (x, _) in enumerate(streamer):
                 if i >= 200:
                     break
                 self.pipeline_full.learn_one(x)

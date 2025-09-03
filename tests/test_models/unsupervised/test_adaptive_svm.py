@@ -1,13 +1,14 @@
 import unittest
+
 import numpy as np
 from sklearn.metrics import roc_auc_score
+
 from onad.model.unsupervised.svm.adaptive_svm import (
     IncrementalOneClassSVMAdaptiveKernel,
 )
 
 
 class TestIncrementalOneClassSVMAdaptiveKernel(unittest.TestCase):
-
     def setUp(self):
         """Set up test fixtures before each test method."""
         # Set random seed for reproducible tests

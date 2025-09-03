@@ -4,10 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "onad"
-version = "0.0.12"
-description = "Online Anomaly Detection Models"
+version = "0.1.0"
+description = "Online Anomaly Detection Toolkit"
 authors = [
-  { name = "Oliver Hennhoefer", email = "oliver.hennhoefer@mail.de" },
+  { name = "Oliver Hennhoefer", email = "oliver.hennhoefer@mail.de" }
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
@@ -25,11 +25,71 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["black", "ruff", "river>=0.22.0"]
-eval = ["scikit-learn>=1.6.1"]
-dl = ["torch>=2.6.0"]
-all = ["black", "ruff", "river>=0.22.0", "scikit-learn>=1.6.1", "torch>=2.6.0"]
+dev = [
+    "ruff>=0.8.0,<1.0.0",
+    "pre-commit>=4.0.0,<5.0.0",
+    "pytest>=8.0.0,<9.0.0",
+    "pytest-cov>=6.0.0,<7.0.0",
+    "mypy>=1.13.0,<2.0.0",
+]
+eval = ["scikit-learn>=1.6.1,<2.0.0"]
+dl = ["torch>=2.6.0,<3.0.0"]
+benchmark = ["river>=0.22.0,<1.0.0"]
+all = ["onad[dev,eval,dl,benchmark]"]
 
 [project.urls]
 "Homepage" = "https://github.com/OliverHennhoefer/onad"
 "Bugs" = "https://github.com/OliverHennhoefer/onad/issues"
+
+# Ruff configuration
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "dist",
+    "build",
+    ".eggs",
+    "*.egg-info",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "PL",  # pylint
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "PLR0913", # too many arguments
+    "PLR2004", # magic value used in comparison
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["onad"]
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true

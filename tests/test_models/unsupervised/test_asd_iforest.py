@@ -3,12 +3,11 @@ import unittest
 from sklearn.metrics import average_precision_score, roc_auc_score, roc_curve
 
 from onad.model.unsupervised.forest.asd_iforest import ASDIsolationForest
-from onad.stream.streamer import ParquetStreamer, Dataset
+from onad.stream.streamer import Dataset, ParquetStreamer
 
 
 class TestCaseASDIsolationForest(unittest.TestCase):
     def test_shuttle(self):
-
         model = ASDIsolationForest(n_estimators=750, max_samples=2750, seed=1)
 
         labels, scores = [], []

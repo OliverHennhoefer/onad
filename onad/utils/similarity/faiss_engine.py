@@ -1,13 +1,12 @@
-import faiss
 import collections
 
+import faiss
 import numpy as np
 
 from onad.base.similarity import BaseSimilaritySearchEngine
 
 
 class FaissSimilaritySearchEngine(BaseSimilaritySearchEngine):
-
     def __init__(self, window_size: int, warm_up: int):
         self.window = collections.deque(maxlen=window_size)
 
@@ -29,14 +28,12 @@ class FaissSimilaritySearchEngine(BaseSimilaritySearchEngine):
             x = np.array(
                 [item.get(key, np.nan) for key in self.keys], dtype=float
             ).reshape(1, -1)
-            distances, _ = self.index.search(
-                x.astype(np.float32), k=n_neighbors
-            )  # noqa
+            distances, _ = self.index.search(x.astype(np.float32), k=n_neighbors)  # noqa
             return np.mean(distances)
         return None
 
     def _get_window_data(self):
-        keys = sorted({key for dict_ in self.window for key in dict_.keys()})
+        keys = sorted({key for dict_ in self.window for key in dict_})
         return keys, np.array(
             [[dict_.get(key, np.nan) for key in keys] for dict_ in self.window]
         )

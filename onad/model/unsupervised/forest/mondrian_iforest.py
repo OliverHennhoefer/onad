@@ -1,6 +1,7 @@
 import math
+
 import numpy as np
-from typing import Dict
+
 from onad.base.model import BaseModel
 
 
@@ -90,14 +91,12 @@ class MondrianTree:
                     continue  # Continue to traverse after split
                 else:
                     break
+            elif (
+                x_projected[current_node.split_feature] <= current_node.split_threshold
+            ):
+                current_node = current_node.left_child
             else:
-                if (
-                    x_projected[current_node.split_feature]
-                    <= current_node.split_threshold
-                ):
-                    current_node = current_node.left_child
-                else:
-                    current_node = current_node.right_child
+                current_node = current_node.right_child
 
     def score_one(self, x_projected: np.ndarray) -> int:
         path_length = 0
@@ -130,7 +129,7 @@ class MondrianForest(BaseModel):
         self.features_ = None
         self.feature_to_index = None
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         if self.features_ is None:
             self._initialize_features(x)
         global_features = np.array([x[f] for f in self.features_])
@@ -141,7 +140,7 @@ class MondrianForest(BaseModel):
 
         self.n_samples += 1
 
-    def _initialize_features(self, x: Dict[str, float]) -> None:
+    def _initialize_features(self, x: dict[str, float]) -> None:
         self.features_ = sorted(x.keys())
         self.subspace_size = min(self.subspace_size, len(self.features_))
         self.feature_to_index = {f: i for i, f in enumerate(self.features_)}
@@ -160,7 +159,7 @@ class MondrianForest(BaseModel):
             tree.learn_one(x_projected)
             self.trees.append(tree)
 
-    def score_one(self, x: Dict[str, float]) -> float:
+    def score_one(self, x: dict[str, float]) -> float:
         global_features = np.array([x[f] for f in self.features_])
         path_lengths = []
 

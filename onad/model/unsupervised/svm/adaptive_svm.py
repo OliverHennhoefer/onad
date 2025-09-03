@@ -1,6 +1,7 @@
-import numpy as np
-from typing import List, Dict, Optional, Tuple, Deque
 from collections import deque
+
+import numpy as np
+
 from onad.base.model import BaseModel
 
 
@@ -13,7 +14,7 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
         self,
         nu: float = 0.1,
         initial_gamma: float = 1.0,
-        gamma_bounds: Tuple[float, float] = (0.001, 100.0),
+        gamma_bounds: tuple[float, float] = (0.001, 100.0),
         adaptation_rate: float = 0.1,
         buffer_size: int = 200,
         sv_budget: int = 100,
@@ -28,23 +29,23 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
         self.tolerance = tolerance
 
         # Model parameters
-        self.support_vectors: List[np.ndarray] = []
-        self.alpha: List[float] = []
-        self.birth_sample: List[int] = []  # Track SV creation time
+        self.support_vectors: list[np.ndarray] = []
+        self.alpha: list[float] = []
+        self.birth_sample: list[int] = []  # Track SV creation time
         self.rho: float = 0.0
 
         # Adaptation mechanism
-        self.data_buffer: Deque[np.ndarray] = deque(maxlen=buffer_size)
+        self.data_buffer: deque[np.ndarray] = deque(maxlen=buffer_size)
         self.n_samples: int = 0
 
         # Precomputed kernel matrix
-        self.K_sv: Optional[np.ndarray] = None
+        self.K_sv: np.ndarray | None = None
 
         # Feature handling
-        self.feature_order: Optional[Tuple[str, ...]] = None
-        self.feature_stats: Dict[str, Tuple[float, float]] = {}  # For standardization
+        self.feature_order: tuple[str, ...] | None = None
+        self.feature_stats: dict[str, tuple[float, float]] = {}  # For standardization
 
-    def _get_feature_vector(self, x: Dict[str, float]) -> np.ndarray:
+    def _get_feature_vector(self, x: dict[str, float]) -> np.ndarray:
         """Convert feature dictionary to standardized numpy array."""
         if self.feature_order is None:
             self.feature_order = tuple(sorted(x.keys()))
@@ -64,7 +65,7 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
 
         return x_vec
 
-    def _update_feature_stats(self, x: Dict[str, float]):
+    def _update_feature_stats(self, x: dict[str, float]):
         """Update running feature statistics for standardization"""
         if not self.feature_stats:
             return
@@ -93,7 +94,7 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
         """Compute kernel values between x and all support vectors."""
         return np.array([self._rbf_kernel(x, sv) for sv in self.support_vectors])
 
-    def _update_kernel_matrix(self, new_sv: Optional[np.ndarray] = None):
+    def _update_kernel_matrix(self, new_sv: np.ndarray | None = None):
         """Efficient kernel matrix update with corrected dimension handling"""
         n_sv = len(self.support_vectors)
 
@@ -206,7 +207,9 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
             max_age = self.n_samples - min(self.birth_sample)
 
             scores = []
-            for i, (alpha_val, birth) in enumerate(zip(self.alpha, self.birth_sample)):
+            for i, (alpha_val, birth) in enumerate(
+                zip(self.alpha, self.birth_sample, strict=False)
+            ):
                 age = self.n_samples - birth
                 norm_alpha = alpha_val / (max_alpha + 1e-8)
                 norm_age = age / (max_age + 1e-8)
@@ -234,7 +237,7 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
         kernel_values = self._compute_kernel_row(x)
         return np.dot(self.alpha, kernel_values) - self.rho
 
-    def learn_one(self, x: Dict[str, float]):
+    def learn_one(self, x: dict[str, float]):
         """Incrementally learn from one sample."""
         # Update feature statistics before standardization
         self._update_feature_stats(x)
@@ -258,7 +261,7 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
         # Perform gamma adaptation
         self._adapt_gamma()
 
-    def predict_one(self, x: Dict[str, float]) -> int:
+    def predict_one(self, x: dict[str, float]) -> int:
         """Predict if sample is normal (1) or anomaly (-1)."""
         if not self.support_vectors:
             return 1  # Default to normal
@@ -267,7 +270,7 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
         decision_value = self._decision_function(x_vec)
         return 1 if decision_value >= -self.tolerance else -1
 
-    def score_one(self, x: Dict[str, float]) -> float:
+    def score_one(self, x: dict[str, float]) -> float:
         """Compute anomaly score (higher = more anomalous)."""
         if not self.support_vectors:
             return 0.0
@@ -276,7 +279,7 @@ class IncrementalOneClassSVMAdaptiveKernel(BaseModel):
         decision_value = self._decision_function(x_vec)
         return -decision_value
 
-    def get_model_info(self) -> Dict:
+    def get_model_info(self) -> dict:
         """Get current model information."""
         return {
             "n_support_vectors": len(self.support_vectors),

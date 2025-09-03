@@ -13,7 +13,6 @@ class Dataset(Enum):
 
 class ParquetStreamer:
     def __init__(self, dataset: str | Dataset):
-
         current_dir = os.path.dirname(os.path.abspath(__file__))
         if isinstance(dataset, Dataset):
             # Make the dataset path relative to the current Python file

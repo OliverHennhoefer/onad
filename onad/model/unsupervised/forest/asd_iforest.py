@@ -1,7 +1,6 @@
 import math
 import random
 from collections import deque
-from typing import Dict, Optional, List
 
 import numpy as np
 
@@ -22,12 +21,12 @@ class ASDIsolationForest(BaseModel):
         self,
         n_estimators: int = 100,
         max_samples: int = 256,
-        seed: Optional[int] = None,
+        seed: int | None = None,
     ):
         super().__init__()
         self.n_estimators = n_estimators
         self.max_samples = max_samples
-        self.feature_names: Optional[List[str]] = None
+        self.feature_names: list[str] | None = None
         self.buffer: np.ndarray = np.empty((0, 0))
         self.buffer_count: int = 0
         self.trees: deque = deque()
@@ -50,7 +49,7 @@ class ASDIsolationForest(BaseModel):
         harmonic = math.log(n - 1) + 0.5772156649
         return 2.0 * harmonic - 2.0 * (n - 1) / n
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single data point."""
         if self.feature_names is None:
             self.feature_names = list(x.keys())
@@ -73,7 +72,7 @@ class ASDIsolationForest(BaseModel):
             self.buffer[self.buffer_count] = x_converted
             self.buffer_count += 1
 
-    def _build_tree(self, data_arr: np.ndarray) -> Dict:
+    def _build_tree(self, data_arr: np.ndarray) -> dict:
         """Build an isolation tree from a NumPy array buffer."""
         n_samples = data_arr.shape[0]
         indices = np.arange(n_samples)
@@ -86,7 +85,7 @@ class ASDIsolationForest(BaseModel):
         indices: np.ndarray,
         max_height: int,
         current_height: int = 0,
-    ) -> Dict:
+    ) -> dict:
         """Iteratively build isolation tree nodes with NumPy optimizations."""
         n = len(indices)
         if n <= 1 or current_height >= max_height:
@@ -116,7 +115,7 @@ class ASDIsolationForest(BaseModel):
             "size": n,  # For consistency, though mainly used in leaves
         }
 
-    def _compute_path_length(self, x: Dict[str, float], tree: Dict) -> float:
+    def _compute_path_length(self, x: dict[str, float], tree: dict) -> float:
         """Iteratively compute path length with precomputed c values."""
         depth = 0
         current_node = tree
@@ -130,7 +129,7 @@ class ASDIsolationForest(BaseModel):
                 current_node = current_node["right"]
             depth += 1
 
-    def score_one(self, x: Dict[str, float]) -> float:
+    def score_one(self, x: dict[str, float]) -> float:
         """Compute anomaly score using optimized path calculations."""
         if not self.trees:
             return 0.0

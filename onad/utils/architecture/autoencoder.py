@@ -1,5 +1,4 @@
 import torch
-
 from torch import nn
 
 from onad.base.architecture import Architecture

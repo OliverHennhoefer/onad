@@ -1,7 +1,7 @@
-from typing import Dict, List, Optional
 from concurrent.futures import ThreadPoolExecutor
+
 import numpy as np
-from numpy import ndarray, log, inf, zeros, empty, argsort, sort, split, vstack
+from numpy import argsort, empty, inf, log, ndarray, sort, split, vstack, zeros
 from numpy.random import choice, random, uniform
 
 from onad.base.model import BaseModel
@@ -19,13 +19,13 @@ class TrueOnlineINode:
     def __init__(
         self,
         data_size: int,
-        children: Optional[ndarray],
+        children: ndarray | None,
         depth: int,
         node_index: int,
-        min_values: Optional[ndarray] = None,
-        max_values: Optional[ndarray] = None,
-        projection_vector: Optional[ndarray] = None,
-        split_values: Optional[ndarray] = None,
+        min_values: ndarray | None = None,
+        max_values: ndarray | None = None,
+        projection_vector: ndarray | None = None,
+        split_values: ndarray | None = None,
     ) -> None:
         """
         Initialize a TrueOnlineINode.
@@ -130,7 +130,7 @@ class TrueOnlineITree:
             self.max_leaf_samples,
             self.data_size * self.subsample,
         )
-        self.root: Optional[TrueOnlineINode] = None
+        self.root: TrueOnlineINode | None = None
         self.next_node_index = 0
 
     def learn(self, data: ndarray) -> "TrueOnlineITree":
@@ -262,41 +262,40 @@ class TrueOnlineITree:
         if node.children is None:
             return node
         # If the current node is not a leaf, try to unsplit it
+        # If there are not enough samples according to max leaf samples, unsplit the node
+        elif node.data_size < self.max_leaf_samples * self.get_multiplier(
+            self.type, node.depth
+        ):
+            return self.recursive_unbuild(node)
+        # If there are enough samples according to max leaf samples, recursively update all its children
         else:
-            # If there are not enough samples according to max leaf samples, unsplit the node
-            if node.data_size < self.max_leaf_samples * self.get_multiplier(
-                self.type, node.depth
-            ):
-                return self.recursive_unbuild(node)
-            # If there are enough samples according to max leaf samples, recursively update all its children
-            else:
-                # Partition data
-                partition_indices = self.split_data(
-                    data, node.projection_vector, node.split_values
-                )
-                # Recursively update children
-                for i, indices in enumerate(partition_indices):
-                    if len(indices) > 0:
-                        node.children[i] = self.recursive_unlearn(
-                            node.children[i], data[indices]
-                        )
+            # Partition data
+            partition_indices = self.split_data(
+                data, node.projection_vector, node.split_values
+            )
+            # Recursively update children
+            for i, indices in enumerate(partition_indices):
+                if len(indices) > 0:
+                    node.children[i] = self.recursive_unlearn(
+                        node.children[i], data[indices]
+                    )
 
-                # Update the vectors of minimum and maximum values seen so far by the current node
-                if len(node.children) > 0:
-                    min_vals = [
-                        child.min_values
-                        for child in node.children
-                        if child.min_values is not None
-                    ]
-                    max_vals = [
-                        child.max_values
-                        for child in node.children
-                        if child.max_values is not None
-                    ]
-                    if min_vals and max_vals:
-                        node.min_values = vstack(min_vals).min(axis=0)
-                        node.max_values = vstack(max_vals).max(axis=0)
-                return node
+            # Update the vectors of minimum and maximum values seen so far by the current node
+            if len(node.children) > 0:
+                min_vals = [
+                    child.min_values
+                    for child in node.children
+                    if child.min_values is not None
+                ]
+                max_vals = [
+                    child.max_values
+                    for child in node.children
+                    if child.max_values is not None
+                ]
+                if min_vals and max_vals:
+                    node.min_values = vstack(min_vals).min(axis=0)
+                    node.max_values = vstack(max_vals).max(axis=0)
+            return node
 
     def recursive_unbuild(self, node: TrueOnlineINode) -> TrueOnlineINode:
         """
@@ -477,7 +476,7 @@ class TrueOnlineITree:
 
     def split_data(
         self, data: ndarray, projection_vector: ndarray, split_values: ndarray
-    ) -> List[ndarray]:
+    ) -> list[ndarray]:
         """
         Split data according to projection vector and split values.
 
@@ -541,7 +540,7 @@ class OnlineIsolationForest(BaseModel):
         self.metric = metric
         self.n_jobs = n_jobs if n_jobs != -1 else None
 
-        self.trees: List[TrueOnlineITree] = [
+        self.trees: list[TrueOnlineITree] = [
             TrueOnlineITree(
                 max_leaf_samples=max_leaf_samples,
                 type=type,
@@ -553,11 +552,11 @@ class OnlineIsolationForest(BaseModel):
             for _ in range(num_trees)
         ]
 
-        self.data_window: List[ndarray] = []
+        self.data_window: list[ndarray] = []
         self.data_size: int = 0
         self.normalization_factor: float = 0.0
 
-    def learn_one(self, x: Dict[str, float]) -> None:
+    def learn_one(self, x: dict[str, float]) -> None:
         """
         Learn from a single data point.
 
@@ -572,7 +571,7 @@ class OnlineIsolationForest(BaseModel):
         data_point = np.array([list(x.values())], dtype=np.float32)
         self.learn_batch(data_point)
 
-    def score_one(self, x: Dict[str, float]) -> float:
+    def score_one(self, x: dict[str, float]) -> float:
         """
         Compute anomaly score for a single data point.
 
