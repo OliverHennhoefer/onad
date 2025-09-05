@@ -1,118 +1,170 @@
+"""Statistical models for univariate moving window analysis."""
+
 from collections import deque
+from typing import Any
 
 from onad.base.model import BaseModel
 
 
-class MovingAverage(BaseModel):
-    """A simple moving model that calculates the difference between arithmetic average of a window + new value and the window."""
-
-    def __init__(self, window_size: int, key: str | None = None, abs_diff=True) -> None:
-        """Initialize a new instance of MovingAverage.
-        Args:
-            window_size (int): The number of recent values to consider for calculating the moving arithmetic average.
-            key (str): optional, if None is given, the first learned key-value pair will set the key
-            abs_diff (bool): When true (default) returns abs() from the difference
-        Raises:
-            ValueError: If window_size is not a positive integer."""
+class _BaseMovingUnivariate(BaseModel):
+    """Base class for univariate moving window models to reduce code duplication."""
+    
+    def __init__(self, window_size: int, key: str | None = None, abs_diff: bool = True) -> None:
+        """Initialize base moving univariate model."""
+        super().__init__()
+        
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
-        self.window: deque[float] = deque([], maxlen=window_size)
+            
+        self.window_size = window_size
+        self.window: deque[float] = deque(maxlen=window_size)
         self.feature_name: str | None = key
         self.abs_diff = abs_diff
-
+    
     def learn_one(self, x: dict[str, float]) -> None:
-        """Update the model with a single resource point.
+        """
+        Update the model with a single data point.
+        
         Args:
-            x (Dict[str, float]): A dictionary representing a single resource point.
+            x: Dictionary with exactly one key-value pair.
+            
         Raises:
-            AssertionError: If the input dictionary contains more than one key-value pair or is empty.
+            ValueError: If input doesn't contain exactly one feature.
         """
-        assert len(x) == 1, "Dictionary has more than one key-value pair."
+        if len(x) != 1:
+            raise ValueError("Input must contain exactly one key-value pair.")
+            
         if self.feature_name is None:
-            self.window.append(list(x.values())[0])
-        else:
-            self.window.append(x[self.feature_name])
-
-    def score_one(self, x) -> float:
-        """Calculate and return the difference between the moving average of the current window (including the new data point)
-        and the moving average of the original window.
-
-        Args:
-            x (Dict[str, float]): A dictionary representing a single data point. It is expected to contain one key-value pair,
-            where the value will be used in the calculation.
-
-        Returns:
-            float: The difference between the new moving average (including `x`) and the current moving average of the window.
-            If the original window has zero or fewer elements, returns 0.
-        """
-        actual_window_length = len(self.window)
-        if actual_window_length <= 0:
-            return 0
-        score_window = list(self.window)
-        score_window.append(list(x.values())[0])
-        score = (
-            sum(score_window) / len(score_window)
-            - sum(self.window) / actual_window_length
-        )
-        return abs(score) if self.abs_diff else score
+            # Extract the single value efficiently
+            self.feature_name = next(iter(x))
+            
+        value = x.get(self.feature_name)
+        if value is not None and isinstance(value, (int, float)):
+            self.window.append(float(value))
+    
+    def _extract_value(self, x: dict[str, float]) -> float:
+        """Extract single value from input dictionary efficiently."""
+        if self.feature_name is not None:
+            return float(x[self.feature_name])
+        return float(next(iter(x.values())))
 
 
-class MovingHarmonicAverage(BaseModel):
-    """A simple moving model that calculates the difference between harmonic average of a window + new value and the window.
-    Attributes:
-        window (collections.deque): A fixed-size deque storing the most recent values.
+class MovingAverage(_BaseMovingUnivariate):
+    """
+    Moving average anomaly detection model.
+    
+    Calculates the difference between the arithmetic mean of a window with a new value
+    and the mean of the current window.
+    
+    Args:
+        window_size: Number of recent values to consider.
+        key: Feature name. If None, uses first learned key.
+        abs_diff: If True, returns absolute difference.
+        
+    Example:
+        >>> model = MovingAverage(window_size=10)
+        >>> model.learn_one({"value": 1.0})
+        >>> score = model.score_one({"value": 1.5})
     """
 
-    def __init__(self, window_size: int, key: str | None = None, abs_diff=True) -> None:
-        """Initialize a new instance of MovingHarmonicAverage.
+    def score_one(self, x: dict[str, float]) -> float:
+        """
+        Compute anomaly score based on mean change.
+        
         Args:
-            window_size (int): The number of recent values to consider for calculating the moving harmonic average.
-            key (str): optional, if None is given, the first learned key-value pair will set the key
-            abs_diff (bool): When true (default) returns abs() from the difference
-        Raises:
-            ValueError: If window_size is not a positive integer."""
-        if window_size <= 0:
-            raise ValueError("Window size must be a positive integer.")
-        self.window: deque[float] = deque([], maxlen=window_size)
-        self.feature_name: str | None = key
-        self.abs_diff = abs_diff
+            x: Data point to score.
+            
+        Returns:
+            Mean difference. Returns 0.0 if window is empty.
+        """
+        if len(self.window) == 0:
+            return 0.0
+            
+        current_mean = sum(self.window) / len(self.window)
+        new_value = self._extract_value(x)
+        new_mean = (sum(self.window) + new_value) / (len(self.window) + 1)
+        
+        difference = new_mean - current_mean
+        return abs(difference) if self.abs_diff else difference
+    
+    def __repr__(self) -> str:
+        """Return string representation of the model."""
+        return (
+            f"MovingAverage(window_size={self.window_size}, "
+            f"abs_diff={self.abs_diff})"
+        )
+
+
+class MovingHarmonicAverage(_BaseMovingUnivariate):
+    """
+    Moving harmonic average anomaly detection model.
+    
+    Calculates the difference between the harmonic mean of a window with a new value
+    and the harmonic mean of the current window. Zero values are ignored.
+    
+    Args:
+        window_size: Number of recent values to consider.
+        key: Feature name. If None, uses first learned key.
+        abs_diff: If True, returns absolute difference.
+        
+    Example:
+        >>> model = MovingHarmonicAverage(window_size=10)
+        >>> model.learn_one({"value": 2.0})
+        >>> score = model.score_one({"value": 3.0})
+    """
 
     def learn_one(self, x: dict[str, float]) -> None:
-        """Update the model with a single resource point.
-        Args:
-            x (Dict[str, float]): A dictionary representing a single resource point. 0 will be ignored.
-        Raises:
-            AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
-        assert len(x) == 1, "Dictionary has more than one key-value pair."
+        Update the model with a single data point.
+        
+        Zero values are ignored as they would make harmonic mean undefined.
+        
+        Args:
+            x: Dictionary with exactly one key-value pair.
+        """
+        if len(x) != 1:
+            raise ValueError("Input must contain exactly one key-value pair.")
+            
         if self.feature_name is None:
-            if list(x.values())[0] != 0:
-                self.window.append(list(x.values())[0])
-        elif x[self.feature_name] != 0:
-            self.window.append(x[self.feature_name])
+            self.feature_name = next(iter(x))
+            
+        value = x.get(self.feature_name, 0)
+        if value != 0 and isinstance(value, (int, float)):
+            self.window.append(float(value))
 
-    def score_one(self, x) -> float:
-        """Calculate and return the difference between the harmonic average of the current window (including the new data point)
-        and the moving average of the original window.
-
-        Args:
-            x (Dict[str, float]): A dictionary representing a single data point. It is expected to contain one key-value pair,
-            where the value will be used in the calculation.
-
-        Returns:
-            float: The difference between the new harmonic average (including `x`) and the current harmonic average of the window.
-            If the original window has zero or fewer elements, returns 0.
+    def score_one(self, x: dict[str, float]) -> float:
         """
-        actual_window_length = len(self.window)
-        if actual_window_length <= 0:
-            return 0
-
-        score_window = list(self.window)
-        score_window.append(list(x.values())[0])
-        score = len(score_window) / sum(
-            1 / x for x in score_window
-        ) - actual_window_length / sum(1 / x for x in self.window)
-        return abs(score) if self.abs_diff else score
+        Compute anomaly score based on harmonic mean change.
+        
+        Args:
+            x: Data point to score.
+            
+        Returns:
+            Harmonic mean difference. Returns 0.0 if insufficient data.
+        """
+        if len(self.window) == 0:
+            return 0.0
+            
+        new_value = self._extract_value(x)
+        if new_value == 0:  # Skip zero values
+            return 0.0
+            
+        # Calculate harmonic means
+        current_harmonic = len(self.window) / sum(1 / val for val in self.window)
+        
+        # Include new value
+        all_values = list(self.window) + [new_value]
+        new_harmonic = len(all_values) / sum(1 / val for val in all_values)
+        
+        difference = new_harmonic - current_harmonic
+        return abs(difference) if self.abs_diff else difference
+    
+    def __repr__(self) -> str:
+        """Return string representation of the model."""
+        return (
+            f"MovingHarmonicAverage(window_size={self.window_size}, "
+            f"abs_diff={self.abs_diff})"
+        )
 
 
 class MovingGeometricAverage(BaseModel):
@@ -154,7 +206,8 @@ class MovingGeometricAverage(BaseModel):
         Raises:
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
-        assert len(x) == 1, "Dictionary has more than one key-value pair."
+        if len(x) != 1:
+            raise ValueError("Input must contain exactly one key-value pair.")
         if self.feature_name is None:
             if list(x.values())[0] > 0:
                 self.window.append(list(x.values())[0])
@@ -228,7 +281,8 @@ class MovingMedian(BaseModel):
         Raises:
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
-        assert len(x) == 1, "Dictionary has more than one key-value pair."
+        if len(x) != 1:
+            raise ValueError("Input must contain exactly one key-value pair.")
         if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:
@@ -271,6 +325,13 @@ class MovingMedian(BaseModel):
             median_new = window_score[mid_index_new]
         score = median_new - median_old
         return abs(score) if self.abs_diff else score
+    
+    def __repr__(self) -> str:
+        """Return string representation of the model."""
+        return (
+            f"MovingMedian(window_size={len(self.window)}, "
+            f"abs_diff={self.abs_diff})"
+        )
 
 
 class MovingQuantile(BaseModel):
@@ -306,7 +367,8 @@ class MovingQuantile(BaseModel):
         Raises:
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
-        assert len(x) == 1, "Dictionary has more than one key-value pair."
+        if len(x) != 1:
+            raise ValueError("Input must contain exactly one key-value pair.")
         if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:
@@ -377,7 +439,8 @@ class MovingVariance(BaseModel):
         Raises:
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
-        assert len(x) == 1, "Dictionary has more than one key-value pair."
+        if len(x) != 1:
+            raise ValueError("Input must contain exactly one key-value pair.")
         if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:
@@ -412,6 +475,13 @@ class MovingVariance(BaseModel):
             variance_score = sum(squared_diffs_score) / len(score_window)
             score = variance_score - variance_window
             return abs(score) if self.abs_diff else score
+    
+    def __repr__(self) -> str:
+        """Return string representation of the model."""
+        return (
+            f"MovingVariance(window_size={len(self.window)}, "
+            f"abs_diff={self.abs_diff})"
+        )
 
 
 class MovingInterquartileRange(BaseModel):
@@ -440,7 +510,8 @@ class MovingInterquartileRange(BaseModel):
         Raises:
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
-        assert len(x) == 1, "Dictionary has more than one key-value pair."
+        if len(x) != 1:
+            raise ValueError("Input must contain exactly one key-value pair.")
         if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:
@@ -517,7 +588,8 @@ class MovingAverageAbsoluteDeviation(BaseModel):
         Raises:
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
-        assert len(x) == 1, "Dictionary has more than one key-value pair."
+        if len(x) != 1:
+            raise ValueError("Input must contain exactly one key-value pair.")
         if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:
@@ -580,7 +652,8 @@ class MovingKurtosis(BaseModel):
         Raises:
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
-        assert len(x) == 1, "Dictionary has more than one key-value pair."
+        if len(x) != 1:
+            raise ValueError("Input must contain exactly one key-value pair.")
         if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:
@@ -657,7 +730,8 @@ class MovingSkewness(BaseModel):
         Raises:
             AssertionError: If the input dictionary contains more than one key-value pair or is empty.
         """
-        assert len(x) == 1, "Dictionary has more than one key-value pair."
+        if len(x) != 1:
+            raise ValueError("Input must contain exactly one key-value pair.")
         if self.feature_name is None:
             self.window.append(list(x.values())[0])
         else:

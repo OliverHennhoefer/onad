@@ -1,36 +1,60 @@
+"""Statistical models for multivariate moving window analysis."""
+
 from collections import deque
+from typing import Any
 
 import numpy as np
 
 from onad.base.model import BaseModel
 
 
-def _covariance(x, y, ddof=1):
+def _covariance(x: np.ndarray | list, y: np.ndarray | list, ddof: int = 1) -> float:
     """
-    Calculate the covariance between two arrays.
+    Calculate the covariance between two arrays using numpy for efficiency.
 
     Args:
-        x (array-like): First dataset.
-        y (array-like): Second dataset.
-        ddof (int): 1/(n-ddof) for bessel correction.
+        x: First dataset.
+        y: Second dataset.
+        ddof: Delta degrees of freedom for Bessel correction.
 
     Returns:
-        float: Covariance value
+        Covariance value.
+        
+    Raises:
+        ValueError: If datasets have different lengths.
     """
-    if len(x) != len(y):
+    x_array = np.asarray(x)
+    y_array = np.asarray(y)
+    
+    if len(x_array) != len(y_array):
         raise ValueError("Both datasets must have the same length.")
-    mean_x = sum(x) / len(x)
-    mean_y = sum(y) / len(y)
-    cov = sum((x[i] - mean_x) * (y[i] - mean_y) for i in range(len(x))) / (
-        len(x) - ddof
-    )
-    return cov
+    
+    if len(x_array) <= ddof:
+        return 0.0
+        
+    return float(np.cov(x_array, y_array, ddof=ddof)[0, 1])
 
 
 class MovingCovariance(BaseModel):
     """
-    A simple moving model that calculates the difference between the covariance from the window with a new value
-    to the covariance from the window of the most recent values.
+    Moving covariance anomaly detection model.
+    
+    Calculates the difference between the covariance of a window with a new value
+    and the covariance of the current window. Designed for bivariate data streams.
+    
+    Args:
+        window_size: Number of recent values to consider.
+        bias: If False, applies Bessel correction (ddof=1).
+        keys: Feature names for the two variables. If None, uses first learned keys.
+        abs_diff: If True, returns absolute difference.
+        
+    Raises:
+        ValueError: If window_size is not positive.
+        
+    Example:
+        >>> model = MovingCovariance(window_size=10)
+        >>> model.learn_one({"x": 1.0, "y": 2.0})
+        >>> score = model.score_one({"x": 1.5, "y": 2.5})
     """
 
     def __init__(
@@ -40,78 +64,81 @@ class MovingCovariance(BaseModel):
         keys: list[str] | None = None,
         abs_diff: bool = True,
     ) -> None:
-        """Initialize a new instance of MovingCovariance.
-        Args:
-            window_size (int): The number of recent values to consider for calculating the moving covariance.
-            bias (bool): False if bessel correction should not be used.
-            keys (list[str]): Keys for the moving window. If None, the first keys learned are used.
-            abs_diff (bool): If True absolute is given back, else covariance(window + score) - covariance(window)
-        Raises:
-            ValueError: If window_size is not a positive integer."""
+        """Initialize the moving covariance model."""
+        super().__init__()
+        
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
+            
         self.window_size = window_size
-        self.window: dict = {}
+        self.window: dict[str, deque[float]] = {}
         self.feature_names: list[str] | None = keys
         self.bias = bias
         self.abs_diff = abs_diff
 
     def learn_one(self, x: dict[str, float]) -> None:
-        """Update the model with a single resource point.
-        Args:
-            x (Dict[str, float]): A dictionary representing a single resource point.
-        Raises:
-            AssertionError: If the input dictionary contains other than two key-value pairs.
         """
-        assert len(x) == 2, "Dictionary has other than two key-value pairs."
+        Update the model with a single data point.
+        
+        Args:
+            x: Dictionary with exactly two key-value pairs.
+            
+        Raises:
+            ValueError: If input doesn't contain exactly two features.
+        """
+        if len(x) != 2:
+            raise ValueError("Input must contain exactly two key-value pairs.")
+            
         if self.feature_names is None:
-            self.feature_names = list(x.keys())
-            self.window[self.feature_names[0]] = deque([], maxlen=self.window_size)
-            self.window[self.feature_names[1]] = deque([], maxlen=self.window_size)
-        if isinstance(x[self.feature_names[0]], int | float) and isinstance(
-            x[self.feature_names[1]], int | float
-        ):
-            self.window[self.feature_names[0]].append(x[self.feature_names[0]])
-            self.window[self.feature_names[1]].append(x[self.feature_names[1]])
+            self.feature_names = sorted(x.keys())  # Sort for consistency
+            for name in self.feature_names:
+                self.window[name] = deque(maxlen=self.window_size)
+        
+        # Add values to windows
+        for name in self.feature_names:
+            if name in x and isinstance(x[name], (int, float)):
+                self.window[name].append(float(x[name]))
 
     def score_one(self, x: dict[str, float]) -> float:
-        """Calculate and return the difference of the covariance of the values in the window with and without the new point.
-            covariance(window + score) - covariance(window)
-        Args:
-            x (Dict): Single datapoint to be added temporarily to calculate the covariance.
-        Returns:
-            float: Difference in the windows. 0 if the window is empty or has less than 2 data points.
         """
-        if self.feature_names is None:
-            return 0
-        score_window_0 = list(self.window[self.feature_names[0]])
-        score_window_1 = list(self.window[self.feature_names[1]])
-        score_window_0.append(x[self.feature_names[0]])
-        score_window_1.append(x[self.feature_names[1]])
-        len_window_0 = len(self.window[self.feature_names[0]])
-        len_window_1 = len(self.window[self.feature_names[1]])
-        len_score_0 = len(score_window_0)
-        len_score_1 = len(score_window_1)
-
-        if len_window_0 != len_window_1:
-            raise ValueError("Both windows must have the same length.")
-        if len_window_0 < 2:
-            return 0
-        if len_score_0 != len_score_1:
-            raise ValueError("Both score windows must have the same length.")
-        if len_score_0 < 2:
-            return 0
-
+        Compute anomaly score based on covariance change.
+        
+        Calculates covariance(window + x) - covariance(window).
+        
+        Args:
+            x: Data point to score.
+            
+        Returns:
+            Covariance difference. Returns 0.0 if insufficient data.
+        """
+        if self.feature_names is None or len(self.window[self.feature_names[0]]) < 2:
+            return 0.0
+            
+        window_0 = self.window[self.feature_names[0]]
+        window_1 = self.window[self.feature_names[1]]
+        
+        if len(window_0) != len(window_1):
+            raise ValueError("Window lengths must match.")
+        
+        # Create score windows efficiently using numpy
+        score_0 = np.append(window_0, x[self.feature_names[0]])
+        score_1 = np.append(window_1, x[self.feature_names[1]])
+        
         ddof = 0 if self.bias else 1
-        score_cov = _covariance(score_window_0, score_window_1, ddof=ddof)
-        window_cov = _covariance(
-            self.window[self.feature_names[0]],
-            self.window[self.feature_names[1]],
-            ddof=ddof,
+        
+        # Calculate covariances
+        window_cov = _covariance(window_0, window_1, ddof=ddof)
+        score_cov = _covariance(score_0, score_1, ddof=ddof)
+        
+        difference = score_cov - window_cov
+        return abs(difference) if self.abs_diff else difference
+    
+    def __repr__(self) -> str:
+        """Return string representation of the model."""
+        return (
+            f"MovingCovariance(window_size={self.window_size}, "
+            f"bias={self.bias}, abs_diff={self.abs_diff})"
         )
-
-        covariance_difference = score_cov - window_cov
-        return abs(covariance_difference) if self.abs_diff else covariance_difference
 
 
 class MovingCorrelationCoefficient(BaseModel):

@@ -3,7 +3,7 @@ from collections import deque
 
 import numpy as np
 
-from onad.model.stat.multivariate import (
+from onad.model.stat.multi import (
     MovingCorrelationCoefficient,
     MovingCovariance,
     MovingMahalanobisDistance,

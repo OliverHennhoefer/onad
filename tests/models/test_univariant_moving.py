@@ -4,7 +4,7 @@ from collections import deque
 import numpy as np
 from scipy.stats import kurtosis, skew
 
-from onad.model.stat.univariate import (
+from onad.model.stat.uni import (
     MovingAverage,
     MovingAverageAbsoluteDeviation,
     MovingGeometricAverage,
@@ -36,18 +36,18 @@ class TestMovingAverage(unittest.TestCase):
 
     def test_learn_one_with_multiple_keys_raises_assertion_error(self):
         ma = MovingAverage(3)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             ma.learn_one({"key1": 1.0, "key2": 2.0})
 
     def test_score_one_calculates_mean_correctly(self):
         ma = MovingAverage(3)
         ma.learn_one({"value": 1.0})
         ma.learn_one({"value": 2.0})
-        self.assertEqual(ma.score_one({"key1": 3}), 0.5)
+        self.assertEqual(ma.score_one({"value": 3}), 0.5)
 
     def test_score_one_with_empty_window(self):
         ma = MovingAverage(3)
-        self.assertEqual(ma.score_one({"key1": 3}), 0)
+        self.assertEqual(ma.score_one({"value": 3}), 0)
 
     def test_window_shifting(self):
         ma = MovingAverage(3)
@@ -59,7 +59,7 @@ class TestMovingAverage(unittest.TestCase):
         ma = MovingAverage(3)
         for x in [0, 0, 0, 0, 0]:
             ma.learn_one({"value": x})
-        self.assertEqual(ma.score_one({"key1": 0}), 0)
+        self.assertEqual(ma.score_one({"value": 0}), 0)
 
 
 class TestMovingHarmonicAverage(unittest.TestCase):
@@ -90,18 +90,18 @@ class TestMovingHarmonicAverage(unittest.TestCase):
 
     def test_learn_one_raises_assertion_error_if_more_than_one_key(self):
         mah = MovingHarmonicAverage(3)
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             mah.learn_one({"a": 10.0, "b": 20.0})
         self.assertEqual(
-            str(context.exception), "Dictionary has more than one key-value pair."
+            str(context.exception), "Input must contain exactly one key-value pair."
         )
 
     def test_learn_one_raises_assertion_error_if_empty_dict(self):
         mah = MovingHarmonicAverage(3)
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             mah.learn_one({})
         self.assertEqual(
-            str(context.exception), "Dictionary has more than one key-value pair."
+            str(context.exception), "Input must contain exactly one key-value pair."
         )
 
     def test_score_one_with_no_values_returns_zero(self):
@@ -149,12 +149,12 @@ class TestMovingGeometricAverage(unittest.TestCase):
 
     def test_learn_one_raises_assertion_error_for_empty_dict(self):
         m = MovingGeometricAverage(window_size=3)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             m.learn_one({})
 
     def test_learn_one_raises_assertion_error_for_multiple_keys(self):
         m = MovingGeometricAverage(window_size=3)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             m.learn_one({"feature1": 2.0, "feature2": 4.0})
 
     def test_score_one_with_empty_window(self):
@@ -214,7 +214,7 @@ class TestMovingMedian(unittest.TestCase):
     def test_learn_one_invalid_input_dict_length(self):
         # Test assertion error for dictionary with more than one key-value pair
         mm = MovingMedian(3)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             mm.learn_one({"a": 1, "b": 2})
 
     def test_score_one_empty_window(self):
@@ -280,10 +280,10 @@ class TestMovingQuantile(unittest.TestCase):
 
     def test_learn_one_invalid(self):
         model = MovingQuantile(window_size=3)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             model.learn_one({})
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             model.learn_one({"value1": 1, "value2": 2})
 
     def test_score_empty_window(self):
@@ -366,7 +366,7 @@ class TestMovingVariance(unittest.TestCase):
 
     def test_learn_one_invalid_input_raises_assertion_error(self):
         mv = MovingVariance(window_size=3)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             mv.learn_one({"a": 1, "b": 2})
 
     def test_score_one_empty_window_returns_zero(self):
@@ -430,7 +430,7 @@ class TestMovingInterquartileRange(unittest.TestCase):
 
     def test_learn_one_with_multiple_keys_raises_assertion_error(self):
         ma = MovingInterquartileRange(3)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             ma.learn_one({"key1": 1.0, "key2": 2.0})
 
     def test_score_one_calculates_mean_correctly(self):
@@ -478,7 +478,7 @@ class TestMovingAverageAbsoluteDeviation(unittest.TestCase):
 
     def test_learn_one_with_multiple_keys_raises_assertion_error(self):
         ma = MovingAverageAbsoluteDeviation(3)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             ma.learn_one({"key1": 1.0, "key2": 2.0})
 
     def test_score_one_calculates_mean_correctly(self):
@@ -530,7 +530,7 @@ class TestMovingKurtosis(unittest.TestCase):
 
     def test_learn_one_with_multiple_keys_raises_assertion_error(self):
         ma = MovingKurtosis(3)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             ma.learn_one({"key1": 1.0, "key2": 2.0})
 
     def test_score_one_calculates_pearson_correctly(self):
@@ -582,7 +582,7 @@ class TestMovingSkewness(unittest.TestCase):
 
     def test_learn_one_with_multiple_keys_raises_assertion_error(self):
         ma = MovingSkewness(3)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             ma.learn_one({"key1": 1.0, "key2": 2.0})
 
     def test_score_one_calculates_skewness_correctly(self):
