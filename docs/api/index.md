@@ -86,7 +86,7 @@ Helper functions and supporting components:
 All models follow a consistent interface:
 
 ```python
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 
 # Initialize model
 model = OnlineIsolationForest(window_size=1000)
@@ -150,7 +150,7 @@ All ONAD components include comprehensive type hints:
 
 ```python
 from typing import Dict
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 
 model: OnlineIsolationForest = OnlineIsolationForest()
 features: Dict[str, float] = {"temperature": 23.5, "humidity": 0.65}

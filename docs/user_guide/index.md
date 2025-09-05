@@ -56,7 +56,7 @@ Combine components for sophisticated processing:
 ### Basic Anomaly Detection
 
 ```python
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 
 # Initialize model
 model = OnlineIsolationForest()
@@ -117,7 +117,7 @@ with ParquetStreamer(Dataset.FRAUD) as streamer:
 
 ```python
 # Models
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 from onad.model.svm import IncrementalOneClassSVMAdaptiveKernel
 from onad.model.stat.multi import MovingMahalanobisDistance
 

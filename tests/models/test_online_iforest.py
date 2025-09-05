@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from sklearn.metrics import average_precision_score, roc_auc_score, roc_curve
 
-from onad.model.forest.online_iforest import OnlineIsolationForest
+from onad.model.iforest.online import OnlineIsolationForest
 from onad.stream.dataset import Dataset, load
 
 

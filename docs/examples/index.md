@@ -30,7 +30,7 @@ Complex scenarios and production-ready examples:
 ### 30-Second Quick Start
 
 ```python
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 from onad.stream import ParquetStreamer, Dataset
 
 # Initialize model
@@ -50,7 +50,7 @@ with ParquetStreamer(Dataset.FRAUD) as streamer:
 
 ```python
 from onad.transform.preprocess.scaler import StandardScaler
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 
 # Create preprocess pipeline
 scaler = StandardScaler()
@@ -93,7 +93,7 @@ print(f"Found {len(anomalies)} anomalies")
 import logging
 from onad.transform.preprocess.scaler import StandardScaler
 from onad.transform.project.incremental_pca import IncrementalPCA
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

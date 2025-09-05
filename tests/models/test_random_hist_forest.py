@@ -2,7 +2,7 @@ import unittest
 
 from sklearn.metrics import average_precision_score, roc_auc_score, roc_curve
 
-from onad.model.forest.random_hist_forest import StreamRandomHistogramForest
+from onad.model.iforest.rand_hist import StreamRandomHistogramForest
 from onad.stream.dataset import Dataset, load
 
 

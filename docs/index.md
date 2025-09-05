@@ -59,7 +59,7 @@ pip install onad[all]
 Here's a simple example to get you started:
 
 ```python
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 from onad.stream import ParquetStreamer, Dataset
 
 # Initialize the model

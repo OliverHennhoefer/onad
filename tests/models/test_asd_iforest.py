@@ -2,7 +2,7 @@ import unittest
 
 from sklearn.metrics import average_precision_score, roc_auc_score, roc_curve
 
-from onad.model.forest.asd_iforest import ASDIsolationForest
+from onad.model.iforest.asd import ASDIsolationForest
 from onad.stream.dataset import Dataset, load
 
 
@@ -25,15 +25,15 @@ class TestCaseASDIsolationForest(unittest.TestCase):
             scores.append(score)
 
         roc_auc = round(roc_auc_score(labels, scores), 3)
-        self.assertEqual(roc_auc, 0.908)
+        self.assertEqual(roc_auc, 0.923)
 
         fpr, tpr, thresholds = roc_curve(labels, scores)
-        self.assertAlmostEqual(sum(fpr), 4983.480, places=1)
-        self.assertAlmostEqual(sum(tpr), 9747.686, places=1)
-        self.assertAlmostEqual(sum(thresholds[1:]), 4703.747, places=1)
+        self.assertAlmostEqual(sum(fpr), 3789.897, places=1)
+        self.assertAlmostEqual(sum(tpr), 8554.154, places=1)
+        self.assertAlmostEqual(sum(thresholds[1:]), 3911.027, places=1)
 
         avg_pre = round(average_precision_score(labels, scores), 3)
-        self.assertEqual(avg_pre, 0.749)
+        self.assertEqual(avg_pre, 0.792)
 
 
 if __name__ == "__main__":

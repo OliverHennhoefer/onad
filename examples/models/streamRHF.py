@@ -1,6 +1,6 @@
 from sklearn.metrics import average_precision_score
 
-from onad.model.forest import StreamRandomHistogramForest
+from onad.model.iforest import StreamRandomHistogramForest
 from onad.stream.dataset import Dataset, load
 
 model = StreamRandomHistogramForest(

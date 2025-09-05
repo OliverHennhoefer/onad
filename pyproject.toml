@@ -16,7 +16,7 @@ maintainers = [
   { name = "Oliver Hennhoefer", email = "oliver.hennhoefer@mail.de" }
 ]
 license = { file = "LICENSE" }
-readme = "README.md"
+readme = { file = "README.md", content-type = "text/markdown" }
 classifiers = [
     "Programming Language :: Python :: 3.10",
     "License :: OSI Approved :: BSD License",

@@ -1,6 +1,6 @@
 from sklearn.metrics import average_precision_score, roc_auc_score
 
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 from onad.stream.dataset import Dataset, load
 
 # Create True Online Isolation Forest with original algorithm

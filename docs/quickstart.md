@@ -17,12 +17,12 @@ Let's create a simple anomaly detection system using the Online Isolation Forest
 ### 1. Basic Setup
 
 ```python
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 import numpy as np
 
 # Create an Online Isolation Forest model
 model = OnlineIsolationForest(
-    num_trees=50,  # Number of trees in the forest
+    num_trees=50,  # Number of trees in the iforest
     window_size=1000,  # Memory window size
     max_leaf_samples=32  # Samples per leaf node
 )
@@ -117,7 +117,7 @@ print(f"🔍 Detected {detected_anomalies}/{len(anomaly_scores)} anomalies ({det
 Here's the complete code in one block:
 
 ```python
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 import numpy as np
 
 # Initialize model
@@ -210,7 +210,7 @@ Combine multiple components for more sophisticated processing:
 
 ```python
 from onad.transform.preprocess.scaler import StandardScaler
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 
 # Create a processing pipeline
 scaler = StandardScaler()

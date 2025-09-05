@@ -522,9 +522,9 @@ class OnlineIsolationForest(BaseModel):
         Initialize a TrueOnlineIForest.
 
         Args:
-            num_trees: Number of isolation trees in the forest.
+            num_trees: Number of isolation trees in the iforest.
             max_leaf_samples: Maximum samples in leaf nodes.
-            type: Type of forest implementation ('fixed' or 'adaptive').
+            type: Type of iforest implementation ('fixed' or 'adaptive').
             subsample: Subsampling rate for training.
             window_size: Size of the sliding window for data.
             branching_factor: Number of children per internal node.

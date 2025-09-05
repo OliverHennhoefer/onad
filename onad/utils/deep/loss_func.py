@@ -1,5 +1,8 @@
+"""Loss function types for deep learning models."""
+
 from torch import nn
 
+# Type alias for all PyTorch loss functions
 LossFunction = (
     nn.L1Loss
     | nn.MSELoss
@@ -20,3 +23,6 @@ LossFunction = (
     | nn.TripletMarginLoss
     | nn.TripletMarginWithDistanceLoss
 )
+
+# More specific type alias for autoencoder reconstruction losses
+AutoencoderLoss = nn.MSELoss | nn.L1Loss | nn.SmoothL1Loss | nn.HuberLoss

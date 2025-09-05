@@ -18,7 +18,7 @@ A typical ONAD pipeline consists of several stages:
 # Basic pipeline structure
 from onad.transform.preprocess.scaler import StandardScaler
 from onad.transform.project.incremental_pca import IncrementalPCA
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 
 # Create pipeline components
 scaler = StandardScaler()
@@ -439,14 +439,14 @@ class NetworkSecurityPipeline:
             
             # Forest-based detection
             self.forest_detector.learn_one(scaled_features)
-            scores['forest'] = self.forest_detector.score_one(scaled_features)
+            scores['iforest'] = self.forest_detector.score_one(scaled_features)
             
             # Distance-based detection
             self.knn_detector.learn_one(scaled_features)
             scores['knn'] = self.knn_detector.score_one(scaled_features)
             
             # Combine scores (weighted average)
-            weights = [0.4, 0.4, 0.2]  # statistical, forest, knn
+            weights = [0.4, 0.4, 0.2]  # statistical, iforest, knn
             combined_score = sum(s * w for s, w in zip(scores.values(), weights))
             
             # Detection decision

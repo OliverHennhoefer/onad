@@ -11,7 +11,7 @@ class StreamRandomHistogramForest(BaseModel):
     Online Stream Random Histogram Forest for anomaly detection.
 
     Args:
-        n_estimators (int): Number of histogram trees in the forest.
+        n_estimators (int): Number of histogram trees in the iforest.
         max_bins (int): Number of bins per dimension.
         window_size (int): Max number of instances stored per histogram.
         seed (Optional[int]): Random seed for reproducibility.

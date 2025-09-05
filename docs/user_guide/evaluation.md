@@ -469,7 +469,7 @@ class StreamingCrossValidator:
 
 
 # Usage
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 
 cv = StreamingCrossValidator(n_folds=5)
 results = cv.validate_model(

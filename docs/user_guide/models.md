@@ -26,7 +26,7 @@ The flagship model for general-purpose anomaly detection.
 **Configuration:**
 
 ```python
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 
 model = OnlineIsolationForest(
     num_trees=100,  # More trees = better accuracy, higher memory
@@ -53,7 +53,7 @@ Advanced forest model with adaptive partitioning based on data distribution.
 - Scenarios with strong feature interactions
 
 ```python
-from onad.model.forest import MondrianIsolationForest
+from onad.model.iforest import MondrianIsolationForest
 
 model = MondrianIsolationForest(
     num_trees=50,

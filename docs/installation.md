@@ -137,7 +137,7 @@ import onad
 print(f"ONAD version: {onad.__version__}")
 
 # Test a simple model
-from onad.model.forest import OnlineIsolationForest
+from onad.model.iforest import OnlineIsolationForest
 
 model = OnlineIsolationForest()
 print("✅ Installation successful!")

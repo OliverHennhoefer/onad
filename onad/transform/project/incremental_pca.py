@@ -1,7 +1,9 @@
 import numpy as np
 
+from onad.base.transformer import BaseTransformer
 
-class IncrementalPCA:
+
+class IncrementalPCA(BaseTransformer):
     def __init__(
         self,
         n_components: int,

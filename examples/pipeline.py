@@ -39,10 +39,9 @@ for i, (x, y) in enumerate(dataset.stream()):
     score1 = pipeline1.score_one(x)  # Simple pipeline
     score2 = pipeline2.score_one(x)  # PCA pipeline
 
-    if score1 is not None and score2 is not None:
-        labels.append(y)
-        scores1.append(score1)
-        scores2.append(score2)
+    labels.append(y)
+    scores1.append(score1)
+    scores2.append(score2)
 
 pr_auc1 = average_precision_score(labels, scores1)
 pr_auc2 = average_precision_score(labels, scores2)

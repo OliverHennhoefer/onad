@@ -1,3 +1,10 @@
+"""
+Autoencoder example for online anomaly detection.
+
+This example demonstrates using a vanilla autoencoder for anomaly detection
+on the SHUTTLE dataset, with online learning and preprocessing.
+"""
+
 from sklearn.metrics import average_precision_score
 from torch import nn, optim
 
@@ -6,30 +13,49 @@ from onad.stream.dataset import Dataset, load
 from onad.transform.preprocess.scaler import MinMaxScaler
 from onad.utils.deep.architecture import VanillaAutoencoder
 
-model = VanillaAutoencoder(input_size=9, seed=1)
+# Hyperparameters
+INPUT_SIZE = 9  # SHUTTLE dataset feature count
+LEARNING_RATE = 0.005
+SEED = 1
+WARMUP_SAMPLES = 10_000  # Train only on normal samples during warmup
 
+# Initialize the neural network architecture
+architecture = VanillaAutoencoder(input_size=INPUT_SIZE, seed=SEED)
+
+# Create the autoencoder model with optimizer and loss function
 autoencoder = Autoencoder(
-    model=model,
-    optimizer=optim.Adam(model.parameters(), lr=0.005, weight_decay=0),
+    model=architecture,
+    optimizer=optim.Adam(architecture.parameters(), lr=LEARNING_RATE, weight_decay=0),
     criterion=nn.MSELoss(),
 )
 
+# Create preprocessing pipeline: scaling -> autoencoder
 scaler = MinMaxScaler()
-model = scaler | autoencoder
+pipeline = scaler | autoencoder
+
+# Storage for evaluation
 labels, scores = [], []
 
-# Load dataset using new API
+# Load and process the dataset
+print("Loading SHUTTLE dataset...")
 dataset = load(Dataset.SHUTTLE)
 
+print(f"Starting online learning with {WARMUP_SAMPLES} warmup samples...")
 for i, (x, y) in enumerate(dataset.stream()):
-    if i < 10_000:
+    # Warmup phase: train only on normal samples (y == 0)
+    if i < WARMUP_SAMPLES:
         if y == 0:
-            model.learn_one(x)
+            pipeline.learn_one(x)
         continue
-    model.learn_one(x)
-    score = model.score_one(x)
+
+    # Online phase: learn from all samples and compute scores
+    pipeline.learn_one(x)
+    score = pipeline.score_one(x)
 
     labels.append(y)
     scores.append(score)
 
-print(f"PR_AUC: {round(average_precision_score(labels, scores), 3)}")  # 0.298
+# Evaluate performance
+pr_auc = average_precision_score(labels, scores)
+print(f"PR_AUC: {round(pr_auc, 3)}")  # Expected: ~0.298
+print(f"Processed {len(labels)} test samples")
