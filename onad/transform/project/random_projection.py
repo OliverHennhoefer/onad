@@ -1,48 +1,60 @@
+"""Random projection transformer for dimensionality reduction."""
+
 import numpy as np
 
+from onad.base.transformer import BaseTransformer
 
-class RandomProjection:
+
+class RandomProjection(BaseTransformer):
     def __init__(
-        self, n_components: int, keys: list[str] | None = None, seed=None
+        self, n_components: int, keys: list[str] | None = None, seed: int | None = None
     ) -> None:
         """
-        Initialize the RandomProjections transformer.
-
-        This constructor sets up an instance of the RandomProjections class to perform
-        dimensionality reduction on data points using random projections.
-
-        Implements the binary approach for random projections from:
-            - Achlioptas D. (2003) "Database-friendly random projections: Johnson-Lindenstrauss with binary coins"
+        Initialize the RandomProjection transformer.
+        
+        Implements the binary approach for random projections using sparse random matrices.
+        This provides a computationally efficient way to reduce dimensionality while
+        approximately preserving distances (Johnson-Lindenstrauss lemma).
+        
+        Reference:
+            Achlioptas D. (2003) "Database-friendly random projections: 
+            Johnson-Lindenstrauss with binary coins"
 
         Args:
-            n_components (int): The target number of dimensions after transformation. Must be less than or equal to the number of original features if `keys` are provided.
-
-            keys (Optional[list[str]]): An optional list of strings representing the
-                initial set of feature names.
-            seed (Optional[int]): Optional seed for random matrix
+            n_components: Target number of dimensions after transformation.
+            keys: Feature names. If None, inferred from first sample.
+            seed: Random seed for reproducibility.
 
         Raises:
-            ValueError: If `n_components` is greater than the number of features when
-                `keys` are provided.
+            ValueError: If n_components is greater than the number of features.
         """
+        super().__init__()
+        
         if n_components < 1:
-            raise ValueError("n_components has to be greater then 0")
+            raise ValueError("n_components must be greater than 0")
         self.n_components = n_components
         self.feature_names = keys
         self.seed = seed
 
         self.n_dimensions = 0
-        self.random_matrix = np.array([])
+        self.random_matrix: np.ndarray = np.array([])
 
         if self.feature_names is not None:
             if len(self.feature_names) != len(set(self.feature_names)):
-                raise ValueError("keys contains duplicates")
+                raise ValueError("Feature names cannot contain duplicates")
             self._initialize_random_matrix()
 
-    def _initialize_random_matrix(self):
-        assert self.feature_names, (
-            "_initialize_random_matrix should not be called before assigning self.feature_names"
-        )
+    def _initialize_random_matrix(self) -> None:
+        """
+        Initialize the random projection matrix.
+        
+        Raises:
+            ValueError: If feature names are not set.
+        """
+        if self.feature_names is None:
+            raise ValueError(
+                "Feature names must be set before initializing random matrix"
+            )
         self.n_dimensions = len(self.feature_names)
         if self.n_components > self.n_dimensions:
             raise ValueError(
@@ -58,13 +70,13 @@ class RandomProjection:
 
     def learn_one(self, x: dict[str, float]) -> None:
         """
-        Lern the number of dimension in in the datapoint using a single sample (only with the first).
+        Learn the number of dimensions from the first data point.
 
         Args:
-            x (Dict[str, float]): A dictionary with feature names as keys and values as the data point dimensions.
+            x: A dictionary with feature names as keys and values as data point dimensions.
 
         Raises:
-            ValueError: If `n_components` is greater than the number of features in `x`.
+            ValueError: If n_components is greater than the number of features in x.
         """
         if self.feature_names is None and len(x) >= 1:
             self.feature_names = list(x.keys())
@@ -72,20 +84,30 @@ class RandomProjection:
 
     def transform_one(self, x: dict[str, float]) -> dict[str, float]:
         """
-        Transform a single data point using the learned PCA components.
+        Transform a single data point using random projection.
 
         Args:
-            x (Dict[str, float]): A dictionary with feature names as keys and values as the data point dimensions.
+            x: A dictionary with feature names as keys and values as data point dimensions.
 
         Returns:
-            Dict[int, float]: Transformed data point as a dictionary with reduced dimensions.
+            Transformed data point as dictionary with component names as keys.
+            
+        Raises:
+            RuntimeError: If called before learning feature names.
         """
 
         if self.feature_names is None:
             raise RuntimeError(
-                "You can't call transform_one() before assigning feature names manually or at least once learn_one()"
+                "Cannot transform before learning. Call learn_one() first or provide keys."
             )
-        else:
-            data_vector = np.array([x[key] for key in self.feature_names])
+        
+        data_vector = np.array([x[key] for key in self.feature_names])
         transformed_x = self.random_matrix.T @ data_vector
-        return {f"component_{i}": val for i, val in enumerate(transformed_x)}
+        return {f"component_{i}": float(val) for i, val in enumerate(transformed_x)}
+    
+    def __repr__(self) -> str:
+        """Return string representation of the transformer."""
+        return (
+            f"RandomProjection(n_components={self.n_components}, "
+            f"seed={self.seed})"
+        )

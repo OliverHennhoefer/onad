@@ -1,9 +1,30 @@
+"""Incremental Principal Component Analysis transformer."""
+
 import numpy as np
 
 from onad.base.transformer import BaseTransformer
 
 
 class IncrementalPCA(BaseTransformer):
+    """
+    Incremental Principal Component Analysis for online dimensionality reduction.
+    
+    Implements an online PCA algorithm that can process data points one at a time,
+    maintaining principal components without storing all historical data.
+    
+    Args:
+        n_components: Number of principal components to keep.
+        n0: Initial number of samples for warm-up phase.
+        keys: Feature names. If None, inferred from first sample.
+        tol: Tolerance for considering residual significance.
+        forgetting_factor: Weight for new values (0 < f < 1). If None, uses 1/t.
+        
+    Example:
+        >>> pca = IncrementalPCA(n_components=2)
+        >>> pca.learn_one({"x": 1.0, "y": 2.0, "z": 3.0})
+        >>> transformed = pca.transform_one({"x": 1.5, "y": 2.5, "z": 3.5})
+    """
+    
     def __init__(
         self,
         n_components: int,
@@ -45,12 +66,14 @@ class IncrementalPCA(BaseTransformer):
         self.n0: int = n0
         self.feature_names: list[str] | None = keys
         self.tol: float = tol
+        super().__init__()
+        
         if forgetting_factor is not None and not (0 < forgetting_factor < 1):
-            raise ValueError("forgetting_factor has to be 0 < forgetting_factor < 1")
+            raise ValueError("forgetting_factor must be 0 < forgetting_factor < 1")
         self.forgetting_factor = forgetting_factor
 
         # State variables
-        self.window: list = []  # Store data points during initialization phase
+        self.window: list[np.ndarray] = []  # Store data points during initialization
         self.n0_reached: bool = False  # Flag for switching to online mode
         self.n_samples_seen: int = 0  # Total number of samples processed
         self.n_features: int = 0  # Number of features in the data
@@ -61,19 +84,22 @@ class IncrementalPCA(BaseTransformer):
 
         self._check_n_features()
 
-        # handling missing data settings -> learn_one() and transform_one()
-        # ...
-
-    def _check_n_features(self):
+    def _check_n_features(self) -> None:
+        """Validate n_components against feature count."""
         if self.feature_names is not None:
             self.n_features = len(self.feature_names)
             if self.n_components > len(self.feature_names):
                 raise ValueError(
-                    "The number of primary components has to be less or equal to the number of features"
+                    f"n_components ({self.n_components}) must be <= number of features ({len(self.feature_names)})"
                 )
 
     def _update_online_pca(self, data_vector: np.ndarray) -> None:
-        """Update PCA components using online algorithm."""
+        """
+        Update PCA components using online algorithm.
+        
+        Args:
+            data_vector: New data point as numpy array.
+        """
         # Compute forgetting factor
         f = (
             1.0 / self.n_samples_seen
@@ -107,7 +133,18 @@ class IncrementalPCA(BaseTransformer):
         residual: np.ndarray,
         norm_residual: float,
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Expand subspace when residual is significant."""
+        """
+        Expand subspace when residual is significant.
+        
+        Args:
+            lambda_updated: Current eigenvalues.
+            xhat: Projected data point.
+            residual: Orthogonal residual.
+            norm_residual: Norm of the residual.
+            
+        Returns:
+            Extended eigenvalues and projected data point.
+        """
         k = len(lambda_updated) + 1
 
         # Extend eigenvalues
@@ -130,7 +167,13 @@ class IncrementalPCA(BaseTransformer):
     def _update_eigendecomposition(
         self, lambda_updated: np.ndarray, xhat: np.ndarray
     ) -> None:
-        """Compute and apply eigendecomposition update."""
+        """
+        Compute and apply eigendecomposition update.
+        
+        Args:
+            lambda_updated: Updated eigenvalues.
+            xhat: Projected data point.
+        """
         # Compute eigendecomposition of updated covariance matrix
         matrix_to_decompose = np.diag(lambda_updated) + np.outer(xhat, xhat)
         eigenvalues, eigenvectors = np.linalg.eig(matrix_to_decompose)
@@ -150,7 +193,12 @@ class IncrementalPCA(BaseTransformer):
         self.vectors = self.vectors @ eigenvectors
 
     def _initialize_pca(self, data_vector: np.ndarray) -> None:
-        """Handle initialization phase by collecting data until n0 samples."""
+        """
+        Handle initialization phase by collecting data until n0 samples.
+        
+        Args:
+            data_vector: New data point to add to initialization window.
+        """
         self.window.append(data_vector)
         if len(self.window) >= self.n0:
             # Perform initial full PCA and switch to online mode
@@ -197,18 +245,25 @@ class IncrementalPCA(BaseTransformer):
             x (Dict[str, float]): A dictionary with feature names as keys and values as the data point dimensions.
 
         Returns:
-            Dict[int, float]: Transformed data point as a dictionary with reduced dimensions.
+            Transformed data point as dictionary with component names as keys.
         """
 
         if self.n0_reached:
             if self.feature_names is None:
                 raise RuntimeError(
-                    "You can't call transform_one() before assigning feature names manually or at least once learn_one()"
+                    "Cannot transform before learning. Call learn_one() first or provide keys."
                 )
-            else:
-                data_vector = np.array([x[key] for key in self.feature_names])
-                # handling missing values...?
+            
+            data_vector = np.array([x[key] for key in self.feature_names])
             transformed_x = self.vectors.T @ data_vector
-            return {f"component_{i}": val for i, val in enumerate(transformed_x)}
+            return {f"component_{i}": float(val) for i, val in enumerate(transformed_x)}
         else:
+            # Return zeros during initialization phase
             return {f"component_{i}": 0.0 for i in range(self.n_components)}
+    
+    def __repr__(self) -> str:
+        """Return string representation of the transformer."""
+        return (
+            f"IncrementalPCA(n_components={self.n_components}, n0={self.n0}, "
+            f"tol={self.tol}, forgetting_factor={self.forgetting_factor})"
+        )

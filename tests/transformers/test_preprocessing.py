@@ -446,7 +446,7 @@ class TestRandomProjections(unittest.TestCase):
             sample_data = {f"feature_{i}": np.random.rand() for i in range(10)}
             rp.transform_one(sample_data)
 
-        expected_msg = "You can't call transform_one() before assigning feature names manually or at least once learn_one()"
+        expected_msg = "Cannot transform before learning. Call learn_one() first or provide keys."
         self.assertTrue(
             expected_msg in str(context.exception),
             f"Expected error message '{expected_msg}' but got {context.exception}",
@@ -456,7 +456,7 @@ class TestRandomProjections(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             RandomProjection(n_components=0, keys=self.feature_keys[:5])
 
-        expected_msg_zero = "n_components has to be greater then 0"
+        expected_msg_zero = "n_components must be greater than 0"
         self.assertTrue(
             expected_msg_zero in str(context.exception),
             f"Expected error message '{expected_msg_zero}' but got {context.exception}",
@@ -465,7 +465,7 @@ class TestRandomProjections(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             RandomProjection(n_components=-3, keys=self.feature_keys[:5])
 
-        expected_msg_negative = "n_components has to be greater then 0"
+        expected_msg_negative = "n_components must be greater than 0"
         self.assertTrue(
             expected_msg_negative in str(context.exception),
             f"Expected error message '{expected_msg_negative}' but got {context.exception}",
@@ -476,7 +476,7 @@ class TestRandomProjections(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             RandomProjection(n_components=self.n_components, keys=duplicate_keys)
 
-        expected_msg = "keys contains duplicates"
+        expected_msg = "Feature names cannot contain duplicates"
         self.assertTrue(
             expected_msg in str(context.exception),
             f"Expected error message '{expected_msg}' but got {context.exception}",
