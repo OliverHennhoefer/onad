@@ -86,7 +86,7 @@ Helper functions and supporting components:
 All models follow a consistent interface:
 
 ```python
-from onad.model.unsupervised.forest import OnlineIsolationForest
+from onad.model.forest import OnlineIsolationForest
 
 # Initialize model
 model = OnlineIsolationForest(window_size=1000)
@@ -95,10 +95,10 @@ model = OnlineIsolationForest(window_size=1000)
 for data_point in data_stream:
     # Learn from the data point
     model.learn_one(data_point)
-    
+
     # Get anomaly score
     score = model.score_one(data_point)
-    
+
     # Check if anomalous
     if score > threshold:
         handle_anomaly(data_point, score)
@@ -109,19 +109,20 @@ for data_point in data_stream:
 Combine transformers and models:
 
 ```python
-from onad.transform.scale import StandardScaler
-from onad.model.unsupervised.svm import IncrementalOneClassSVMAdaptiveKernel
+from onad.transform.preprocess.scaler import StandardScaler
+from onad.model.svm import IncrementalOneClassSVMAdaptiveKernel
 
 # Create pipeline components
 scaler = StandardScaler()
 detector = IncrementalOneClassSVMAdaptiveKernel()
+
 
 # Process data through pipeline
 def detect_anomaly(raw_data):
     # Transform data
     scaler.learn_one(raw_data)
     normalized_data = scaler.transform_one(raw_data)
-    
+
     # Detect anomaly
     detector.learn_one(normalized_data)
     return detector.score_one(normalized_data)
@@ -149,7 +150,7 @@ All ONAD components include comprehensive type hints:
 
 ```python
 from typing import Dict
-from onad.model.unsupervised.forest import OnlineIsolationForest
+from onad.model.forest import OnlineIsolationForest
 
 model: OnlineIsolationForest = OnlineIsolationForest()
 features: Dict[str, float] = {"temperature": 23.5, "humidity": 0.65}

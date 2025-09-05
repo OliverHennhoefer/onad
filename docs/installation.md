@@ -133,10 +133,12 @@ Test your installation:
 
 ```python
 import onad
+
 print(f"ONAD version: {onad.__version__}")
 
 # Test a simple model
-from onad.model.unsupervised.forest import OnlineIsolationForest
+from onad.model.forest import OnlineIsolationForest
+
 model = OnlineIsolationForest()
 print("✅ Installation successful!")
 ```

@@ -24,14 +24,15 @@ The flagship model for general-purpose anomaly detection.
 - Real-time applications with moderate memory constraints
 
 **Configuration:**
+
 ```python
-from onad.model.unsupervised.forest import OnlineIsolationForest
+from onad.model.forest import OnlineIsolationForest
 
 model = OnlineIsolationForest(
-    num_trees=100,          # More trees = better accuracy, higher memory
-    window_size=1000,       # Memory window size
-    max_leaf_samples=32,    # Tree complexity control
-    random_state=42         # Reproducible results
+    num_trees=100,  # More trees = better accuracy, higher memory
+    window_size=1000,  # Memory window size
+    max_leaf_samples=32,  # Tree complexity control
+    random_state=42  # Reproducible results
 )
 ```
 
@@ -52,12 +53,12 @@ Advanced forest model with adaptive partitioning based on data distribution.
 - Scenarios with strong feature interactions
 
 ```python
-from onad.model.unsupervised.forest import MondrianIsolationForest
+from onad.model.forest import MondrianIsolationForest
 
 model = MondrianIsolationForest(
     num_trees=50,
     window_size=1000,
-    lambda_param=1.0        # Controls partitioning randomness
+    lambda_param=1.0  # Controls partitioning randomness
 )
 ```
 
@@ -80,13 +81,13 @@ Adaptive one-class SVM with evolving kernel parameters.
 - Applications requiring boundary adaptation
 
 ```python
-from onad.model.unsupervised.svm import IncrementalOneClassSVMAdaptiveKernel
+from onad.model.svm import IncrementalOneClassSVMAdaptiveKernel
 
 model = IncrementalOneClassSVMAdaptiveKernel(
-    gamma='scale',          # Kernel parameter
-    nu=0.1,                # Anomaly ratio estimate
-    window_size=1000,       # Memory window
-    adaptation_rate=0.01    # Kernel adaptation speed
+    gamma='scale',  # Kernel parameter
+    nu=0.1,  # Anomaly ratio estimate
+    window_size=1000,  # Memory window
+    adaptation_rate=0.01  # Kernel adaptation speed
 )
 ```
 
@@ -107,7 +108,7 @@ Graph-based SVM that leverages structural relationships in data.
 - Applications where connectivity matters
 
 ```python
-from onad.model.unsupervised.svm import GADGETSVM
+from onad.model.svm import GADGETSVM
 
 model = GADGETSVM(
     graph={0: [1], 1: [2], 2: []},  # Graph structure
@@ -134,11 +135,11 @@ K-Nearest Neighbors approach with efficient similarity search.
 - Medium to high-dimensional data with good distance metrics
 
 ```python
-from onad.model.unsupervised.distance import IncrementalKNN
+from onad.model.distance import IncrementalKNN
 
 model = IncrementalKNN(
-    k=10,                   # Number of neighbors
-    window_size=1000,       # Size of reference window
+    k=10,  # Number of neighbors
+    window_size=1000,  # Size of reference window
     distance_metric='euclidean'
 )
 ```
@@ -159,11 +160,11 @@ Single-variable statistical anomaly detection.
 - Seasonal decomposition with residual analysis
 
 ```python
-from onad.model.statistics.univariant import MovingAverage
+from onad.model.stat.uni import MovingAverage
 
 model = MovingAverage(
     window_size=100,
-    n_std=2.0              # Standard deviation threshold
+    n_std=2.0  # Standard deviation threshold
 )
 ```
 
@@ -175,11 +176,11 @@ Multi-variable statistical methods for correlated features.
 Tracks covariance matrix evolution for anomaly detection.
 
 ```python
-from onad.model.statistics.multivariant import MovingCovariance
+from onad.model.stat.multi import MovingCovariance
 
 model = MovingCovariance(
     window_size=200,
-    regularization=0.01    # Covariance matrix regularization
+    regularization=0.01  # Covariance matrix regularization
 )
 ```
 
@@ -187,7 +188,7 @@ model = MovingCovariance(
 Uses Mahalanobis distance with evolving statistics.
 
 ```python
-from onad.model.statistics.multivariant import MovingMahalanobisDistance
+from onad.model.stat.multi import MovingMahalanobisDistance
 
 model = MovingMahalanobisDistance(
     window_size=500,
@@ -199,7 +200,7 @@ model = MovingMahalanobisDistance(
 Monitors correlation structure changes.
 
 ```python
-from onad.model.statistics.multivariant import MovingCorrelationCoefficient
+from onad.model.stat.multi import MovingCorrelationCoefficient
 
 model = MovingCorrelationCoefficient(
     window_size=300,

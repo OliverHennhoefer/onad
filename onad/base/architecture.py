@@ -10,7 +10,7 @@ class Architecture(abc.ABC, nn.Module):
     """
     Abstract base class for defining neural network architectures.
 
-    This class ensures that any architecture can be plugged into the online model.
+    This class ensures that any deep can be plugged into the online model.
     """
 
     def __init__(self):

@@ -1,8 +1,8 @@
 from sklearn.metrics import average_precision_score
 
-from onad.dataset import Dataset, load
-from onad.model.unsupervised.svm.gadget_svm import GADGETSVM
-from onad.transform.scale import MinMaxScaler
+from onad.model.svm import GADGETSVM
+from onad.stream.dataset import Dataset, load
+from onad.transform.preprocess.scaler import MinMaxScaler
 
 scaler = MinMaxScaler()
 model = GADGETSVM()

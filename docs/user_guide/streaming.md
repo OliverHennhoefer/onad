@@ -425,9 +425,9 @@ class CachedPreprocessor:
     
     @lru_cache(maxsize=1000)
     def preprocess_features(self, data_tuple):
-        """Cache preprocessing results"""
+        """Cache preprocess results"""
         data_dict = dict(data_tuple)
-        # Expensive preprocessing here
+        # Expensive preprocess here
         return data_dict
     
     def process_stream(self, stream, model):
@@ -435,7 +435,7 @@ class CachedPreprocessor:
             # Convert to tuple for hashing
             data_tuple = tuple(sorted(data_point.items()))
             
-            # Use cached preprocessing
+            # Use cached preprocess
             processed = self.preprocess_features(data_tuple)
             
             model.learn_one(processed)

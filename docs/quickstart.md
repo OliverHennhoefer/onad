@@ -17,14 +17,14 @@ Let's create a simple anomaly detection system using the Online Isolation Forest
 ### 1. Basic Setup
 
 ```python
-from onad.model.unsupervised.forest import OnlineIsolationForest
+from onad.model.forest import OnlineIsolationForest
 import numpy as np
 
 # Create an Online Isolation Forest model
 model = OnlineIsolationForest(
-    num_trees=50,           # Number of trees in the forest
-    window_size=1000,       # Memory window size
-    max_leaf_samples=32     # Samples per leaf node
+    num_trees=50,  # Number of trees in the forest
+    window_size=1000,  # Memory window size
+    max_leaf_samples=32  # Samples per leaf node
 )
 
 print("✅ Model initialized successfully!")
@@ -117,7 +117,7 @@ print(f"🔍 Detected {detected_anomalies}/{len(anomaly_scores)} anomalies ({det
 Here's the complete code in one block:
 
 ```python
-from onad.model.unsupervised.forest import OnlineIsolationForest
+from onad.model.forest import OnlineIsolationForest
 import numpy as np
 
 # Initialize model
@@ -125,9 +125,9 @@ model = OnlineIsolationForest(num_trees=50, window_size=1000, max_leaf_samples=3
 
 # Generate data
 np.random.seed(42)
-normal_data = [{'x': np.random.normal(0, 1), 'y': np.random.normal(0, 1)} 
+normal_data = [{'x': np.random.normal(0, 1), 'y': np.random.normal(0, 1)}
                for _ in range(500)]
-anomaly_data = [{'x': np.random.normal(5, 0.5), 'y': np.random.normal(5, 0.5)} 
+anomaly_data = [{'x': np.random.normal(5, 0.5), 'y': np.random.normal(5, 0.5)}
                 for _ in range(20)]
 
 # Train model
@@ -209,24 +209,26 @@ print(f"Total anomalies detected: {anomaly_count}")
 Combine multiple components for more sophisticated processing:
 
 ```python
-from onad.transform.scale import StandardScaler
-from onad.model.unsupervised.forest import OnlineIsolationForest
+from onad.transform.preprocess.scaler import StandardScaler
+from onad.model.forest import OnlineIsolationForest
 
 # Create a processing pipeline
 scaler = StandardScaler()
 model = OnlineIsolationForest()
+
 
 # Process data through the pipeline
 def process_point(raw_data):
     # 1. Learn and transform features
     scaler.learn_one(raw_data)
     normalized_data = scaler.transform_one(raw_data)
-    
+
     # 2. Learn and score with the model
     model.learn_one(normalized_data)
     anomaly_score = model.score_one(normalized_data)
-    
+
     return anomaly_score
+
 
 # Use the pipeline
 for point in my_data_stream():

@@ -30,7 +30,7 @@ Complex scenarios and production-ready examples:
 ### 30-Second Quick Start
 
 ```python
-from onad.model.unsupervised.forest import OnlineIsolationForest
+from onad.model.forest import OnlineIsolationForest
 from onad.stream import ParquetStreamer, Dataset
 
 # Initialize model
@@ -41,7 +41,7 @@ with ParquetStreamer(Dataset.FRAUD) as streamer:
     for features, label in streamer:
         model.learn_one(features)
         score = model.score_one(features)
-        
+
         if score > 0.8:  # High anomaly threshold
             print(f"Anomaly detected! Score: {score:.3f}")
 ```
@@ -49,30 +49,32 @@ with ParquetStreamer(Dataset.FRAUD) as streamer:
 ### 2-Minute Data Pipeline
 
 ```python
-from onad.transform.scale import StandardScaler
-from onad.model.unsupervised.forest import OnlineIsolationForest
+from onad.transform.preprocess.scaler import StandardScaler
+from onad.model.forest import OnlineIsolationForest
 
-# Create preprocessing pipeline
+# Create preprocess pipeline
 scaler = StandardScaler()
 detector = OnlineIsolationForest(num_trees=100)
+
 
 # Process your data
 def detect_anomalies(data_stream, threshold=0.7):
     anomalies = []
-    
+
     for data_point in data_stream:
         # Preprocess
         scaler.learn_one(data_point)
         scaled_data = scaler.transform_one(data_point)
-        
+
         # Detect
         detector.learn_one(scaled_data)
         score = detector.score_one(scaled_data)
-        
+
         if score > threshold:
             anomalies.append((data_point, score))
-    
+
     return anomalies
+
 
 # Your data stream (replace with your data source)
 data_stream = [
@@ -89,67 +91,69 @@ print(f"Found {len(anomalies)} anomalies")
 
 ```python
 import logging
-from onad.transform.scale import StandardScaler
-from onad.transform.pca import IncrementalPCA
-from onad.model.unsupervised.forest import OnlineIsolationForest
+from onad.transform.preprocess.scaler import StandardScaler
+from onad.transform.project.incremental_pca import IncrementalPCA
+from onad.model.forest import OnlineIsolationForest
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class ProductionAnomalyDetector:
     def __init__(self):
         # Preprocessing pipeline
         self.scaler = StandardScaler()
         self.pca = IncrementalPCA(n_components=10)
-        
+
         # Detection model
         self.detector = OnlineIsolationForest(
             num_trees=100,
             window_size=2000,
             max_leaf_samples=32
         )
-        
+
         # Monitoring
         self.processed_count = 0
         self.anomaly_count = 0
-    
+
     def process_data_point(self, data_point, threshold=0.8):
         """Process single data point"""
         try:
             # Preprocessing
             self.scaler.learn_one(data_point)
             scaled = self.scaler.transform_one(data_point)
-            
+
             self.pca.learn_one(scaled)
             reduced = self.pca.transform_one(scaled)
-            
+
             # Anomaly detection
             self.detector.learn_one(reduced)
             score = self.detector.score_one(reduced)
-            
+
             # Update counters
             self.processed_count += 1
             is_anomaly = score > threshold
-            
+
             if is_anomaly:
                 self.anomaly_count += 1
                 logger.warning(f"Anomaly detected: {score:.3f}")
-            
+
             # Periodic reporting
             if self.processed_count % 1000 == 0:
                 rate = self.anomaly_count / self.processed_count
                 logger.info(f"Processed {self.processed_count} points, {rate:.1%} anomalies")
-            
+
             return {
                 'score': score,
                 'is_anomaly': is_anomaly,
                 'processed_count': self.processed_count
             }
-            
+
         except Exception as e:
             logger.error(f"Processing error: {e}")
             return {'error': str(e)}
+
 
 # Usage
 detector = ProductionAnomalyDetector()
@@ -157,7 +161,7 @@ detector = ProductionAnomalyDetector()
 # Process your stream
 for data_point in your_data_stream:
     result = detector.process_data_point(data_point)
-    
+
     if result.get('is_anomaly'):
         handle_anomaly(data_point, result['score'])
 ```

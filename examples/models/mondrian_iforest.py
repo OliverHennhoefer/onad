@@ -1,7 +1,7 @@
 from sklearn.metrics import average_precision_score
 
-from onad.dataset import Dataset, load
-from onad.model.unsupervised.forest.mondrian_iforest import MondrianForest
+from onad.model.forest import MondrianForest
+from onad.stream.dataset import Dataset, load
 
 model = MondrianForest(n_estimators=250, subspace_size=500, random_state=1)
 

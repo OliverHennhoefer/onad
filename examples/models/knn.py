@@ -1,9 +1,9 @@
 from sklearn.metrics import average_precision_score
 
-from onad.dataset import Dataset, load
-from onad.model.unsupervised.distance.knn import KNN
-from onad.transform.scale import MinMaxScaler
-from onad.utils.similarity.faiss_engine import FaissSimilaritySearchEngine
+from onad.model.distance.knn import KNN
+from onad.stream.dataset import Dataset, load
+from onad.transform.preprocess.scaler import MinMaxScaler
+from onad.utils.similar.faiss_engine import FaissSimilaritySearchEngine
 
 scaler = MinMaxScaler()
 

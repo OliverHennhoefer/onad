@@ -59,7 +59,7 @@ pip install onad[all]
 Here's a simple example to get you started:
 
 ```python
-from onad.model.unsupervised.forest import OnlineIsolationForest
+from onad.model.forest import OnlineIsolationForest
 from onad.stream import ParquetStreamer, Dataset
 
 # Initialize the model
@@ -74,10 +74,10 @@ with ParquetStreamer(Dataset.FRAUD) as streamer:
     for features, label in streamer:
         # Learn from the data point
         model.learn_one(features)
-        
+
         # Get anomaly score
         score = model.score_one(features)
-        
+
         # Check if it's an anomaly
         if score > 0.7:  # threshold
             print(f"Anomaly detected! Score: {score:.3f}")

@@ -1,10 +1,10 @@
 from sklearn.metrics import average_precision_score
 from torch import nn, optim
 
-from onad.dataset import Dataset, load
-from onad.model.unsupervised.deep.autoencoder import Autoencoder
-from onad.transform.scale import MinMaxScaler
-from onad.utils.architecture.autoencoder import VanillaAutoencoder
+from onad.model.deep.autoencoder import Autoencoder
+from onad.stream.dataset import Dataset, load
+from onad.transform.preprocess.scaler import MinMaxScaler
+from onad.utils.deep.architecture import VanillaAutoencoder
 
 model = VanillaAutoencoder(input_size=9, seed=1)
 

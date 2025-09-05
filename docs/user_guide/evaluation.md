@@ -395,65 +395,66 @@ results = evaluator.evaluate_stream(data_stream, label_stream)
 from typing import List, Tuple
 import numpy as np
 
+
 class StreamingCrossValidator:
     def __init__(self, n_folds=5, window_size=1000):
         self.n_folds = n_folds
         self.window_size = window_size
-    
+
     def validate_model(self, model_class, data_stream, labels, model_params=None):
         """Perform time-series cross-validation"""
         if model_params is None:
             model_params = {}
-        
+
         # Convert stream to list for indexing
         data_list = list(data_stream)
         label_list = list(labels)
-        
+
         fold_results = []
         fold_size = len(data_list) // self.n_folds
-        
+
         for fold in range(self.n_folds):
             # Time-series split: use past data for training, future for testing
             train_end = (fold + 1) * fold_size
             test_start = train_end
             test_end = min(test_start + fold_size, len(data_list))
-            
+
             if test_end <= test_start:
                 continue
-            
+
             # Initialize fresh model
             model = model_class(**model_params)
-            
+
             # Train on past data
             for i in range(min(train_end, self.window_size)):
                 model.learn_one(data_list[i])
-            
+
             # Test on future data
             test_scores = []
             test_labels = []
-            
+
             for i in range(test_start, test_end):
                 score = model.score_one(data_list[i])
                 test_scores.append(score)
                 test_labels.append(label_list[i])
-                
+
                 # Continue learning (prequential)
                 model.learn_one(data_list[i])
-            
+
             # Evaluate fold
             if len(set(test_labels)) > 1:  # Need both classes
                 fold_auc = roc_auc_score(test_labels, test_scores)
                 threshold = np.percentile(test_scores, 95)
                 fold_predictions = (np.array(test_scores) > threshold).astype(int)
                 fold_f1 = f1_score(test_labels, fold_predictions)
-                
+
                 fold_results.append({
                     'fold': fold,
                     'auc_roc': fold_auc,
                     'f1_score': fold_f1,
                     'test_size': len(test_labels)
                 })
-        
+
         # Aggregate results
         if fold_results:
             return {
@@ -466,8 +467,9 @@ class StreamingCrossValidator:
         else:
             return None
 
+
 # Usage
-from onad.model.unsupervised.forest import OnlineIsolationForest
+from onad.model.forest import OnlineIsolationForest
 
 cv = StreamingCrossValidator(n_folds=5)
 results = cv.validate_model(

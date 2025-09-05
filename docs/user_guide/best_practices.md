@@ -7,11 +7,13 @@ This guide provides proven strategies for deploying ONAD in production environme
 ### System Architecture
 
 **Microservices Design**
+
 ```python
 import logging
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 import json
+
 
 @dataclass
 class AnomalyDetectionConfig:
@@ -22,20 +24,21 @@ class AnomalyDetectionConfig:
     memory_limit_mb: int = 1000
     checkpoint_interval: int = 10000
 
+
 class AnomalyDetectionService:
     def __init__(self, config: AnomalyDetectionConfig):
         self.config = config
         self.logger = logging.getLogger(__name__)
-        
+
         # Initialize components
         self.model = self._create_model()
         self.preprocessors = self._create_preprocessors()
-        
+
         # Monitoring
         self.processed_count = 0
         self.anomaly_count = 0
         self.last_checkpoint = 0
-        
+
     def _create_model(self):
         """Factory method for model creation"""
         model_map = {
@@ -43,26 +46,26 @@ class AnomalyDetectionService:
             'adaptive_svm': IncrementalOneClassSVMAdaptiveKernel,
             'knn': IncrementalKNN
         }
-        
+
         model_class = model_map.get(self.config.model_type)
         if not model_class:
             raise ValueError(f"Unknown model type: {self.config.model_type}")
-        
+
         return model_class(**self.config.model_params)
-    
+
     def _create_preprocessors(self):
-        """Create preprocessing pipeline"""
+        """Create preprocess pipeline"""
         preprocessors = []
         for step in self.config.preprocessing_steps:
             if step['type'] == 'scaler':
-                from onad.transform.scale import StandardScaler
+                from onad.transform.preprocess.scaler import StandardScaler
                 preprocessors.append(StandardScaler(**step.get('params', {})))
             elif step['type'] == 'pca':
-                from onad.transform.pca import IncrementalPCA
+                from onad.transform.project.incremental_pca import IncrementalPCA
                 preprocessors.append(IncrementalPCA(**step.get('params', {})))
-        
+
         return preprocessors
-    
+
     def process_data_point(self, data: Dict[str, float]) -> Dict[str, Any]:
         """Process single data point"""
         try:
@@ -71,24 +74,24 @@ class AnomalyDetectionService:
             for preprocessor in self.preprocessors:
                 preprocessor.learn_one(processed_data)
                 processed_data = preprocessor.transform_one(processed_data)
-            
+
             # Anomaly detection
             self.model.learn_one(processed_data)
             score = self.model.score_one(processed_data)
-            
+
             # Thresholding
             is_anomaly = score > self.config.thresholds.get('anomaly', 0.7)
             severity = self._calculate_severity(score)
-            
+
             # Update counters
             self.processed_count += 1
             if is_anomaly:
                 self.anomaly_count += 1
-            
+
             # Periodic operations
             if self.processed_count % self.config.checkpoint_interval == 0:
                 self._checkpoint_model()
-            
+
             result = {
                 'anomaly_score': score,
                 'is_anomaly': is_anomaly,
@@ -96,20 +99,20 @@ class AnomalyDetectionService:
                 'timestamp': time.time(),
                 'model_state': self._get_model_info()
             }
-            
+
             if is_anomaly:
                 self.logger.warning(f"Anomaly detected: score={score:.3f}")
-            
+
             return result
-            
+
         except Exception as e:
             self.logger.error(f"Processing error: {e}")
             return {'error': str(e), 'timestamp': time.time()}
-    
+
     def _calculate_severity(self, score: float) -> str:
         """Calculate anomaly severity level"""
         thresholds = self.config.thresholds
-        
+
         if score > thresholds.get('critical', 0.9):
             return 'critical'
         elif score > thresholds.get('high', 0.8):
@@ -118,15 +121,15 @@ class AnomalyDetectionService:
             return 'medium'
         else:
             return 'low'
-    
+
     def _checkpoint_model(self):
         """Save model checkpoint"""
         import pickle
         import os
-        
+
         checkpoint_dir = 'checkpoints'
         os.makedirs(checkpoint_dir, exist_ok=True)
-        
+
         checkpoint_path = f"{checkpoint_dir}/model_{self.processed_count}.pkl"
         with open(checkpoint_path, 'wb') as f:
             pickle.dump({
@@ -135,9 +138,9 @@ class AnomalyDetectionService:
                 'processed_count': self.processed_count,
                 'config': self.config
             }, f)
-        
+
         self.logger.info(f"Model checkpoint saved: {checkpoint_path}")
-    
+
     def _get_model_info(self) -> Dict[str, Any]:
         """Get model state information"""
         return {
@@ -146,13 +149,14 @@ class AnomalyDetectionService:
             'anomaly_rate': self.anomaly_count / max(self.processed_count, 1),
             'memory_usage': self._get_memory_usage()
         }
-    
+
     def _get_memory_usage(self) -> float:
         """Get current memory usage in MB"""
         import psutil
         import os
         process = psutil.Process(os.getpid())
         return process.memory_info().rss / 1024 / 1024
+
 
 # Configuration example
 config = AnomalyDetectionConfig(
@@ -723,7 +727,7 @@ class SmartCacheAnomalyDetector:
         self.model = model
         self.cache_size = cache_size
         
-        # Feature preprocessing cache
+        # Feature preprocess cache
         self._preprocess_cache = {}
         
         # Score cache for identical inputs
@@ -733,11 +737,11 @@ class SmartCacheAnomalyDetector:
     def _cached_transform(self, data_hash: str, data_json: str) -> str:
         """Cache expensive transformations"""
         data = json.loads(data_json)
-        # Expensive preprocessing here
+        # Expensive preprocess here
         return json.dumps(self._expensive_preprocessing(data))
     
     def _expensive_preprocessing(self, data: Dict[str, float]) -> Dict[str, float]:
-        """Placeholder for expensive preprocessing"""
+        """Placeholder for expensive preprocess"""
         # Example: complex feature engineering
         result = data.copy()
         result['feature_sum'] = sum(data.values())
@@ -757,7 +761,7 @@ class SmartCacheAnomalyDetector:
         if data_hash in self._score_cache:
             return self._score_cache[data_hash]
         
-        # Check preprocessing cache
+        # Check preprocess cache
         data_json = json.dumps(data, sort_keys=True)
         if data_hash in self._preprocess_cache:
             processed_data = self._preprocess_cache[data_hash]

@@ -1,6 +1,7 @@
 # Project
 .idea
 .claude
+nul
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

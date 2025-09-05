@@ -54,8 +54,9 @@ Combine components for sophisticated processing:
 ## Common Workflows
 
 ### Basic Anomaly Detection
+
 ```python
-from onad.model.unsupervised.forest import OnlineIsolationForest
+from onad.model.forest import OnlineIsolationForest
 
 # Initialize model
 model = OnlineIsolationForest()
@@ -69,13 +70,15 @@ for data_point in stream:
 ```
 
 ### Data Preprocessing Pipeline
+
 ```python
-from onad.transform.scale import StandardScaler
-from onad.model.unsupervised.svm import IncrementalOneClassSVMAdaptiveKernel
+from onad.transform.preprocess.scaler import StandardScaler
+from onad.model.svm import IncrementalOneClassSVMAdaptiveKernel
 
 # Create pipeline components
 scaler = StandardScaler()
 detector = IncrementalOneClassSVMAdaptiveKernel()
+
 
 # Process data through pipeline
 def detect_anomaly(raw_data):
@@ -111,15 +114,16 @@ with ParquetStreamer(Dataset.FRAUD) as streamer:
 ## Quick Reference
 
 ### Essential Imports
+
 ```python
 # Models
-from onad.model.unsupervised.forest import OnlineIsolationForest
-from onad.model.unsupervised.svm import IncrementalOneClassSVMAdaptiveKernel
-from onad.model.statistics.multivariant import MovingMahalanobisDistance
+from onad.model.forest import OnlineIsolationForest
+from onad.model.svm import IncrementalOneClassSVMAdaptiveKernel
+from onad.model.stat.multi import MovingMahalanobisDistance
 
 # Transformers
-from onad.transform.scale import StandardScaler, MinMaxScaler
-from onad.transform.pca import IncrementalPCA
+from onad.transform.preprocess.scaler import StandardScaler, MinMaxScaler
+from onad.transform.project.incremental_pca import IncrementalPCA
 
 # Streaming
 from onad.stream import ParquetStreamer, Dataset
@@ -133,7 +137,7 @@ model = OnlineIsolationForest(window_size=1000)
 # Performance tuning
 model = OnlineIsolationForest(num_trees=100, max_leaf_samples=32)
 
-# Data preprocessing
+# Data preprocess
 scaler = StandardScaler()
 pca = IncrementalPCA(n_components=10)
 ```

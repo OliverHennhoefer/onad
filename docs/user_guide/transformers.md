@@ -21,7 +21,7 @@ Z-score normalization that transforms features to have zero mean and unit varian
 - Features are approximately normally distributed
 
 ```python
-from onad.transform.scale import StandardScaler
+from onad.transform.preprocess.scaler import StandardScaler
 
 # Initialize scaler
 scaler = StandardScaler(tolerance=1e-8)
@@ -30,10 +30,10 @@ scaler = StandardScaler(tolerance=1e-8)
 for data_point in stream:
     # Learn statistics from data point
     scaler.learn_one(data_point)
-    
+
     # Transform the data point
     normalized = scaler.transform_one(data_point)
-    
+
     # Use normalized data for anomaly detection
     score = model.score_one(normalized)
 ```
@@ -64,7 +64,7 @@ Min-max normalization that scales features to a fixed range [0, 1] or custom ran
 - Features have known or stable min/max bounds
 
 ```python
-from onad.transform.scale import MinMaxScaler
+from onad.transform.preprocess.scaler import MinMaxScaler
 
 # Scale to [0, 1] range
 scaler = MinMaxScaler()
@@ -104,11 +104,11 @@ Online Principal Component Analysis for dimensionality reduction and feature ext
 - Want to remove noise from data
 
 ```python
-from onad.transform.pca import IncrementalPCA
+from onad.transform.project.incremental_pca import IncrementalPCA
 
 # Initialize PCA transformer
 pca = IncrementalPCA(
-    n_components=10,        # Keep top 10 components
+    n_components=10,  # Keep top 10 components
     forgetting_factor=0.99  # Adaptation rate for concept drift
 )
 
@@ -116,10 +116,10 @@ pca = IncrementalPCA(
 for data_point in stream:
     # Learn from data point
     pca.learn_one(data_point)
-    
+
     # Transform to lower dimension
     reduced = pca.transform_one(data_point)
-    
+
     # Use reduced data for anomaly detection
     score = model.score_one(reduced)
 ```
@@ -154,24 +154,26 @@ Transformers can be chained together for complex preprocessing:
 ### Basic Pipeline
 
 ```python
-from onad.transform.scale import StandardScaler
-from onad.transform.pca import IncrementalPCA
+from onad.transform.preprocess.scaler import StandardScaler
+from onad.transform.project.incremental_pca import IncrementalPCA
 
 # Create pipeline components
 scaler = StandardScaler()
 pca = IncrementalPCA(n_components=5)
+
 
 # Process data through pipeline
 def preprocess_point(raw_data):
     # Step 1: Scale features
     scaler.learn_one(raw_data)
     scaled = scaler.transform_one(raw_data)
-    
+
     # Step 2: Reduce dimensions
     pca.learn_one(scaled)
     reduced = pca.transform_one(scaled)
-    
+
     return reduced
+
 
 # Use in anomaly detection
 for data_point in stream:

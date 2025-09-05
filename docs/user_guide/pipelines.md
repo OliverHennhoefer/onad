@@ -16,9 +16,9 @@ A typical ONAD pipeline consists of several stages:
 
 ```python
 # Basic pipeline structure
-from onad.transform.scale import StandardScaler
-from onad.transform.pca import IncrementalPCA
-from onad.model.unsupervised.forest import OnlineIsolationForest
+from onad.transform.preprocess.scaler import StandardScaler
+from onad.transform.project.incremental_pca import IncrementalPCA
+from onad.model.forest import OnlineIsolationForest
 
 # Create pipeline components
 scaler = StandardScaler()
@@ -30,15 +30,15 @@ for data_point in stream:
     # Stage 1: Preprocessing
     scaler.learn_one(data_point)
     scaled_data = scaler.transform_one(data_point)
-    
+
     # Stage 2: Feature engineering
     pca.learn_one(scaled_data)
     reduced_data = pca.transform_one(scaled_data)
-    
+
     # Stage 3: Anomaly detection
     detector.learn_one(reduced_data)
     anomaly_score = detector.score_one(reduced_data)
-    
+
     # Stage 4: Decision making
     if anomaly_score > threshold:
         handle_anomaly(data_point, anomaly_score)
@@ -68,7 +68,7 @@ class SequentialPipeline:
         """Score one data point through the pipeline"""
         current_data = x
         
-        # Transform through preprocessing stages
+        # Transform through preprocess stages
         for component in self.components[:-1]:  # All except last
             if hasattr(component, 'transform_one'):
                 current_data = component.transform_one(current_data)
@@ -113,7 +113,7 @@ class ParallelPipeline:
         weighted_scores = [s * w for s, w in zip(scores, self.weights)]
         return sum(weighted_scores) / sum(self.weights)
 
-# Create parallel pipelines with different preprocessing
+# Create parallel pipelines with different preprocess
 pipeline1 = SequentialPipeline([
     StandardScaler(),
     OnlineIsolationForest(num_trees=50)

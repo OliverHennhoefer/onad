@@ -1,10 +1,10 @@
 from sklearn.metrics import average_precision_score
 
-from onad.dataset import Dataset, load
-from onad.model.unsupervised.svm.adaptive_svm import (
+from onad.model.svm.adaptive_svm import (
     IncrementalOneClassSVMAdaptiveKernel,
 )
-from onad.transform.scale import StandardScaler
+from onad.stream.dataset import Dataset, load
+from onad.transform.preprocess.scaler import StandardScaler
 
 scaler = StandardScaler()
 model = IncrementalOneClassSVMAdaptiveKernel(

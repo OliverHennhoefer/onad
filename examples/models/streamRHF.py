@@ -1,7 +1,7 @@
 from sklearn.metrics import average_precision_score
 
-from onad.dataset import Dataset, load
-from onad.model.unsupervised.forest.streamRHF import StreamRandomHistogramForest
+from onad.model.forest import StreamRandomHistogramForest
+from onad.stream.dataset import Dataset, load
 
 model = StreamRandomHistogramForest(
     n_estimators=25, max_bins=10, window_size=256, seed=1
