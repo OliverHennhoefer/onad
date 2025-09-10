@@ -54,14 +54,14 @@ class AnomalyDetectionService:
         return model_class(**self.config.model_params)
 
     def _create_preprocessors(self):
-        """Create preprocess pipeline"""
+        """Create preprocessing pipeline"""
         preprocessors = []
         for step in self.config.preprocessing_steps:
             if step['type'] == 'scaler':
-                from onad.transform.preprocess.scaler import StandardScaler
+                from onad.transform.preprocessing.scaler import StandardScaler
                 preprocessors.append(StandardScaler(**step.get('params', {})))
             elif step['type'] == 'pca':
-                from onad.transform.project.incremental_pca import IncrementalPCA
+                from onad.transform.projection.incremental_pca import IncrementalPCA
                 preprocessors.append(IncrementalPCA(**step.get('params', {})))
 
         return preprocessors
@@ -727,7 +727,7 @@ class SmartCacheAnomalyDetector:
         self.model = model
         self.cache_size = cache_size
         
-        # Feature preprocess cache
+        # Feature preprocessing cache
         self._preprocess_cache = {}
         
         # Score cache for identical inputs
@@ -737,11 +737,11 @@ class SmartCacheAnomalyDetector:
     def _cached_transform(self, data_hash: str, data_json: str) -> str:
         """Cache expensive transformations"""
         data = json.loads(data_json)
-        # Expensive preprocess here
+        # Expensive preprocessing here
         return json.dumps(self._expensive_preprocessing(data))
     
     def _expensive_preprocessing(self, data: Dict[str, float]) -> Dict[str, float]:
-        """Placeholder for expensive preprocess"""
+        """Placeholder for expensive preprocessing"""
         # Example: complex feature engineering
         result = data.copy()
         result['feature_sum'] = sum(data.values())
@@ -761,7 +761,7 @@ class SmartCacheAnomalyDetector:
         if data_hash in self._score_cache:
             return self._score_cache[data_hash]
         
-        # Check preprocess cache
+        # Check preprocessing cache
         data_json = json.dumps(data, sort_keys=True)
         if data_hash in self._preprocess_cache:
             processed_data = self._preprocess_cache[data_hash]

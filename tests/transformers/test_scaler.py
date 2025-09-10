@@ -1,7 +1,7 @@
 import unittest
 
 from onad.stream.dataset import Dataset, load
-from onad.transform.preprocess.scaler import MinMaxScaler
+from onad.transform.preprocessing.scaler import MinMaxScaler
 
 
 class MyTestCase(unittest.TestCase):

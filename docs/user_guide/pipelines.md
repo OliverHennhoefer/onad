@@ -16,8 +16,8 @@ A typical ONAD pipeline consists of several stages:
 
 ```python
 # Basic pipeline structure
-from onad.transform.preprocess.scaler import StandardScaler
-from onad.transform.project.incremental_pca import IncrementalPCA
+from onad.transform.preprocessing.scaler import StandardScaler
+from onad.transform.projection.incremental_pca import IncrementalPCA
 from onad.model.iforest import OnlineIsolationForest
 
 # Create pipeline components
@@ -68,7 +68,7 @@ class SequentialPipeline:
         """Score one data point through the pipeline"""
         current_data = x
         
-        # Transform through preprocess stages
+        # Transform through preprocessing stages
         for component in self.components[:-1]:  # All except last
             if hasattr(component, 'transform_one'):
                 current_data = component.transform_one(current_data)
@@ -113,7 +113,7 @@ class ParallelPipeline:
         weighted_scores = [s * w for s, w in zip(scores, self.weights)]
         return sum(weighted_scores) / sum(self.weights)
 
-# Create parallel pipelines with different preprocess
+# Create parallel pipelines with different preprocessing
 pipeline1 = SequentialPipeline([
     StandardScaler(),
     OnlineIsolationForest(num_trees=50)

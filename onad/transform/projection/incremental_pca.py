@@ -8,23 +8,23 @@ from onad.base.transformer import BaseTransformer
 class IncrementalPCA(BaseTransformer):
     """
     Incremental Principal Component Analysis for online dimensionality reduction.
-    
+
     Implements an online PCA algorithm that can process data points one at a time,
     maintaining principal components without storing all historical data.
-    
+
     Args:
         n_components: Number of principal components to keep.
         n0: Initial number of samples for warm-up phase.
         keys: Feature names. If None, inferred from first sample.
         tol: Tolerance for considering residual significance.
         forgetting_factor: Weight for new values (0 < f < 1). If None, uses 1/t.
-        
+
     Example:
         >>> pca = IncrementalPCA(n_components=2)
         >>> pca.learn_one({"x": 1.0, "y": 2.0, "z": 3.0})
         >>> transformed = pca.transform_one({"x": 1.5, "y": 2.5, "z": 3.5})
     """
-    
+
     def __init__(
         self,
         n_components: int,
@@ -67,7 +67,7 @@ class IncrementalPCA(BaseTransformer):
         self.feature_names: list[str] | None = keys
         self.tol: float = tol
         super().__init__()
-        
+
         if forgetting_factor is not None and not (0 < forgetting_factor < 1):
             raise ValueError("forgetting_factor must be 0 < forgetting_factor < 1")
         self.forgetting_factor = forgetting_factor
@@ -96,7 +96,7 @@ class IncrementalPCA(BaseTransformer):
     def _update_online_pca(self, data_vector: np.ndarray) -> None:
         """
         Update PCA components using online algorithm.
-        
+
         Args:
             data_vector: New data point as numpy array.
         """
@@ -110,7 +110,7 @@ class IncrementalPCA(BaseTransformer):
         # Update eigenvalues with forgetting factor
         lambda_updated = (1 - f) * self.values
 
-        # Scale new data point and project onto current subspace
+        # Scale new data point and projection onto current subspace
         x_scaled = np.sqrt(f) * data_vector
         xhat = self.vectors.T @ x_scaled
 
@@ -135,13 +135,13 @@ class IncrementalPCA(BaseTransformer):
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         Expand subspace when residual is significant.
-        
+
         Args:
             lambda_updated: Current eigenvalues.
             xhat: Projected data point.
             residual: Orthogonal residual.
             norm_residual: Norm of the residual.
-            
+
         Returns:
             Extended eigenvalues and projected data point.
         """
@@ -151,7 +151,7 @@ class IncrementalPCA(BaseTransformer):
         lambda_extended = np.zeros(k)
         lambda_extended[: len(lambda_updated)] = lambda_updated
 
-        # Extend project
+        # Extend projection
         xhat_extended = np.zeros(k)
         xhat_extended[: len(xhat)] = xhat
         xhat_extended[-1] = norm_residual
@@ -169,7 +169,7 @@ class IncrementalPCA(BaseTransformer):
     ) -> None:
         """
         Compute and apply eigendecomposition update.
-        
+
         Args:
             lambda_updated: Updated eigenvalues.
             xhat: Projected data point.
@@ -195,7 +195,7 @@ class IncrementalPCA(BaseTransformer):
     def _initialize_pca(self, data_vector: np.ndarray) -> None:
         """
         Handle initialization phase by collecting data until n0 samples.
-        
+
         Args:
             data_vector: New data point to add to initialization window.
         """
@@ -253,14 +253,14 @@ class IncrementalPCA(BaseTransformer):
                 raise RuntimeError(
                     "Cannot transform before learning. Call learn_one() first or provide keys."
                 )
-            
+
             data_vector = np.array([x[key] for key in self.feature_names])
             transformed_x = self.vectors.T @ data_vector
             return {f"component_{i}": float(val) for i, val in enumerate(transformed_x)}
         else:
             # Return zeros during initialization phase
             return {f"component_{i}": 0.0 for i in range(self.n_components)}
-    
+
     def __repr__(self) -> str:
         """Return string representation of the transformer."""
         return (

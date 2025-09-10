@@ -21,7 +21,7 @@ Z-score normalization that transforms features to have zero mean and unit varian
 - Features are approximately normally distributed
 
 ```python
-from onad.transform.preprocess.scaler import StandardScaler
+from onad.transform.preprocessing.scaler import StandardScaler
 
 # Initialize scaler
 scaler = StandardScaler(tolerance=1e-8)
@@ -64,7 +64,7 @@ Min-max normalization that scales features to a fixed range [0, 1] or custom ran
 - Features have known or stable min/max bounds
 
 ```python
-from onad.transform.preprocess.scaler import MinMaxScaler
+from onad.transform.preprocessing.scaler import MinMaxScaler
 
 # Scale to [0, 1] range
 scaler = MinMaxScaler()
@@ -104,7 +104,7 @@ Online Principal Component Analysis for dimensionality reduction and feature ext
 - Want to remove noise from data
 
 ```python
-from onad.transform.project.incremental_pca import IncrementalPCA
+from onad.transform.projection.incremental_pca import IncrementalPCA
 
 # Initialize PCA transformer
 pca = IncrementalPCA(
@@ -154,8 +154,8 @@ Transformers can be chained together for complex preprocessing:
 ### Basic Pipeline
 
 ```python
-from onad.transform.preprocess.scaler import StandardScaler
-from onad.transform.project.incremental_pca import IncrementalPCA
+from onad.transform.preprocessing.scaler import StandardScaler
+from onad.transform.projection.incremental_pca import IncrementalPCA
 
 # Create pipeline components
 scaler = StandardScaler()

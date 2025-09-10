@@ -1,47 +1,48 @@
 """Statistical models for univariate moving window analysis."""
 
 from collections import deque
-from typing import Any
 
 from onad.base.model import BaseModel
 
 
 class _BaseMovingUnivariate(BaseModel):
     """Base class for univariate moving window models to reduce code duplication."""
-    
-    def __init__(self, window_size: int, key: str | None = None, abs_diff: bool = True) -> None:
+
+    def __init__(
+        self, window_size: int, key: str | None = None, abs_diff: bool = True
+    ) -> None:
         """Initialize base moving univariate model."""
         super().__init__()
-        
+
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
-            
+
         self.window_size = window_size
         self.window: deque[float] = deque(maxlen=window_size)
         self.feature_name: str | None = key
         self.abs_diff = abs_diff
-    
+
     def learn_one(self, x: dict[str, float]) -> None:
         """
         Update the model with a single data point.
-        
+
         Args:
             x: Dictionary with exactly one key-value pair.
-            
+
         Raises:
             ValueError: If input doesn't contain exactly one feature.
         """
         if len(x) != 1:
             raise ValueError("Input must contain exactly one key-value pair.")
-            
+
         if self.feature_name is None:
             # Extract the single value efficiently
             self.feature_name = next(iter(x))
-            
+
         value = x.get(self.feature_name)
-        if value is not None and isinstance(value, (int, float)):
+        if value is not None and isinstance(value, int | float):
             self.window.append(float(value))
-    
+
     def _extract_value(self, x: dict[str, float]) -> float:
         """Extract single value from input dictionary efficiently."""
         if self.feature_name is not None:
@@ -52,15 +53,15 @@ class _BaseMovingUnivariate(BaseModel):
 class MovingAverage(_BaseMovingUnivariate):
     """
     Moving average anomaly detection model.
-    
+
     Calculates the difference between the arithmetic mean of a window with a new value
     and the mean of the current window.
-    
+
     Args:
         window_size: Number of recent values to consider.
         key: Feature name. If None, uses first learned key.
         abs_diff: If True, returns absolute difference.
-        
+
     Example:
         >>> model = MovingAverage(window_size=10)
         >>> model.learn_one({"value": 1.0})
@@ -70,43 +71,42 @@ class MovingAverage(_BaseMovingUnivariate):
     def score_one(self, x: dict[str, float]) -> float:
         """
         Compute anomaly score based on mean change.
-        
+
         Args:
             x: Data point to score.
-            
+
         Returns:
             Mean difference. Returns 0.0 if window is empty.
         """
         if len(self.window) == 0:
             return 0.0
-            
+
         current_mean = sum(self.window) / len(self.window)
         new_value = self._extract_value(x)
         new_mean = (sum(self.window) + new_value) / (len(self.window) + 1)
-        
+
         difference = new_mean - current_mean
         return abs(difference) if self.abs_diff else difference
-    
+
     def __repr__(self) -> str:
         """Return string representation of the model."""
         return (
-            f"MovingAverage(window_size={self.window_size}, "
-            f"abs_diff={self.abs_diff})"
+            f"MovingAverage(window_size={self.window_size}, abs_diff={self.abs_diff})"
         )
 
 
 class MovingHarmonicAverage(_BaseMovingUnivariate):
     """
     Moving harmonic average anomaly detection model.
-    
+
     Calculates the difference between the harmonic mean of a window with a new value
     and the harmonic mean of the current window. Zero values are ignored.
-    
+
     Args:
         window_size: Number of recent values to consider.
         key: Feature name. If None, uses first learned key.
         abs_diff: If True, returns absolute difference.
-        
+
     Example:
         >>> model = MovingHarmonicAverage(window_size=10)
         >>> model.learn_one({"value": 2.0})
@@ -116,49 +116,49 @@ class MovingHarmonicAverage(_BaseMovingUnivariate):
     def learn_one(self, x: dict[str, float]) -> None:
         """
         Update the model with a single data point.
-        
+
         Zero values are ignored as they would make harmonic mean undefined.
-        
+
         Args:
             x: Dictionary with exactly one key-value pair.
         """
         if len(x) != 1:
             raise ValueError("Input must contain exactly one key-value pair.")
-            
+
         if self.feature_name is None:
             self.feature_name = next(iter(x))
-            
+
         value = x.get(self.feature_name, 0)
-        if value != 0 and isinstance(value, (int, float)):
+        if value != 0 and isinstance(value, int | float):
             self.window.append(float(value))
 
     def score_one(self, x: dict[str, float]) -> float:
         """
         Compute anomaly score based on harmonic mean change.
-        
+
         Args:
             x: Data point to score.
-            
+
         Returns:
             Harmonic mean difference. Returns 0.0 if insufficient data.
         """
         if len(self.window) == 0:
             return 0.0
-            
+
         new_value = self._extract_value(x)
         if new_value == 0:  # Skip zero values
             return 0.0
-            
+
         # Calculate harmonic means
         current_harmonic = len(self.window) / sum(1 / val for val in self.window)
-        
+
         # Include new value
         all_values = list(self.window) + [new_value]
         new_harmonic = len(all_values) / sum(1 / val for val in all_values)
-        
+
         difference = new_harmonic - current_harmonic
         return abs(difference) if self.abs_diff else difference
-    
+
     def __repr__(self) -> str:
         """Return string representation of the model."""
         return (
@@ -325,13 +325,10 @@ class MovingMedian(BaseModel):
             median_new = window_score[mid_index_new]
         score = median_new - median_old
         return abs(score) if self.abs_diff else score
-    
+
     def __repr__(self) -> str:
         """Return string representation of the model."""
-        return (
-            f"MovingMedian(window_size={len(self.window)}, "
-            f"abs_diff={self.abs_diff})"
-        )
+        return f"MovingMedian(window_size={len(self.window)}, abs_diff={self.abs_diff})"
 
 
 class MovingQuantile(BaseModel):
@@ -475,12 +472,11 @@ class MovingVariance(BaseModel):
             variance_score = sum(squared_diffs_score) / len(score_window)
             score = variance_score - variance_window
             return abs(score) if self.abs_diff else score
-    
+
     def __repr__(self) -> str:
         """Return string representation of the model."""
         return (
-            f"MovingVariance(window_size={len(self.window)}, "
-            f"abs_diff={self.abs_diff})"
+            f"MovingVariance(window_size={len(self.window)}, abs_diff={self.abs_diff})"
         )
 
 

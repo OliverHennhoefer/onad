@@ -3,8 +3,8 @@ import unittest
 import numpy as np
 
 from onad.stream.dataset import Dataset, load
-from onad.transform.preprocess.scaler import MinMaxScaler, StandardScaler
-from onad.transform.project.random_projection import RandomProjection
+from onad.transform.preprocessing.scaler import MinMaxScaler, StandardScaler
+from onad.transform.projection.random_projection import RandomProjection
 
 
 class TestMinMaxScaler(unittest.TestCase):
@@ -446,7 +446,9 @@ class TestRandomProjections(unittest.TestCase):
             sample_data = {f"feature_{i}": np.random.rand() for i in range(10)}
             rp.transform_one(sample_data)
 
-        expected_msg = "Cannot transform before learning. Call learn_one() first or provide keys."
+        expected_msg = (
+            "Cannot transform before learning. Call learn_one() first or provide keys."
+        )
         self.assertTrue(
             expected_msg in str(context.exception),
             f"Expected error message '{expected_msg}' but got {context.exception}",

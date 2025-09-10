@@ -10,7 +10,7 @@ from torch import nn, optim
 
 from onad.model.deep.autoencoder import Autoencoder
 from onad.stream.dataset import Dataset, load
-from onad.transform.preprocess.scaler import MinMaxScaler
+from onad.transform.preprocessing.scaler import MinMaxScaler
 from onad.utils.deep.architecture import VanillaAutoencoder
 
 # Hyperparameters

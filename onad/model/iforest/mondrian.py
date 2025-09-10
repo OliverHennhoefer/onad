@@ -1,7 +1,6 @@
 """Online Mondrian Forest for anomaly detection."""
 
 import math
-from typing import Any
 
 import numpy as np
 
@@ -200,7 +199,7 @@ class MondrianForest(BaseModel):
     ) -> None:
         """Initialize the Mondrian Forest."""
         super().__init__()
-        
+
         # Input validation
         if n_estimators <= 0:
             raise ValueError("n_estimators must be positive")
@@ -218,7 +217,6 @@ class MondrianForest(BaseModel):
         self.n_samples = 0
         self._feature_order: list[str] | None = None
         self._feature_to_index: dict[str, int] | None = None
-        
 
     def learn_one(self, x: dict[str, float]) -> None:
         """
@@ -229,7 +227,7 @@ class MondrianForest(BaseModel):
         """
         if self._feature_order is None:
             self._initialize_features(x)
-        
+
         # Use original approach to maintain exact behavior
         global_features = np.array([x[f] for f in self._feature_order])
 
@@ -249,7 +247,7 @@ class MondrianForest(BaseModel):
         self._feature_order = sorted(x.keys())
         self.subspace_size = min(self.subspace_size, len(self._feature_order))
         self._feature_to_index = {f: i for i, f in enumerate(self._feature_order)}
-        
+
         # Use original approach for exact behavior match
         global_features = np.array([x[f] for f in self._feature_order])
 
@@ -277,7 +275,7 @@ class MondrianForest(BaseModel):
         """
         if self._feature_order is None:
             return 0.0
-            
+
         # Use original approach for exact behavior match
         global_features = np.array([x[f] for f in self._feature_order])
         path_lengths = []
@@ -299,8 +297,7 @@ class MondrianForest(BaseModel):
         """
         n = self.n_samples
         return 2 * (math.log(n - 1) + self.EULER_MASCHERONI) - 2 * (n - 1) / n
-    
-    
+
     def __repr__(self) -> str:
         """Return a string representation of the Mondrian Forest."""
         return (

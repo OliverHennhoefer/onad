@@ -209,7 +209,7 @@ print(f"Total anomalies detected: {anomaly_count}")
 Combine multiple components for more sophisticated processing:
 
 ```python
-from onad.transform.preprocess.scaler import StandardScaler
+from onad.transform.preprocessing.scaler import StandardScaler
 from onad.model.iforest import OnlineIsolationForest
 
 # Create a processing pipeline

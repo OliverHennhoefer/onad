@@ -4,7 +4,7 @@ from onad.model.svm.adaptive import (
     IncrementalOneClassSVMAdaptiveKernel,
 )
 from onad.stream.dataset import Dataset, load
-from onad.transform.preprocess.scaler import StandardScaler
+from onad.transform.preprocessing.scaler import StandardScaler
 
 scaler = StandardScaler()
 model = IncrementalOneClassSVMAdaptiveKernel(

@@ -109,7 +109,7 @@ for data_point in data_stream:
 Combine transformers and models:
 
 ```python
-from onad.transform.preprocess.scaler import StandardScaler
+from onad.transform.preprocessing.scaler import StandardScaler
 from onad.model.svm import IncrementalOneClassSVMAdaptiveKernel
 
 # Create pipeline components

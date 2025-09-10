@@ -49,10 +49,10 @@ with ParquetStreamer(Dataset.FRAUD) as streamer:
 ### 2-Minute Data Pipeline
 
 ```python
-from onad.transform.preprocess.scaler import StandardScaler
+from onad.transform.preprocessing.scaler import StandardScaler
 from onad.model.iforest import OnlineIsolationForest
 
-# Create preprocess pipeline
+# Create preprocessing pipeline
 scaler = StandardScaler()
 detector = OnlineIsolationForest(num_trees=100)
 
@@ -91,8 +91,8 @@ print(f"Found {len(anomalies)} anomalies")
 
 ```python
 import logging
-from onad.transform.preprocess.scaler import StandardScaler
-from onad.transform.project.incremental_pca import IncrementalPCA
+from onad.transform.preprocessing.scaler import StandardScaler
+from onad.transform.projection.incremental_pca import IncrementalPCA
 from onad.model.iforest import OnlineIsolationForest
 
 # Configure logging

@@ -11,13 +11,13 @@ class RandomProjection(BaseTransformer):
     ) -> None:
         """
         Initialize the RandomProjection transformer.
-        
+
         Implements the binary approach for random projections using sparse random matrices.
         This provides a computationally efficient way to reduce dimensionality while
         approximately preserving distances (Johnson-Lindenstrauss lemma).
-        
+
         Reference:
-            Achlioptas D. (2003) "Database-friendly random projections: 
+            Achlioptas D. (2003) "Database-friendly random projections:
             Johnson-Lindenstrauss with binary coins"
 
         Args:
@@ -29,7 +29,7 @@ class RandomProjection(BaseTransformer):
             ValueError: If n_components is greater than the number of features.
         """
         super().__init__()
-        
+
         if n_components < 1:
             raise ValueError("n_components must be greater than 0")
         self.n_components = n_components
@@ -47,7 +47,7 @@ class RandomProjection(BaseTransformer):
     def _initialize_random_matrix(self) -> None:
         """
         Initialize the random projection matrix.
-        
+
         Raises:
             ValueError: If feature names are not set.
         """
@@ -91,7 +91,7 @@ class RandomProjection(BaseTransformer):
 
         Returns:
             Transformed data point as dictionary with component names as keys.
-            
+
         Raises:
             RuntimeError: If called before learning feature names.
         """
@@ -100,14 +100,11 @@ class RandomProjection(BaseTransformer):
             raise RuntimeError(
                 "Cannot transform before learning. Call learn_one() first or provide keys."
             )
-        
+
         data_vector = np.array([x[key] for key in self.feature_names])
         transformed_x = self.random_matrix.T @ data_vector
         return {f"component_{i}": float(val) for i, val in enumerate(transformed_x)}
-    
+
     def __repr__(self) -> str:
         """Return string representation of the transformer."""
-        return (
-            f"RandomProjection(n_components={self.n_components}, "
-            f"seed={self.seed})"
-        )
+        return f"RandomProjection(n_components={self.n_components}, seed={self.seed})"

@@ -72,7 +72,7 @@ for data_point in stream:
 ### Data Preprocessing Pipeline
 
 ```python
-from onad.transform.preprocess.scaler import StandardScaler
+from onad.transform.preprocessing.scaler import StandardScaler
 from onad.model.svm import IncrementalOneClassSVMAdaptiveKernel
 
 # Create pipeline components
@@ -122,8 +122,8 @@ from onad.model.svm import IncrementalOneClassSVMAdaptiveKernel
 from onad.model.stat.multi import MovingMahalanobisDistance
 
 # Transformers
-from onad.transform.preprocess.scaler import StandardScaler, MinMaxScaler
-from onad.transform.project.incremental_pca import IncrementalPCA
+from onad.transform.preprocessing.scaler import StandardScaler, MinMaxScaler
+from onad.transform.projection.incremental_pca import IncrementalPCA
 
 # Streaming
 from onad.stream import ParquetStreamer, Dataset
@@ -137,7 +137,7 @@ model = OnlineIsolationForest(window_size=1000)
 # Performance tuning
 model = OnlineIsolationForest(num_trees=100, max_leaf_samples=32)
 
-# Data preprocess
+# Data preprocessing
 scaler = StandardScaler()
 pca = IncrementalPCA(n_components=10)
 ```

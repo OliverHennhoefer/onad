@@ -37,7 +37,7 @@ class TrueOnlineINode:
             node_index: Unique index for this node.
             min_values: Minimum values for each feature in this node's bounding box.
             max_values: Maximum values for each feature in this node's bounding box.
-            projection_vector: Axis-parallel project vector for splitting.
+            projection_vector: Axis-parallel projection vector for splitting.
             split_values: Array of split threshold values for multi-way splits.
         """
         self.data_size = data_size
@@ -332,7 +332,7 @@ class TrueOnlineITree:
                     node.min_values = vstack(min_vals).min(axis=0)
                     node.max_values = vstack(max_vals).max(axis=0)
 
-            # Delete children nodes, project vector and split values
+            # Delete children nodes, projection vector and split values
             node.children = None
             node.projection_vector = None
             node.split_values = None
@@ -370,14 +370,14 @@ class TrueOnlineITree:
                 split_values=None,
             )
         else:
-            # Sample project vector (axis-parallel)
+            # Sample projection vector (axis-parallel)
             if self.metric == "axisparallel":
                 projection_vector = zeros(data.shape[1])
                 projection_vector[choice(projection_vector.shape[0])] = 1.0
             else:
                 raise ValueError(f"Bad metric {self.metric}")
 
-            # Project sampled data using project vector
+            # Project sampled data using projection vector
             projected_data = data @ projection_vector
 
             # Sample split values
@@ -478,7 +478,7 @@ class TrueOnlineITree:
         self, data: ndarray, projection_vector: ndarray, split_values: ndarray
     ) -> list[ndarray]:
         """
-        Split data according to project vector and split values.
+        Split data according to projection vector and split values.
 
         Args:
             data: Input data array.
@@ -488,7 +488,7 @@ class TrueOnlineITree:
         Returns:
             List of index arrays for each partition.
         """
-        # Project data using project vector
+        # Project data using projection vector
         projected_data = data @ projection_vector
         # Sort projected data and keep sort indices
         sort_indices = argsort(projected_data)
