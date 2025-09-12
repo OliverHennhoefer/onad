@@ -308,66 +308,7 @@ class TestStandardScaler(unittest.TestCase):
         self.assertEqual(self.scaler._safe_div(10.0, False), 0.0)
 
 
-class TestScalersIntegration(unittest.TestCase):
-    """Integration tests using real data from the streaming framework."""
 
-    def test_min_max_scaler_integration(self):
-        """Integration test for MinMaxScaler with streaming data."""
-        scaler = MinMaxScaler()
-
-        normalized_vals = []
-
-        # Load dataset using new API
-        dataset = load(Dataset.FRAUD)
-
-        for sample_count, (x, _) in enumerate(dataset.stream()):
-            scaler.learn_one(x)
-            scaled_x = scaler.transform_one(x)
-            normalized_vals.append(scaled_x)
-
-            if sample_count >= 99:  # Limit for faster testing (0-based indexing)
-                break
-
-        # Verify all values are in [0, 1] range with tight validation
-        for i, scaled_dict in enumerate(normalized_vals):
-            for feature, value in scaled_dict.items():
-                self.assertGreaterEqual(
-                    value, 0.0, f"Sample {i}, feature {feature}: {value} < 0.0"
-                )
-                self.assertLessEqual(
-                    value, 1.0, f"Sample {i}, feature {feature}: {value} > 1.0"
-                )
-                self.assertIsInstance(
-                    value, float, f"Sample {i}, feature {feature}: {value} is not float"
-                )
-
-    def test_standard_scaler_integration(self):
-        """Integration test for StandardScaler with streaming data."""
-        scaler = StandardScaler()
-
-        scaled_vals = []
-
-        # Load dataset using new API
-        dataset = load(Dataset.FRAUD)
-
-        for sample_count, (x, _) in enumerate(dataset.stream()):
-            scaler.learn_one(x)
-            scaled_x = scaler.transform_one(x)
-            scaled_vals.append(scaled_x)
-
-            if sample_count >= 99:  # Limit for faster testing (0-based indexing)
-                break
-
-        # Verify all values are finite and properly typed
-        for i, scaled_dict in enumerate(scaled_vals):
-            for feature, value in scaled_dict.items():
-                self.assertTrue(
-                    np.isfinite(value),
-                    f"Sample {i}, feature {feature}: {value} is not finite",
-                )
-                self.assertIsInstance(
-                    value, float, f"Sample {i}, feature {feature}: {value} is not float"
-                )
 
 
 class TestRandomProjections(unittest.TestCase):

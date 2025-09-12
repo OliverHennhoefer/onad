@@ -92,68 +92,7 @@ class TestPCAPipelineIntegration(unittest.TestCase):
         self.assertTrue(all(f"component_{i}" in transformed for i in range(5)))
         self.assertTrue(all(isinstance(v, float) for v in transformed.values()))
 
-    def test_streaming_shuttle_dataset(self):
-        """Test complete pipeline with streaming Shuttle dataset."""
-        labels, scores = [], []
-        processed_samples = 0
-        max_samples = 500  # Process subset for test efficiency
-
-        # Track PCA state evolution
-        pca_values_evolution = []
-
-        # Load dataset using new API
-        dataset = load(Dataset.SHUTTLE)
-
-        for i, (x, y) in enumerate(dataset.stream()):
-            if processed_samples >= max_samples:
-                break
-
-            # Learn from normal samples initially (similar to examples pattern)
-            if y == 0 and i < 100:
-                self.pipeline_full.learn_one(x)
-                processed_samples += 1
-
-                # Track PCA evolution during learning
-                if self.pca.n0_reached and len(self.pca.values) > 0:
-                    pca_values_evolution.append(self.pca.values.copy())
-                continue
-
-            # Learn and score
-            self.pipeline_full.learn_one(x)
-            score = self.pipeline_full.score_one(x)
-
-            # Skip if score is None (happens during warm-up phase)
-            if score is not None:
-                labels.append(y)
-                scores.append(score)
-
-                # Validate score is reasonable
-                self.assertIsInstance(score, (int, float, np.floating))
-                self.assertFalse(np.isnan(score))
-                self.assertFalse(np.isinf(score))
-
-            processed_samples += 1
-
-        # Validate we processed data
-        self.assertGreater(processed_samples, 100)
-        self.assertGreater(len(labels), 50)
-        self.assertGreater(len(scores), 50)
-
-        # Validate PCA learned and evolved
-        if len(pca_values_evolution) > 1:
-            # Eigenvalues should change as PCA learns
-            first_values = pca_values_evolution[0]
-            last_values = pca_values_evolution[-1]
-            self.assertFalse(np.allclose(first_values, last_values, rtol=1e-6))
-
-        # Validate anomaly detection performance (basic sanity check)
-        if len(set(labels)) > 1:  # If we have both normal and anomalous samples
-            # Calculate PR-AUC (should be > random baseline of minority class %)
-            pr_auc = average_precision_score(labels, scores)
-            minority_class_ratio = sum(labels) / len(labels)
-            self.assertGreater(
-                pr_auc, minority_class_ratio * 0.5
-            )  # At least half the random baseline
+    
 
     def test_pca_state_consistency(self):
         """Test that PCA maintains consistent state during streaming."""

@@ -244,6 +244,9 @@ class MondrianForest(BaseModel):
         Args:
             x: First data point to establish feature order.
         """
+        if not x:
+            raise ValueError("Cannot initialize forest with empty feature dictionary")
+            
         self._feature_order = sorted(x.keys())
         self.subspace_size = min(self.subspace_size, len(self._feature_order))
         self._feature_to_index = {f: i for i, f in enumerate(self._feature_order)}
@@ -296,6 +299,8 @@ class MondrianForest(BaseModel):
             Average path length of unsuccessful search in BST.
         """
         n = self.n_samples
+        if n <= 1:
+            return 1.0
         return 2 * (math.log(n - 1) + self.EULER_MASCHERONI) - 2 * (n - 1) / n
 
     def __repr__(self) -> str:

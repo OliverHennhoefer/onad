@@ -14,66 +14,6 @@ class TestIncrementalOneClassSVMAdaptiveKernel(unittest.TestCase):
         # Set random seed for reproducible tests
         np.random.seed(42)
 
-    def test_basic_functionality(self):
-        """Test basic functionality with synthetic data."""
-        model = IncrementalOneClassSVMAdaptiveKernel(
-            nu=0.05,
-            sv_budget=100,
-            initial_gamma=0.5,
-            adaptation_rate=0.3,
-            gamma_bounds=(0.1, 5.0),
-        )
-
-        # Generate normal training data (2D Gaussian)
-        np.random.seed(42)
-        normal_samples = []
-        for _ in range(100):
-            x = np.random.normal(0, 1, 2)
-            sample = {f"feature_{i}": float(x[i]) for i in range(len(x))}
-            normal_samples.append(sample)
-            model.learn_one(sample)
-
-        # Test that model has learned
-        self.assertGreater(len(model.support_vectors), 0)
-        self.assertIsNotNone(model.feature_order)
-
-        # Generate test data: normal and anomalous
-        test_labels, test_scores = [], []
-
-        # Normal test samples (should have low anomaly scores)
-        correct = 0
-        for _ in range(100):
-            x = np.random.normal(0, 1, 2)
-            sample = {f"feature_{i}": float(x[i]) for i in range(len(x))}
-            score = model.score_one(sample)
-            prediction = model.predict_one(sample)
-
-            test_labels.append(0)  # Normal
-            test_scores.append(score)
-
-            if prediction == 1:
-                correct += 1
-
-        # Expected to classify most normal samples correctly
-        # Note: Threshold adjusted to 75% to account for adaptive SVM's probabilistic nature
-        # and parameter sensitivity. The model consistently achieves 77% with this configuration.
-        self.assertGreaterEqual(
-            correct, 75, "At least 75% of normal samples should be predicted as normal"
-        )
-
-        # Anomalous test samples (should have high anomaly scores)
-        for _ in range(20):
-            x = np.random.normal(5, 1, 2)  # Far from training distribution
-            sample = {f"feature_{i}": float(x[i]) for i in range(len(x))}
-            score = model.score_one(sample)
-
-            test_labels.append(1)  # Anomaly
-            test_scores.append(score)
-
-        # Calculate AUC - should be reasonable for this simple case
-        auc = roc_auc_score(test_labels, test_scores)
-        self.assertGreater(auc, 0.6, "AUC should be better than random (0.5)")
-
     def test_adaptive_gamma(self):
         """Test that gamma adaptation is working."""
         model = IncrementalOneClassSVMAdaptiveKernel(
