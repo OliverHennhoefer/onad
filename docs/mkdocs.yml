@@ -8,7 +8,7 @@ edit_uri: edit/main/docs/
 
 copyright: Copyright © 2025 Oliver Hennhoefer
 
-# docs_dir: docs  # Not needed since mkdocs.yml is now inside docs/
+docs_dir: .  # Set docs directory to current directory (docs/)
 site_dir: ../site
 
 theme:
