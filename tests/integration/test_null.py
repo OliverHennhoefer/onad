@@ -1,10 +1,11 @@
 """Integration test for the NullModel."""
 
 import unittest
+
 from sklearn.metrics import average_precision_score
 
 from onad.model.null import NullModel
-from onad.stream.dataset import Dataset, load, get_dataset_info
+from onad.stream.dataset import Dataset, load
 
 
 class TestNullModel(unittest.TestCase):
@@ -30,7 +31,7 @@ class TestNullModel(unittest.TestCase):
         test_count = 0
 
         # Process dataset stream
-        for i, (features, label) in enumerate(dataset_stream.stream()):
+        for _i, (features, label) in enumerate(dataset_stream.stream()):
             if warmup_count < WARMUP_SAMPLES:
                 if label == 0:
                     model.learn_one(features)
@@ -49,12 +50,16 @@ class TestNullModel(unittest.TestCase):
         # Calculate and assert PR-AUC
         self.assertGreater(len(scores), 0, "No test samples were processed.")
         pr_auc = average_precision_score(labels, scores)
-        
+
         # For a NullModel (always scoring 0), PR-AUC is equivalent to the anomaly rate in the test set.
         expected_pr_auc = sum(labels) / len(labels)
 
-        self.assertAlmostEqual(pr_auc, expected_pr_auc, places=6,
-                               msg=f"PR-AUC {pr_auc:.10f} should be exactly {expected_pr_auc:.10f}")
+        self.assertAlmostEqual(
+            pr_auc,
+            expected_pr_auc,
+            places=6,
+            msg=f"PR-AUC {pr_auc:.10f} should be exactly {expected_pr_auc:.10f}",
+        )
 
 
 if __name__ == "__main__":

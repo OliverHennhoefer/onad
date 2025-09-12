@@ -1,6 +1,7 @@
 """Integration test for the OnlineIsolationForest model."""
 
 import unittest
+
 from sklearn.metrics import average_precision_score
 
 from onad.model.iforest.online import OnlineIsolationForest
@@ -28,7 +29,7 @@ class TestOnlineIsolationForest(unittest.TestCase):
             window_size=1024,
             branching_factor=2,
             metric="axisparallel",
-            n_jobs=1
+            n_jobs=1,
         )
 
         # Load dataset
@@ -39,7 +40,7 @@ class TestOnlineIsolationForest(unittest.TestCase):
         test_count = 0
 
         # Process dataset stream
-        for i, (features, label) in enumerate(dataset_stream.stream()):
+        for _i, (features, label) in enumerate(dataset_stream.stream()):
             if warmup_count < WARMUP_SAMPLES:
                 if label == 0:
                     model.learn_one(features)
@@ -58,11 +59,19 @@ class TestOnlineIsolationForest(unittest.TestCase):
         # Calculate and assert PR-AUC
         self.assertGreater(len(scores), 0, "No test samples were processed.")
         pr_auc = average_precision_score(labels, scores)
-        
+
         # For non-deterministic models, assert a reasonable performance range
         lower_bound, upper_bound = 0.2, 0.98
-        self.assertGreaterEqual(pr_auc, lower_bound, f"PR-AUC {pr_auc:.3f} is below expected range [{lower_bound}, {upper_bound}]")
-        self.assertLessEqual(pr_auc, upper_bound, f"PR-AUC {pr_auc:.3f} is above expected range [{lower_bound}, {upper_bound}]")
+        self.assertGreaterEqual(
+            pr_auc,
+            lower_bound,
+            f"PR-AUC {pr_auc:.3f} is below expected range [{lower_bound}, {upper_bound}]",
+        )
+        self.assertLessEqual(
+            pr_auc,
+            upper_bound,
+            f"PR-AUC {pr_auc:.3f} is above expected range [{lower_bound}, {upper_bound}]",
+        )
 
 
 if __name__ == "__main__":

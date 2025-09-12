@@ -1,6 +1,7 @@
 """Integration test for the IncrementalOneClassSVMAdaptiveKernel model."""
 
 import unittest
+
 from sklearn.metrics import average_precision_score
 
 from onad.model.svm.adaptive import IncrementalOneClassSVMAdaptiveKernel
@@ -22,9 +23,7 @@ class TestAdaptiveSVM(unittest.TestCase):
 
         # Create model
         model = IncrementalOneClassSVMAdaptiveKernel(
-            nu=0.1,
-            initial_gamma=1.0,
-            seed=SEED
+            nu=0.1, initial_gamma=1.0, seed=SEED
         )
 
         # Load dataset
@@ -35,7 +34,7 @@ class TestAdaptiveSVM(unittest.TestCase):
         test_count = 0
 
         # Process dataset stream
-        for i, (features, label) in enumerate(dataset_stream.stream()):
+        for _i, (features, label) in enumerate(dataset_stream.stream()):
             if warmup_count < WARMUP_SAMPLES:
                 if label == 0:
                     model.learn_one(features)
@@ -56,8 +55,12 @@ class TestAdaptiveSVM(unittest.TestCase):
         pr_auc = average_precision_score(labels, scores)
         expected_pr_auc = 0.280510
 
-        self.assertAlmostEqual(pr_auc, expected_pr_auc, places=6,
-                               msg=f"PR-AUC {pr_auc:.10f} should be exactly {expected_pr_auc:.10f}")
+        self.assertAlmostEqual(
+            pr_auc,
+            expected_pr_auc,
+            places=6,
+            msg=f"PR-AUC {pr_auc:.10f} should be exactly {expected_pr_auc:.10f}",
+        )
 
 
 if __name__ == "__main__":

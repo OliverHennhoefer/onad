@@ -1,6 +1,7 @@
 """Integration test for the ASDIsolationForest model."""
 
 import unittest
+
 from sklearn.metrics import average_precision_score
 
 from onad.model.iforest.asd import ASDIsolationForest
@@ -21,11 +22,7 @@ class TestASDIsolationForest(unittest.TestCase):
         DATASET = Dataset.SHUTTLE
 
         # Create model
-        model = ASDIsolationForest(
-            n_estimators=50,
-            max_samples=256,
-            seed=SEED
-        )
+        model = ASDIsolationForest(n_estimators=50, max_samples=256, seed=SEED)
 
         # Load dataset
         dataset_stream = load(DATASET)
@@ -35,7 +32,7 @@ class TestASDIsolationForest(unittest.TestCase):
         test_count = 0
 
         # Process dataset stream
-        for i, (features, label) in enumerate(dataset_stream.stream()):
+        for _i, (features, label) in enumerate(dataset_stream.stream()):
             if warmup_count < WARMUP_SAMPLES:
                 if label == 0:
                     model.learn_one(features)
@@ -56,8 +53,12 @@ class TestASDIsolationForest(unittest.TestCase):
         pr_auc = average_precision_score(labels, scores)
         expected_pr_auc = 0.888677
 
-        self.assertAlmostEqual(pr_auc, expected_pr_auc, places=6,
-                               msg=f"PR-AUC {pr_auc:.10f} should be exactly {expected_pr_auc:.10f}")
+        self.assertAlmostEqual(
+            pr_auc,
+            expected_pr_auc,
+            places=6,
+            msg=f"PR-AUC {pr_auc:.10f} should be exactly {expected_pr_auc:.10f}",
+        )
 
 
 if __name__ == "__main__":

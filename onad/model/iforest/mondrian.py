@@ -246,7 +246,7 @@ class MondrianForest(BaseModel):
         """
         if not x:
             raise ValueError("Cannot initialize forest with empty feature dictionary")
-            
+
         self._feature_order = sorted(x.keys())
         self.subspace_size = min(self.subspace_size, len(self._feature_order))
         self._feature_to_index = {f: i for i, f in enumerate(self._feature_order)}

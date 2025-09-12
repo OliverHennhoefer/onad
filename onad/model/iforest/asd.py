@@ -96,10 +96,10 @@ class ASDIsolationForest(BaseModel):
         # Add current sample to buffer
         self.buffer[self.buffer_count] = self._x_converted
         self.buffer_count += 1
-        
+
         # Check if buffer is now full and we should build a tree
         if self.buffer_count == self.max_samples:
-            # Build new tree from current buffer  
+            # Build new tree from current buffer
             new_tree = self._build_tree(self.buffer[: self.max_samples])
             self.trees.append(new_tree)
             if len(self.trees) > self.n_estimators:

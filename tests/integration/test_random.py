@@ -1,6 +1,7 @@
 """Integration test for the RandomModel."""
 
 import unittest
+
 from sklearn.metrics import average_precision_score
 
 from onad.model.random import RandomModel
@@ -31,7 +32,7 @@ class TestRandomModel(unittest.TestCase):
         test_count = 0
 
         # Process dataset stream
-        for i, (features, label) in enumerate(dataset_stream.stream()):
+        for _i, (features, label) in enumerate(dataset_stream.stream()):
             if warmup_count < WARMUP_SAMPLES:
                 if label == 0:
                     model.learn_one(features)
@@ -50,12 +51,20 @@ class TestRandomModel(unittest.TestCase):
         # Calculate and assert PR-AUC
         self.assertGreater(len(scores), 0, "No test samples were processed.")
         pr_auc = average_precision_score(labels, scores)
-        
+
         # A random classifier's PR-AUC should be close to the anomaly rate of the dataset.
         # For SHUTTLE, this is ~7%. We assert it's in a reasonable range around that.
         lower_bound, upper_bound = 0.01, 0.15
-        self.assertGreaterEqual(pr_auc, lower_bound, f"PR-AUC {pr_auc:.3f} is below expected range [{lower_bound}, {upper_bound}]")
-        self.assertLessEqual(pr_auc, upper_bound, f"PR-AUC {pr_auc:.3f} is above expected range [{lower_bound}, {upper_bound}]")
+        self.assertGreaterEqual(
+            pr_auc,
+            lower_bound,
+            f"PR-AUC {pr_auc:.3f} is below expected range [{lower_bound}, {upper_bound}]",
+        )
+        self.assertLessEqual(
+            pr_auc,
+            upper_bound,
+            f"PR-AUC {pr_auc:.3f} is above expected range [{lower_bound}, {upper_bound}]",
+        )
 
 
 if __name__ == "__main__":

@@ -1,9 +1,10 @@
 """Integration tests for univariate statistical models."""
 
 import unittest
+
 from sklearn.metrics import average_precision_score
 
-from onad.model.stat.uni import MovingAverage, MovingVariance, MovingMedian
+from onad.model.stat.uni import MovingAverage, MovingMedian, MovingVariance
 from onad.stream.dataset import Dataset, load
 
 
@@ -28,7 +29,7 @@ class TestUnivariateStatisticalModels(unittest.TestCase):
         # The dataset stream needs to be re-initialized for each test
         dataset_stream = load(Dataset.SHUTTLE)
 
-        for i, (features, label) in enumerate(dataset_stream.stream()):
+        for _i, (features, label) in enumerate(dataset_stream.stream()):
             # Prepare univariate data by extracting the first feature
             first_feature_key = list(features.keys())[0]
             x_uni = {first_feature_key: features[first_feature_key]}
@@ -50,10 +51,18 @@ class TestUnivariateStatisticalModels(unittest.TestCase):
 
         self.assertGreater(len(scores), 0, "No scores were generated.")
         pr_auc = average_precision_score(labels, scores)
-        
+
         lower, upper = expected_range
-        self.assertGreaterEqual(pr_auc, lower, f"PR-AUC {pr_auc:.3f} is below expected range [{lower}, {upper}] for {model.__class__.__name__}")
-        self.assertLessEqual(pr_auc, upper, f"PR-AUC {pr_auc:.3f} is above expected range [{lower}, {upper}] for {model.__class__.__name__}")
+        self.assertGreaterEqual(
+            pr_auc,
+            lower,
+            f"PR-AUC {pr_auc:.3f} is below expected range [{lower}, {upper}] for {model.__class__.__name__}",
+        )
+        self.assertLessEqual(
+            pr_auc,
+            upper,
+            f"PR-AUC {pr_auc:.3f} is above expected range [{lower}, {upper}] for {model.__class__.__name__}",
+        )
 
     def test_moving_average(self):
         model = MovingAverage(window_size=100)

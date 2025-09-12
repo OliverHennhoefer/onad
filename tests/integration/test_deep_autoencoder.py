@@ -4,13 +4,14 @@ import unittest
 
 try:
     from torch import nn, optim
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
 
 from sklearn.metrics import average_precision_score
 
-from onad.stream.dataset import Dataset, load, get_dataset_info
+from onad.stream.dataset import Dataset, get_dataset_info, load
 
 if TORCH_AVAILABLE:
     from onad.model.deep.autoencoder import Autoencoder
@@ -37,9 +38,7 @@ class TestAutoencoderOnShuttle(unittest.TestCase):
         optimizer = optim.Adam(architecture.parameters(), lr=0.001)
         criterion = nn.MSELoss()
         model = Autoencoder(
-            model=architecture,
-            optimizer=optimizer,
-            criterion=criterion
+            model=architecture, optimizer=optimizer, criterion=criterion
         )
 
         # Load dataset
@@ -50,7 +49,7 @@ class TestAutoencoderOnShuttle(unittest.TestCase):
         test_count = 0
 
         # Process dataset stream
-        for i, (features, label) in enumerate(dataset_stream.stream()):
+        for _i, (features, label) in enumerate(dataset_stream.stream()):
             # Warmup phase: train only on normal samples
             if warmup_count < WARMUP_SAMPLES:
                 if label == 0:  # Normal sample
@@ -74,8 +73,12 @@ class TestAutoencoderOnShuttle(unittest.TestCase):
         pr_auc = average_precision_score(labels, scores)
         expected_pr_auc = 0.4000581594
 
-        self.assertAlmostEqual(pr_auc, expected_pr_auc, places=6,
-                               msg=f"PR-AUC {pr_auc:.10f} should be exactly {expected_pr_auc:.10f}")
+        self.assertAlmostEqual(
+            pr_auc,
+            expected_pr_auc,
+            places=6,
+            msg=f"PR-AUC {pr_auc:.10f} should be exactly {expected_pr_auc:.10f}",
+        )
 
 
 if __name__ == "__main__":

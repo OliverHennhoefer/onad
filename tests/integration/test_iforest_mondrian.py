@@ -1,6 +1,7 @@
 """Integration test for the MondrianForest model."""
 
 import unittest
+
 from sklearn.metrics import average_precision_score
 
 from onad.model.iforest.mondrian import MondrianForest
@@ -22,10 +23,7 @@ class TestMondrianForest(unittest.TestCase):
 
         # Create model
         model = MondrianForest(
-            n_estimators=50,
-            subspace_size=128,
-            lambda_=1.0,
-            seed=SEED
+            n_estimators=50, subspace_size=128, lambda_=1.0, seed=SEED
         )
 
         # Load dataset
@@ -36,7 +34,7 @@ class TestMondrianForest(unittest.TestCase):
         test_count = 0
 
         # Process dataset stream
-        for i, (features, label) in enumerate(dataset_stream.stream()):
+        for _i, (features, label) in enumerate(dataset_stream.stream()):
             if warmup_count < WARMUP_SAMPLES:
                 if label == 0:
                     model.learn_one(features)
@@ -57,8 +55,12 @@ class TestMondrianForest(unittest.TestCase):
         pr_auc = average_precision_score(labels, scores)
         expected_pr_auc = 0.098312
 
-        self.assertAlmostEqual(pr_auc, expected_pr_auc, places=6,
-                               msg=f"PR-AUC {pr_auc:.10f} should be exactly {expected_pr_auc:.10f}")
+        self.assertAlmostEqual(
+            pr_auc,
+            expected_pr_auc,
+            places=6,
+            msg=f"PR-AUC {pr_auc:.10f} should be exactly {expected_pr_auc:.10f}",
+        )
 
 
 if __name__ == "__main__":

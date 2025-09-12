@@ -25,7 +25,7 @@ class StreamRandomHistogramForest(BaseModel):
         seed: int | None = None,
     ):
         super().__init__()
-        
+
         # Parameter validation
         if n_estimators <= 0:
             raise ValueError("n_estimators must be positive")
@@ -33,7 +33,7 @@ class StreamRandomHistogramForest(BaseModel):
             raise ValueError("max_bins must be positive")
         if window_size <= 0:
             raise ValueError("window_size must be positive")
-        
+
         self.n_estimators = n_estimators
         self.max_bins = max_bins
         self.window_size = window_size

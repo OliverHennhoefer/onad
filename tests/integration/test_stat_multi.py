@@ -1,6 +1,7 @@
 """Integration tests for multivariate statistical models."""
 
 import unittest
+
 from sklearn.metrics import average_precision_score
 
 from onad.model.stat.multi import MovingCovariance, MovingMahalanobisDistance
@@ -24,16 +25,19 @@ class TestMultivariateStatisticalModels(unittest.TestCase):
         labels, scores = [], []
         warmup_count = 0
         test_count = 0
-        
+
         dataset_stream = load(Dataset.SHUTTLE)
 
-        for i, (features, label) in enumerate(dataset_stream.stream()):
+        for _i, (features, label) in enumerate(dataset_stream.stream()):
             # Prepare bivariate data
             if len(features) < 2:
                 continue
-            
+
             feature_keys = list(features.keys())
-            x_bi = {feature_keys[0]: features[feature_keys[0]], feature_keys[1]: features[feature_keys[1]]}
+            x_bi = {
+                feature_keys[0]: features[feature_keys[0]],
+                feature_keys[1]: features[feature_keys[1]],
+            }
 
             if warmup_count < self.WARMUP_SAMPLES:
                 if label == 0:
@@ -52,10 +56,18 @@ class TestMultivariateStatisticalModels(unittest.TestCase):
 
         self.assertGreater(len(scores), 0, "No scores were generated.")
         pr_auc = average_precision_score(labels, scores)
-        
+
         lower, upper = (0.3, 0.75)
-        self.assertGreaterEqual(pr_auc, lower, f"PR-AUC {pr_auc:.3f} is below expected range [{lower}, {upper}]")
-        self.assertLessEqual(pr_auc, upper, f"PR-AUC {pr_auc:.3f} is above expected range [{lower}, {upper}]")
+        self.assertGreaterEqual(
+            pr_auc,
+            lower,
+            f"PR-AUC {pr_auc:.3f} is below expected range [{lower}, {upper}]",
+        )
+        self.assertLessEqual(
+            pr_auc,
+            upper,
+            f"PR-AUC {pr_auc:.3f} is above expected range [{lower}, {upper}]",
+        )
 
     def test_moving_mahalanobis_distance(self):
         """Test for the multivariate MovingMahalanobisDistance model."""
@@ -63,10 +75,10 @@ class TestMultivariateStatisticalModels(unittest.TestCase):
         labels, scores = [], []
         warmup_count = 0
         test_count = 0
-        
+
         dataset_stream = load(Dataset.SHUTTLE)
 
-        for i, (features, label) in enumerate(dataset_stream.stream()):
+        for _i, (features, label) in enumerate(dataset_stream.stream()):
             if warmup_count < self.WARMUP_SAMPLES:
                 if label == 0:
                     model.learn_one(features)
@@ -84,10 +96,18 @@ class TestMultivariateStatisticalModels(unittest.TestCase):
 
         self.assertGreater(len(scores), 0, "No scores were generated.")
         pr_auc = average_precision_score(labels, scores)
-        
+
         lower, upper = (0.3, 0.8)
-        self.assertGreaterEqual(pr_auc, lower, f"PR-AUC {pr_auc:.3f} is below expected range [{lower}, {upper}]")
-        self.assertLessEqual(pr_auc, upper, f"PR-AUC {pr_auc:.3f} is above expected range [{lower}, {upper}]")
+        self.assertGreaterEqual(
+            pr_auc,
+            lower,
+            f"PR-AUC {pr_auc:.3f} is below expected range [{lower}, {upper}]",
+        )
+        self.assertLessEqual(
+            pr_auc,
+            upper,
+            f"PR-AUC {pr_auc:.3f} is above expected range [{lower}, {upper}]",
+        )
 
 
 if __name__ == "__main__":

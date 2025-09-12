@@ -1,6 +1,7 @@
 """Integration test for the KNN model."""
 
 import unittest
+
 from sklearn.metrics import average_precision_score
 
 from onad.model.distance.knn import KNN
@@ -32,7 +33,7 @@ class TestKNN(unittest.TestCase):
         test_count = 0
 
         # Process dataset stream
-        for i, (features, label) in enumerate(dataset_stream.stream()):
+        for _i, (features, label) in enumerate(dataset_stream.stream()):
             if warmup_count < WARMUP_SAMPLES:
                 if label == 0:
                     model.learn_one(features)
@@ -53,8 +54,16 @@ class TestKNN(unittest.TestCase):
         pr_auc = average_precision_score(labels, scores)
 
         lower_bound, upper_bound = 0.8, 0.99
-        self.assertGreaterEqual(pr_auc, lower_bound, f"PR-AUC {pr_auc:.3f} is below expected range [{lower_bound}, {upper_bound}]")
-        self.assertLessEqual(pr_auc, upper_bound, f"PR-AUC {pr_auc:.3f} is above expected range [{lower_bound}, {upper_bound}]")
+        self.assertGreaterEqual(
+            pr_auc,
+            lower_bound,
+            f"PR-AUC {pr_auc:.3f} is below expected range [{lower_bound}, {upper_bound}]",
+        )
+        self.assertLessEqual(
+            pr_auc,
+            upper_bound,
+            f"PR-AUC {pr_auc:.3f} is above expected range [{lower_bound}, {upper_bound}]",
+        )
 
 
 if __name__ == "__main__":

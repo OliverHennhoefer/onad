@@ -542,7 +542,7 @@ class OnlineIsolationForest(BaseModel):
             raise ValueError("subsample must be in (0.0, 1.0]")
         if branching_factor <= 1:
             raise ValueError("branching_factor must be greater than 1")
-        
+
         self.num_trees = num_trees
         self.max_leaf_samples = max_leaf_samples
         self.type = type

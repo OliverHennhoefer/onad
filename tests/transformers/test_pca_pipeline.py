@@ -1,7 +1,6 @@
 import unittest
 
 import numpy as np
-from sklearn.metrics import average_precision_score
 
 from onad.model.distance.knn import KNN
 from onad.stream.dataset import Dataset, load
@@ -91,8 +90,6 @@ class TestPCAPipelineIntegration(unittest.TestCase):
         self.assertEqual(len(transformed), 5)
         self.assertTrue(all(f"component_{i}" in transformed for i in range(5)))
         self.assertTrue(all(isinstance(v, float) for v in transformed.values()))
-
-    
 
     def test_pca_state_consistency(self):
         """Test that PCA maintains consistent state during streaming."""

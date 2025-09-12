@@ -2,7 +2,6 @@ import unittest
 
 import numpy as np
 
-from onad.stream.dataset import Dataset, load
 from onad.transform.preprocessing.scaler import MinMaxScaler, StandardScaler
 from onad.transform.projection.random_projection import RandomProjection
 
@@ -306,9 +305,6 @@ class TestStandardScaler(unittest.TestCase):
 
         # Division by False (falsy value)
         self.assertEqual(self.scaler._safe_div(10.0, False), 0.0)
-
-
-
 
 
 class TestRandomProjections(unittest.TestCase):
