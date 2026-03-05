@@ -52,7 +52,12 @@ class Pipeline:
             The transformed data point.
         """
         transformed_x = self.first.transform_one(x)
-        return self.second.transform_one(transformed_x)
+        transformed = self.second.transform_one(transformed_x)
+        if not isinstance(transformed, dict):
+            raise PipelineError(
+                "The final transformer must return a dict[str, float] from transform_one."
+            )
+        return transformed
 
     def score_one(self, x: dict[str, float]) -> float:
         """
@@ -70,7 +75,12 @@ class Pipeline:
         transformed_x = self.first.transform_one(x)
 
         if hasattr(self.second, "score_one"):
-            return self.second.score_one(transformed_x)
+            score = self.second.score_one(transformed_x)
+            if not isinstance(score, int | float):
+                raise PipelineError(
+                    "The final component must return a numeric score from score_one."
+                )
+            return float(score)
         else:
             raise PipelineError(
                 f"The final component ({self.second.__class__.__name__}) does not have a 'score_one' method."

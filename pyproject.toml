@@ -9,7 +9,7 @@ description = "Online Anomaly Detection Toolkit"
 authors = [
     { name = "Oliver Hennhoefer", email = "oliver.hennhoefer@mail.de" },
     { name = "Pascal Heinzelmann" },
-    { name = "Marius Höll" },
+    { name = "Marius Hoell" },
     { name = "Marco Catoir" }
 ]
 maintainers = [
@@ -19,7 +19,7 @@ license = { file = "LICENSE" }
 readme = { file = "README.md", content-type = "text/markdown" }
 classifiers = [
     "Programming Language :: Python :: 3.10",
-    "License :: OSI Approved :: BSD License",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 requires-python = ">=3.10"
@@ -36,6 +36,7 @@ dev = [
     "pre-commit>=4.0.0,<5.0.0",
     "pytest>=8.0.0,<9.0.0",
     "pytest-cov>=6.0.0,<7.0.0",
+    "hypothesis>=6.0.0,<7.0.0",
     "mypy>=1.13.0,<2.0.0",
 ]
 docs = [
@@ -45,12 +46,33 @@ docs = [
 ]
 eval = ["scikit-learn>=1.6.1,<2.0.0"]
 dl = ["torch>=2.6.0,<3.0.0"]
-benchmark = ["river>=0.22.0,<1.0.0"]
-all = ["onad[dev,docs,eval,dl,benchmark]"]
+benchmark = [
+    "river>=0.22.0,<1.0.0",
+    "pytest-benchmark>=5.0.0,<6.0.0",
+]
+parquet = ["pyarrow>=18.0.0,<20.0.0"]
+all = [
+    "ruff>=0.8.0,<1.0.0",
+    "pre-commit>=4.0.0,<5.0.0",
+    "pytest>=8.0.0,<9.0.0",
+    "pytest-cov>=6.0.0,<7.0.0",
+    "hypothesis>=6.0.0,<7.0.0",
+    "mypy>=1.13.0,<2.0.0",
+    "mkdocs",
+    "mkdocs-material[imaging]",
+    "mkdocstrings[python]",
+    "scikit-learn>=1.6.1,<2.0.0",
+    "torch>=2.6.0,<3.0.0",
+    "river>=0.22.0,<1.0.0",
+    "pytest-benchmark>=5.0.0,<6.0.0",
+    "pyarrow>=18.0.0,<20.0.0",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/OliverHennhoefer/onad"
 "Bugs" = "https://github.com/OliverHennhoefer/onad/issues"
+"Documentation" = "https://oliverhennhoefer.github.io/onad"
+"Changelog" = "https://github.com/OliverHennhoefer/onad/blob/main/CHANGELOG.md"
 
 # Ruff configuration
 [tool.ruff]

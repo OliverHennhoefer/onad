@@ -567,6 +567,49 @@ class OnlineIsolationForest(BaseModel):
         self.data_window: list[ndarray] = []
         self.data_size: int = 0
         self.normalization_factor: float = 0.0
+        self._feature_order: tuple[str, ...] | None = None
+        self._n_features: int | None = None
+
+    def _set_or_validate_feature_order(self, x: dict[str, float]) -> None:
+        """Set feature order from first sample and validate future samples."""
+        if self._feature_order is None:
+            candidate_order = tuple(sorted(x.keys()))
+            if (
+                self._n_features is not None
+                and len(candidate_order) != self._n_features
+            ):
+                raise ValueError(
+                    f"Expected {self._n_features} features, received {len(candidate_order)}"
+                )
+            self._feature_order = candidate_order
+            if self._n_features is None:
+                self._n_features = len(self._feature_order)
+            return
+
+        received_keys = set(x.keys())
+        expected_keys = set(self._feature_order)
+        if received_keys != expected_keys:
+            expected = ", ".join(self._feature_order)
+            received = ", ".join(sorted(x.keys()))
+            raise ValueError(
+                "Inconsistent feature keys. "
+                f"Expected [{expected}], received [{received}]."
+            )
+
+    def _dict_to_array(self, x: dict[str, float]) -> ndarray:
+        """
+        Convert a feature dictionary to a 2D float32 array with stable feature order.
+        """
+        self._set_or_validate_feature_order(x)
+        if self._feature_order is None:
+            return np.array([], dtype=np.float32).reshape(0, 0)
+
+        row = np.fromiter(
+            (x[feature] for feature in self._feature_order),
+            dtype=np.float32,
+            count=len(self._feature_order),
+        )
+        return row.reshape(1, -1)
 
     def learn_one(self, x: dict[str, float]) -> None:
         """
@@ -579,8 +622,7 @@ class OnlineIsolationForest(BaseModel):
         if not x:
             return
 
-        # Convert dict to numpy array
-        data_point = np.array([list(x.values())], dtype=np.float32)
+        data_point = self._dict_to_array(x)
         self.learn_batch(data_point)
 
     def score_one(self, x: dict[str, float]) -> float:
@@ -597,8 +639,7 @@ class OnlineIsolationForest(BaseModel):
         if not x:
             return 0.0
 
-        # Convert dict to numpy array
-        data_point = np.array([list(x.values())], dtype=np.float32)
+        data_point = self._dict_to_array(x)
         scores = self.score_batch(data_point)
         return float(scores[0]) if len(scores) > 0 else 0.0
 
@@ -611,6 +652,15 @@ class OnlineIsolationForest(BaseModel):
         """
         if data.size == 0:
             return
+        if data.ndim != 2:
+            raise ValueError("data must be a 2D array of shape (n_samples, n_features)")
+
+        if self._n_features is None:
+            self._n_features = data.shape[1]
+        elif data.shape[1] != self._n_features:
+            raise ValueError(
+                f"Expected {self._n_features} features, received {data.shape[1]}"
+            )
 
         # Update the counter of data seen so far
         self.data_size += data.shape[0]
@@ -678,6 +728,12 @@ class OnlineIsolationForest(BaseModel):
         """
         if data.size == 0:
             return np.array([])
+        if data.ndim != 2:
+            raise ValueError("data must be a 2D array of shape (n_samples, n_features)")
+        if self._n_features is not None and data.shape[1] != self._n_features:
+            raise ValueError(
+                f"Expected {self._n_features} features, received {data.shape[1]}"
+            )
 
         # Collect trees' predict functions
         predict_funcs = [tree.predict for tree in self.trees]

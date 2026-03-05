@@ -81,18 +81,16 @@ class ThresholdModel(BaseModel):
                 if isinstance(self.ceiling, dict):
                     if feature in self.ceiling and value > self.ceiling[feature]:
                         return 1.0
-                else:
-                    if value > self.ceiling:
-                        return 1.0
+                elif value > self.ceiling:
+                    return 1.0
 
             # Check floor violation
             if self.floor is not None:
                 if isinstance(self.floor, dict):
                     if feature in self.floor and value < self.floor[feature]:
                         return 1.0
-                else:
-                    if value < self.floor:
-                        return 1.0
+                elif value < self.floor:
+                    return 1.0
 
         return 0.0
 

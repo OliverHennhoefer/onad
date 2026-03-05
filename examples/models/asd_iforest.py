@@ -48,5 +48,4 @@ for i, (x, y) in enumerate(dataset.stream()):
 
 # Evaluate performance
 pr_auc = average_precision_score(labels, scores)
-print(f"PR_AUC: {round(pr_auc, 3)}")  # Expected: ~0.792
-print(f"Processed {len(labels)} test samples")
+print(f"PR_AUC: {round(pr_auc, 3)}")  # Expected: 0.73

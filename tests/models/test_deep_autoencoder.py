@@ -1,15 +1,24 @@
 """Tests for Autoencoder deep learning anomaly detection model."""
 
+from __future__ import annotations
+
 import unittest
 
-import torch
-from torch import nn, optim
+try:
+    import torch
+    from torch import nn, optim
 
-from onad.model.deep.autoencoder import Autoencoder
-from onad.utils.deep.architecture import VanillaAutoencoder
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+
+if TORCH_AVAILABLE:
+    from onad.model.deep.autoencoder import Autoencoder
+    from onad.utils.deep.architecture import VanillaAutoencoder
 from tests.utils import DataGenerator
 
 
+@unittest.skipUnless(TORCH_AVAILABLE, "PyTorch not available")
 class TestAutoencoder(unittest.TestCase):
     """Test suite for Autoencoder model."""
 

@@ -41,6 +41,10 @@ Advanced Usage:
         process_batch(feature_batch, label_batch)
 """
 
+from typing import Any
+
+from onad import __version__
+
 from .loader import DatasetManager, get_default_manager, set_cache_dir
 
 # Import core classes and functions
@@ -143,7 +147,7 @@ def clear_cache(dataset: Dataset | None = None) -> None:
     manager.clear_cache(dataset)
 
 
-def get_cache_info() -> dict[str, any]:
+def get_cache_info() -> dict[str, Any]:
     """Get information about the dataset cache.
 
     Returns:
@@ -169,6 +173,7 @@ def get_cache_info() -> dict[str, any]:
 
 # Export all public symbols
 __all__ = [
+    "__version__",
     # Main functions
     "load",
     "download",
@@ -196,6 +201,5 @@ __all__ = [
 
 
 # Module-level information
-__version__ = "0.1.0"
 __author__ = "ONAD Team"
 __description__ = "Dataset management system for anomaly detection benchmarks"
