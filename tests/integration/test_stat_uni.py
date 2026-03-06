@@ -4,8 +4,9 @@ import unittest
 
 from sklearn.metrics import average_precision_score
 
-from onad.model.stat.uni import MovingAverage, MovingMedian, MovingVariance
-from onad.stream.dataset import Dataset, load
+from aberrant.model.stat.uni import MovingAverage, MovingMedian, MovingVariance
+from aberrant.stream.dataset import Dataset, load
+from tests.integration._settings import MAX_TEST_STANDARD, WARMUP_SAMPLES
 
 
 class TestUnivariateStatisticalModels(unittest.TestCase):
@@ -16,8 +17,8 @@ class TestUnivariateStatisticalModels(unittest.TestCase):
 
     def setUp(self):
         """Set up test configuration."""
-        self.WARMUP_SAMPLES = 1000
-        self.MAX_TEST_SAMPLES = 2000
+        self.WARMUP_SAMPLES = WARMUP_SAMPLES
+        self.MAX_TEST_SAMPLES = MAX_TEST_STANDARD
         self.dataset = load(Dataset.SHUTTLE)
 
     def run_univariate_test(self, model, expected_range):
@@ -66,7 +67,7 @@ class TestUnivariateStatisticalModels(unittest.TestCase):
 
     def test_moving_average(self):
         model = MovingAverage(window_size=100)
-        self.run_univariate_test(model, expected_range=(0.9, 0.99))
+        self.run_univariate_test(model, expected_range=(0.95, 1.0))
 
     def test_moving_variance(self):
         model = MovingVariance(window_size=100)

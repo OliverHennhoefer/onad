@@ -14,7 +14,7 @@
 
 ## Concept drift
 
-- Pair a detector with drift monitoring from `onad.drift`.
+- Pair a detector with drift monitoring from `aberrant.drift`.
 - When drift is detected, reset or reinitialize selected models.
 
 ## Reliability

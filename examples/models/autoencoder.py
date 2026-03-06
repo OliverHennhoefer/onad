@@ -8,10 +8,10 @@ on the SHUTTLE dataset, with online learning and preprocessing.
 from sklearn.metrics import average_precision_score
 from torch import nn, optim
 
-from onad.model.deep.autoencoder import Autoencoder
-from onad.stream.dataset import Dataset, load
-from onad.transform.preprocessing.scaler import MinMaxScaler
-from onad.utils.deep.architecture import VanillaAutoencoder
+from aberrant.model.deep.autoencoder import Autoencoder
+from aberrant.stream.dataset import Dataset, load
+from aberrant.transform.preprocessing.scaler import MinMaxScaler
+from aberrant.utils.deep.architecture import VanillaAutoencoder
 
 # Hyperparameters
 INPUT_SIZE = 9  # SHUTTLE dataset feature count
@@ -57,5 +57,4 @@ for i, (x, y) in enumerate(dataset.stream()):
 
 # Evaluate performance
 pr_auc = average_precision_score(labels, scores)
-print(f"PR_AUC: {round(pr_auc, 3)}")  # Expected: ~0.298
-print(f"Processed {len(labels)} test samples")
+print(f"PR_AUC: {round(pr_auc, 3)}")  # 0.298

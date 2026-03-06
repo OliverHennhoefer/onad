@@ -4,9 +4,10 @@ import unittest
 
 from sklearn.metrics import average_precision_score
 
-from onad.model.distance.knn import KNN
-from onad.stream.dataset import Dataset, load
-from onad.utils.similar.faiss_engine import FaissSimilaritySearchEngine
+from aberrant.model.distance.knn import KNN
+from aberrant.stream.dataset import Dataset, load
+from aberrant.utils.similar.faiss_engine import FaissSimilaritySearchEngine
+from tests.integration._settings import MAX_TEST_STANDARD, WARMUP_SAMPLES
 
 
 class TestKNN(unittest.TestCase):
@@ -17,8 +18,6 @@ class TestKNN(unittest.TestCase):
         Tests the KNN model on the SHUTTLE dataset and snapshots the PR-AUC score.
         """
         # Test configuration
-        WARMUP_SAMPLES = 1000
-        MAX_TEST_SAMPLES = 2000
         DATASET = Dataset.SHUTTLE
 
         # Create model
@@ -40,7 +39,7 @@ class TestKNN(unittest.TestCase):
                     warmup_count += 1
                 continue
 
-            if test_count >= MAX_TEST_SAMPLES:
+            if test_count >= MAX_TEST_STANDARD:
                 break
 
             model.learn_one(features)
@@ -53,7 +52,7 @@ class TestKNN(unittest.TestCase):
         self.assertGreater(len(scores), 0, "No test samples were processed.")
         pr_auc = average_precision_score(labels, scores)
 
-        lower_bound, upper_bound = 0.8, 0.99
+        lower_bound, upper_bound = 0.85, 0.99
         self.assertGreaterEqual(
             pr_auc,
             lower_bound,

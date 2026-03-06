@@ -1,6 +1,6 @@
 # User Guide
 
-This guide explains ONAD design conventions and practical streaming usage.
+This guide explains ABERRANT design conventions and practical streaming usage.
 
 ## Streaming contract
 
@@ -11,11 +11,11 @@ This guide explains ONAD design conventions and practical streaming usage.
 
 ## Score semantics by model family
 
-- `onad.model.ThresholdModel`: binary score (`0.0` normal, `1.0` anomaly).
-- `onad.model.iforest.*`: bounded score in `[0, 1]` (higher means more anomalous).
-- `onad.model.distance.LocalOutlierFactor`: unbounded positive LOF-like score (`~1` normal, higher outlierness).
-- `onad.model.svm.*`: margin-style continuous score (scale is model-specific).
-- `onad.model.stat.*`: delta/statistic scores, usually unbounded.
+- `aberrant.model.ThresholdModel`: binary score (`0.0` normal, `1.0` anomaly).
+- `aberrant.model.iforest.*`: bounded score in `[0, 1]` (higher means more anomalous).
+- `aberrant.model.distance.LocalOutlierFactor`: unbounded positive LOF-like score (`~1` normal, higher outlierness).
+- `aberrant.model.svm.*`: margin-style continuous score (scale is model-specific).
+- `aberrant.model.stat.*`: delta/statistic scores, usually unbounded.
 
 ## Warmup behavior
 

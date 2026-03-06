@@ -1,10 +1,10 @@
 from sklearn.metrics import average_precision_score
 
-from onad.model.svm.adaptive import (
+from aberrant.model.svm.adaptive import (
     IncrementalOneClassSVMAdaptiveKernel,
 )
-from onad.stream.dataset import Dataset, load
-from onad.transform.preprocessing.scaler import StandardScaler
+from aberrant.stream.dataset import Dataset, load
+from aberrant.transform.preprocessing.scaler import StandardScaler
 
 scaler = StandardScaler()
 model = IncrementalOneClassSVMAdaptiveKernel(
@@ -13,6 +13,7 @@ model = IncrementalOneClassSVMAdaptiveKernel(
     initial_gamma=0.5,
     adaptation_rate=0.3,
     gamma_bounds=(0.1, 5.0),
+    seed=1
 )
 
 pipeline = scaler | model
@@ -33,4 +34,4 @@ for i, (x, y) in enumerate(dataset.stream()):
     labels.append(y)
     scores.append(score)
 
-print(f"PR_AUC: {round(average_precision_score(labels, scores), 3)}")  # 0.154
+print(f"PR_AUC: {round(average_precision_score(labels, scores), 3)}")  # 0.144

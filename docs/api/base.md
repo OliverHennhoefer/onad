@@ -2,14 +2,14 @@
 
 Main base interfaces:
 
-- `onad.base.BaseModel`
-- `onad.base.BaseTransformer`
-- `onad.base.BaseSimilaritySearchEngine`
-- `onad.base.Pipeline`
+- `aberrant.base.BaseModel`
+- `aberrant.base.BaseTransformer`
+- `aberrant.base.BaseSimilaritySearchEngine`
+- `aberrant.base.Pipeline`
 
 Core exceptions:
 
-- `onad.base.OnadError`
-- `onad.base.ModelNotFittedError`
-- `onad.base.ValidationError`
-- `onad.base.PipelineError`
+- `aberrant.base.AberrantError`
+- `aberrant.base.ModelNotFittedError`
+- `aberrant.base.ValidationError`
+- `aberrant.base.PipelineError`

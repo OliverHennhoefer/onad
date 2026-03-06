@@ -1,9 +1,9 @@
-# ONAD
+# ABERRANT
 
-ONAD is a Python library for online anomaly detection on streaming data.
+ABERRANT is a Python library for online anomaly detection on streaming data.
 Models consume one sample at a time and keep bounded state where possible.
 
-## Why ONAD
+## Why ABERRANT
 
 - Streaming-first APIs (`learn_one`, `score_one`)
 - Multiple detector families (forest, distance, SVM, statistical)
@@ -13,20 +13,20 @@ Models consume one sample at a time and keep bounded state where possible.
 ## Install
 
 ```bash
-pip install onad
+pip install aberrant
 ```
 
 Optional extras:
 
-- `onad[eval]`: evaluation tools (`scikit-learn`)
-- `onad[dl]`: deep-learning model support (`torch`)
-- `onad[parquet]`: legacy parquet streamer support (`pyarrow`)
-- `onad[docs]`, `onad[dev]`, `onad[benchmark]`, `onad[all]`
+- `aberrant[eval]`: evaluation tools (`scikit-learn`)
+- `aberrant[dl]`: deep-learning model support (`torch`)
+- `aberrant[parquet]`: legacy parquet streamer support (`pyarrow`)
+- `aberrant[docs]`, `aberrant[dev]`, `aberrant[benchmark]`, `aberrant[all]`
 
 ## Minimal example
 
 ```python
-from onad.model.iforest import OnlineIsolationForest
+from aberrant.model.iforest import OnlineIsolationForest
 
 model = OnlineIsolationForest(window_size=512, num_trees=50)
 
@@ -39,15 +39,15 @@ for point in stream_of_feature_dicts:
 
 ## Stable import surface
 
-ONAD intentionally exposes a small public surface:
+ABERRANT intentionally exposes a small public surface:
 
-- `onad.drift`
-- `onad.model.iforest`
-- `onad.model.distance`
-- `onad.model.svm`
-- `onad.model.stat`
-- `onad.transform.preprocessing`
-- `onad.transform.projection`
-- `onad.stream.dataset`
+- `aberrant.drift`
+- `aberrant.model.iforest`
+- `aberrant.model.distance`
+- `aberrant.model.svm`
+- `aberrant.model.stat`
+- `aberrant.transform.preprocessing`
+- `aberrant.transform.projection`
+- `aberrant.stream.dataset`
 
 See [API Reference](api/index.md) for exact exports.

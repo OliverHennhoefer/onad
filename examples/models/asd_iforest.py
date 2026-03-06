@@ -7,8 +7,8 @@ for anomaly detection on the SHUTTLE dataset, with online learning.
 
 from sklearn.metrics import average_precision_score
 
-from onad.model.iforest.asd import ASDIsolationForest
-from onad.stream.dataset import Dataset, load
+from aberrant.model.iforest.asd import ASDIsolationForest
+from aberrant.stream.dataset import Dataset, load
 
 # Hyperparameters
 N_ESTIMATORS = 750  # Number of trees in the iforest
@@ -48,4 +48,4 @@ for i, (x, y) in enumerate(dataset.stream()):
 
 # Evaluate performance
 pr_auc = average_precision_score(labels, scores)
-print(f"PR_AUC: {round(pr_auc, 3)}")  # Expected: 0.73
+print(f"PR_AUC: {round(pr_auc, 3)}")  # 0.727

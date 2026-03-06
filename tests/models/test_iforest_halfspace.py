@@ -2,7 +2,7 @@
 
 import unittest
 
-from onad.model.iforest.halfspace import HalfSpaceTrees, HSTLeaf, HSTNode
+from aberrant.model.iforest.halfspace import HalfSpaceTrees, HSTLeaf, HSTNode
 
 
 class TestHSTDataStructures(unittest.TestCase):

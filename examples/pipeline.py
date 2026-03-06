@@ -1,10 +1,10 @@
 from sklearn.metrics import average_precision_score
 
-from onad.model.distance.knn import KNN
-from onad.stream.dataset import Dataset, load
-from onad.transform.preprocessing.scaler import MinMaxScaler, StandardScaler
-from onad.transform.projection.incremental_pca import IncrementalPCA
-from onad.utils.similar.faiss_engine import FaissSimilaritySearchEngine
+from aberrant.model.distance.knn import KNN
+from aberrant.stream.dataset import Dataset, load
+from aberrant.transform.preprocessing.scaler import MinMaxScaler, StandardScaler
+from aberrant.transform.projection.incremental_pca import IncrementalPCA
+from aberrant.utils.similar.faiss_engine import FaissSimilaritySearchEngine
 
 # Original pipeline: scaler | model (no PCA)
 scaler = MinMaxScaler()

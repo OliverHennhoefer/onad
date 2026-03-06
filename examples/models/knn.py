@@ -7,10 +7,10 @@ on the SHUTTLE dataset, with online learning and preprocessing.
 
 from sklearn.metrics import average_precision_score
 
-from onad.model.distance.knn import KNN
-from onad.stream.dataset import Dataset, load
-from onad.transform.preprocessing.scaler import MinMaxScaler
-from onad.utils.similar.faiss_engine import FaissSimilaritySearchEngine
+from aberrant.model.distance.knn import KNN
+from aberrant.stream.dataset import Dataset, load
+from aberrant.transform.preprocessing.scaler import MinMaxScaler
+from aberrant.utils.similar.faiss_engine import FaissSimilaritySearchEngine
 
 # Hyperparameters
 K_NEIGHBORS = 45  # Number of nearest neighbors to consider
@@ -52,5 +52,4 @@ for i, (x, y) in enumerate(dataset.stream()):
 
 # Evaluate performance
 pr_auc = average_precision_score(labels, scores)
-print(f"PR_AUC: {round(pr_auc, 3)}")  # Expected: ~0.848
-print(f"Processed {len(labels)} test samples")
+print(f"PR_AUC: {round(pr_auc, 3)}")  # 0.939

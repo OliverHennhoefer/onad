@@ -2,7 +2,7 @@
 
 import unittest
 
-from onad.model.iforest.asd import ASDIsolationForest
+from aberrant.model.iforest.asd import ASDIsolationForest
 from tests.utils import DataGenerator
 
 

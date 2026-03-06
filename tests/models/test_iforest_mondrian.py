@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from onad.model.iforest.mondrian import MondrianForest, MondrianNode, MondrianTree
+from aberrant.model.iforest.mondrian import MondrianForest, MondrianNode, MondrianTree
 from tests.utils import DataGenerator
 
 

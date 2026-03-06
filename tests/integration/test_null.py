@@ -4,8 +4,9 @@ import unittest
 
 from sklearn.metrics import average_precision_score
 
-from onad.model.null import NullModel
-from onad.stream.dataset import Dataset, load
+from aberrant.model.null import NullModel
+from aberrant.stream.dataset import Dataset, load
+from tests.integration._settings import MAX_TEST_STANDARD, WARMUP_SAMPLES
 
 
 class TestNullModel(unittest.TestCase):
@@ -16,8 +17,6 @@ class TestNullModel(unittest.TestCase):
         Tests the NullModel, which should have a PR-AUC equal to the dataset's anomaly rate.
         """
         # Test configuration
-        WARMUP_SAMPLES = 1000
-        MAX_TEST_SAMPLES = 2000
         DATASET = Dataset.SHUTTLE
 
         # Create model
@@ -38,7 +37,7 @@ class TestNullModel(unittest.TestCase):
                     warmup_count += 1
                 continue
 
-            if test_count >= MAX_TEST_SAMPLES:
+            if test_count >= MAX_TEST_STANDARD:
                 break
 
             model.learn_one(features)

@@ -1,6 +1,6 @@
 # Distance Models
 
-Public objects from `onad.model.distance`:
+Public objects from `aberrant.model.distance`:
 
 - `KNN`
 - `LocalOutlierFactor`

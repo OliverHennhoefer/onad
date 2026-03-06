@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from onad.transform.projection.incremental_pca import IncrementalPCA
+from aberrant.transform.projection.incremental_pca import IncrementalPCA
 
 
 class TestIncrementalPCA(unittest.TestCase):

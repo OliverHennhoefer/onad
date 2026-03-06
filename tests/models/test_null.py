@@ -2,7 +2,7 @@
 
 import unittest
 
-from onad.model.null import NullModel
+from aberrant.model.null import NullModel
 from tests.utils import DataGenerator
 
 

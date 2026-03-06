@@ -8,6 +8,104 @@ resolution-markers = [
 ]
 
 [[package]]
+name = "aberrant"
+version = "0.3.1"
+source = { editable = "." }
+dependencies = [
+    { name = "faiss-cpu" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.16.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "tqdm" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "hypothesis" },
+    { name = "mkdocs" },
+    { name = "mkdocs-material", extra = ["imaging"] },
+    { name = "mkdocstrings", extra = ["python"] },
+    { name = "mypy" },
+    { name = "pre-commit" },
+    { name = "pyarrow" },
+    { name = "pytest" },
+    { name = "pytest-benchmark" },
+    { name = "pytest-cov" },
+    { name = "river" },
+    { name = "ruff" },
+    { name = "scikit-learn" },
+    { name = "torch" },
+]
+benchmark = [
+    { name = "pytest-benchmark" },
+    { name = "river" },
+]
+dev = [
+    { name = "hypothesis" },
+    { name = "mypy" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+    { name = "scikit-learn" },
+    { name = "torch" },
+]
+dl = [
+    { name = "torch" },
+]
+docs = [
+    { name = "mkdocs" },
+    { name = "mkdocs-material", extra = ["imaging"] },
+    { name = "mkdocstrings", extra = ["python"] },
+]
+eval = [
+    { name = "scikit-learn" },
+]
+parquet = [
+    { name = "pyarrow" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "faiss-cpu", specifier = ">=1.10.0" },
+    { name = "hypothesis", marker = "extra == 'all'", specifier = ">=6.0.0,<7.0.0" },
+    { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.0.0,<7.0.0" },
+    { name = "mkdocs", marker = "extra == 'all'" },
+    { name = "mkdocs", marker = "extra == 'docs'" },
+    { name = "mkdocs-material", extras = ["imaging"], marker = "extra == 'all'" },
+    { name = "mkdocs-material", extras = ["imaging"], marker = "extra == 'docs'" },
+    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'all'" },
+    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'" },
+    { name = "mypy", marker = "extra == 'all'", specifier = ">=1.13.0,<2.0.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13.0,<2.0.0" },
+    { name = "numpy", specifier = ">=2.2.3" },
+    { name = "pre-commit", marker = "extra == 'all'", specifier = ">=4.0.0,<5.0.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0.0,<5.0.0" },
+    { name = "pyarrow", marker = "extra == 'all'", specifier = ">=18.0.0,<24.0.0" },
+    { name = "pyarrow", marker = "extra == 'parquet'", specifier = ">=18.0.0,<24.0.0" },
+    { name = "pytest", marker = "extra == 'all'", specifier = ">=8.0.0,<10.0.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0,<10.0.0" },
+    { name = "pytest-benchmark", marker = "extra == 'all'", specifier = ">=5.0.0,<6.0.0" },
+    { name = "pytest-benchmark", marker = "extra == 'benchmark'", specifier = ">=5.0.0,<6.0.0" },
+    { name = "pytest-cov", marker = "extra == 'all'", specifier = ">=6.0.0,<8.0.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0.0,<8.0.0" },
+    { name = "river", marker = "extra == 'all'", specifier = ">=0.22.0,<1.0.0" },
+    { name = "river", marker = "extra == 'benchmark'", specifier = ">=0.22.0,<1.0.0" },
+    { name = "ruff", marker = "extra == 'all'", specifier = ">=0.8.0,<1.0.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0,<1.0.0" },
+    { name = "scikit-learn", marker = "extra == 'all'", specifier = ">=1.6.1,<2.0.0" },
+    { name = "scikit-learn", marker = "extra == 'dev'", specifier = ">=1.6.1,<2.0.0" },
+    { name = "scikit-learn", marker = "extra == 'eval'", specifier = ">=1.6.1,<2.0.0" },
+    { name = "scipy", specifier = ">=1.15.2" },
+    { name = "torch", marker = "extra == 'all'", specifier = ">=2.6.0,<3.0.0" },
+    { name = "torch", marker = "extra == 'dev'", specifier = ">=2.6.0,<3.0.0" },
+    { name = "torch", marker = "extra == 'dl'", specifier = ">=2.6.0,<3.0.0" },
+    { name = "tqdm", specifier = ">=4.67.1" },
+]
+provides-extras = ["dev", "docs", "eval", "dl", "benchmark", "parquet", "all"]
+
+[[package]]
 name = "babel"
 version = "2.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1228,100 +1326,6 @@ source = { registry = "https://pypi.org/simple" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a2/eb/86626c1bbc2edb86323022371c39aa48df6fd8b0a1647bc274577f72e90b/nvidia_nvtx_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:5b17e2001cc0d751a5bc2c6ec6d26ad95913324a4adb86788c944f8ce9ba441f", size = 89954, upload-time = "2025-03-07T01:42:44.131Z" },
 ]
-
-[[package]]
-name = "onad"
-version = "0.3.0"
-source = { editable = "." }
-dependencies = [
-    { name = "faiss-cpu" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.16.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "tqdm" },
-]
-
-[package.optional-dependencies]
-all = [
-    { name = "hypothesis" },
-    { name = "mkdocs" },
-    { name = "mkdocs-material", extra = ["imaging"] },
-    { name = "mkdocstrings", extra = ["python"] },
-    { name = "mypy" },
-    { name = "pre-commit" },
-    { name = "pyarrow" },
-    { name = "pytest" },
-    { name = "pytest-benchmark" },
-    { name = "pytest-cov" },
-    { name = "river" },
-    { name = "ruff" },
-    { name = "scikit-learn" },
-    { name = "torch" },
-]
-benchmark = [
-    { name = "pytest-benchmark" },
-    { name = "river" },
-]
-dev = [
-    { name = "hypothesis" },
-    { name = "mypy" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-]
-dl = [
-    { name = "torch" },
-]
-docs = [
-    { name = "mkdocs" },
-    { name = "mkdocs-material", extra = ["imaging"] },
-    { name = "mkdocstrings", extra = ["python"] },
-]
-eval = [
-    { name = "scikit-learn" },
-]
-parquet = [
-    { name = "pyarrow" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "faiss-cpu", specifier = ">=1.10.0" },
-    { name = "hypothesis", marker = "extra == 'all'", specifier = ">=6.0.0,<7.0.0" },
-    { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.0.0,<7.0.0" },
-    { name = "mkdocs", marker = "extra == 'all'" },
-    { name = "mkdocs", marker = "extra == 'docs'" },
-    { name = "mkdocs-material", extras = ["imaging"], marker = "extra == 'all'" },
-    { name = "mkdocs-material", extras = ["imaging"], marker = "extra == 'docs'" },
-    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'all'" },
-    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'" },
-    { name = "mypy", marker = "extra == 'all'", specifier = ">=1.13.0,<2.0.0" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13.0,<2.0.0" },
-    { name = "numpy", specifier = ">=2.2.3" },
-    { name = "pre-commit", marker = "extra == 'all'", specifier = ">=4.0.0,<5.0.0" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0.0,<5.0.0" },
-    { name = "pyarrow", marker = "extra == 'all'", specifier = ">=18.0.0,<24.0.0" },
-    { name = "pyarrow", marker = "extra == 'parquet'", specifier = ">=18.0.0,<24.0.0" },
-    { name = "pytest", marker = "extra == 'all'", specifier = ">=8.0.0,<10.0.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0,<10.0.0" },
-    { name = "pytest-benchmark", marker = "extra == 'all'", specifier = ">=5.0.0,<6.0.0" },
-    { name = "pytest-benchmark", marker = "extra == 'benchmark'", specifier = ">=5.0.0,<6.0.0" },
-    { name = "pytest-cov", marker = "extra == 'all'", specifier = ">=6.0.0,<8.0.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0.0,<8.0.0" },
-    { name = "river", marker = "extra == 'all'", specifier = ">=0.22.0,<1.0.0" },
-    { name = "river", marker = "extra == 'benchmark'", specifier = ">=0.22.0,<1.0.0" },
-    { name = "ruff", marker = "extra == 'all'", specifier = ">=0.8.0,<1.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0,<1.0.0" },
-    { name = "scikit-learn", marker = "extra == 'all'", specifier = ">=1.6.1,<2.0.0" },
-    { name = "scikit-learn", marker = "extra == 'eval'", specifier = ">=1.6.1,<2.0.0" },
-    { name = "scipy", specifier = ">=1.15.2" },
-    { name = "torch", marker = "extra == 'all'", specifier = ">=2.6.0,<3.0.0" },
-    { name = "torch", marker = "extra == 'dl'", specifier = ">=2.6.0,<3.0.0" },
-    { name = "tqdm", specifier = ">=4.67.1" },
-]
-provides-extras = ["dev", "docs", "eval", "dl", "benchmark", "parquet", "all"]
 
 [[package]]
 name = "packaging"

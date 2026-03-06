@@ -4,8 +4,9 @@ import unittest
 
 from sklearn.metrics import average_precision_score
 
-from onad.model.random import RandomModel
-from onad.stream.dataset import Dataset, load
+from aberrant.model.random import RandomModel
+from aberrant.stream.dataset import Dataset, load
+from tests.integration._settings import MAX_TEST_STANDARD, WARMUP_SAMPLES
 
 
 class TestRandomModel(unittest.TestCase):
@@ -16,8 +17,6 @@ class TestRandomModel(unittest.TestCase):
         Tests the RandomModel. PR-AUC should be close to the anomaly rate.
         """
         # Test configuration
-        WARMUP_SAMPLES = 1000
-        MAX_TEST_SAMPLES = 2000
         SEED = 42
         DATASET = Dataset.SHUTTLE
 
@@ -39,7 +38,7 @@ class TestRandomModel(unittest.TestCase):
                     warmup_count += 1
                 continue
 
-            if test_count >= MAX_TEST_SAMPLES:
+            if test_count >= MAX_TEST_STANDARD:
                 break
 
             model.learn_one(features)

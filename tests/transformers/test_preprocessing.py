@@ -2,8 +2,8 @@ import unittest
 
 import numpy as np
 
-from onad.transform.preprocessing.scaler import MinMaxScaler, StandardScaler
-from onad.transform.projection.random_projection import RandomProjection
+from aberrant.transform.preprocessing.scaler import MinMaxScaler, StandardScaler
+from aberrant.transform.projection.random_projection import RandomProjection
 
 
 class TestMinMaxScaler(unittest.TestCase):

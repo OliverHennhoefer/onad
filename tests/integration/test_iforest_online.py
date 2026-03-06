@@ -2,10 +2,12 @@
 
 import unittest
 
+import numpy as np
 from sklearn.metrics import average_precision_score
 
-from onad.model.iforest.online import OnlineIsolationForest
-from onad.stream.dataset import Dataset, load
+from aberrant.model.iforest.online import OnlineIsolationForest
+from aberrant.stream.dataset import Dataset, load
+from tests.integration._settings import MAX_TEST_LONG, WARMUP_SAMPLES
 
 
 class TestOnlineIsolationForest(unittest.TestCase):
@@ -16,11 +18,10 @@ class TestOnlineIsolationForest(unittest.TestCase):
         Tests the OnlineIsolationForest model on the SHUTTLE dataset and snapshots the PR-AUC score.
         """
         # Test configuration
-        WARMUP_SAMPLES = 1000
-        MAX_TEST_SAMPLES = 2000
         DATASET = Dataset.SHUTTLE
 
-        # Create model (non-deterministic, no seed)
+        np.random.seed(42)
+        # Create model
         model = OnlineIsolationForest(
             num_trees=25,
             max_leaf_samples=32,
@@ -47,7 +48,7 @@ class TestOnlineIsolationForest(unittest.TestCase):
                     warmup_count += 1
                 continue
 
-            if test_count >= MAX_TEST_SAMPLES:
+            if test_count >= MAX_TEST_LONG:
                 break
 
             model.learn_one(features)
@@ -60,8 +61,7 @@ class TestOnlineIsolationForest(unittest.TestCase):
         self.assertGreater(len(scores), 0, "No test samples were processed.")
         pr_auc = average_precision_score(labels, scores)
 
-        # For non-deterministic models, assert a reasonable performance range
-        lower_bound, upper_bound = 0.2, 0.98
+        lower_bound, upper_bound = 0.80, 0.95
         self.assertGreaterEqual(
             pr_auc,
             lower_bound,

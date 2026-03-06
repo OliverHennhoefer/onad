@@ -2,7 +2,7 @@
 
 import unittest
 
-from onad.drift.page_hinkley import PageHinkley
+from aberrant.drift.page_hinkley import PageHinkley
 
 
 class TestPageHinkley(unittest.TestCase):

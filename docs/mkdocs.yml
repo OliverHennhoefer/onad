@@ -1,9 +1,9 @@
-site_name: ONAD
+site_name: ABERRANT
 site_description: Online anomaly detection for streaming data
-site_author: ONAD contributors
-site_url: https://oliverhennhoefer.github.io/onad
-repo_url: https://github.com/OliverHennhoefer/onad
-repo_name: OliverHennhoefer/onad
+site_author: ABERRANT contributors
+site_url: https://oliverhennhoefer.github.io/aberrant
+repo_url: https://github.com/OliverHennhoefer/aberrant
+repo_name: OliverHennhoefer/aberrant
 edit_uri: edit/main/docs/
 
 docs_dir: .

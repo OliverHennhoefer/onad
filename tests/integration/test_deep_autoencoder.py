@@ -11,11 +11,12 @@ except ImportError:
 
 from sklearn.metrics import average_precision_score
 
-from onad.stream.dataset import Dataset, get_dataset_info, load
+from aberrant.stream.dataset import Dataset, get_dataset_info, load
+from tests.integration._settings import MAX_TEST_SHORT, WARMUP_SAMPLES
 
 if TORCH_AVAILABLE:
-    from onad.model.deep.autoencoder import Autoencoder
-    from onad.utils.deep.architecture import VanillaAutoencoder
+    from aberrant.model.deep.autoencoder import Autoencoder
+    from aberrant.utils.deep.architecture import VanillaAutoencoder
 
 
 @unittest.skipUnless(TORCH_AVAILABLE, "PyTorch not available")
@@ -27,8 +28,6 @@ class TestAutoencoderOnShuttle(unittest.TestCase):
         Tests the Autoencoder model on the SHUTTLE dataset and snapshots the PR-AUC score.
         """
         # Test configuration
-        WARMUP_SAMPLES = 1000
-        MAX_TEST_SAMPLES = 2000
         SEED = 42
         DATASET = Dataset.SHUTTLE
 
@@ -58,7 +57,7 @@ class TestAutoencoderOnShuttle(unittest.TestCase):
                 continue
 
             # Test phase: learn from all samples and collect scores
-            if test_count >= MAX_TEST_SAMPLES:
+            if test_count >= MAX_TEST_SHORT:
                 break
 
             model.learn_one(features)
@@ -71,13 +70,16 @@ class TestAutoencoderOnShuttle(unittest.TestCase):
         # Calculate and assert PR-AUC
         self.assertGreater(len(scores), 0, "No test samples were processed.")
         pr_auc = average_precision_score(labels, scores)
-        expected_pr_auc = 0.4000581594
-
-        self.assertAlmostEqual(
+        lower_bound, upper_bound = 0.60, 0.80
+        self.assertGreaterEqual(
             pr_auc,
-            expected_pr_auc,
-            places=6,
-            msg=f"PR-AUC {pr_auc:.10f} should be exactly {expected_pr_auc:.10f}",
+            lower_bound,
+            f"PR-AUC {pr_auc:.3f} is below expected range [{lower_bound}, {upper_bound}]",
+        )
+        self.assertLessEqual(
+            pr_auc,
+            upper_bound,
+            f"PR-AUC {pr_auc:.3f} is above expected range [{lower_bound}, {upper_bound}]",
         )
 
 

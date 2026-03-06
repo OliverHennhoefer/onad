@@ -5,7 +5,7 @@ This page shows a complete streaming loop with a model and a dataset stream.
 ## 1. Build a model
 
 ```python
-from onad.model.iforest import OnlineIsolationForest
+from aberrant.model.iforest import OnlineIsolationForest
 
 model = OnlineIsolationForest(
     num_trees=50,
@@ -17,7 +17,7 @@ model = OnlineIsolationForest(
 ## 2. Load a stream
 
 ```python
-from onad.stream.dataset import Dataset, load
+from aberrant.stream.dataset import Dataset, load
 
 dataset = load(Dataset.SHUTTLE)
 ```
@@ -49,7 +49,7 @@ print("PR-AUC:", average_precision_score(labels, scores))
 `OnlineIsolationForest` returns scores in `[0, 1]`. You can add a threshold model:
 
 ```python
-from onad.model import ThresholdModel
+from aberrant.model import ThresholdModel
 
 threshold = ThresholdModel(ceiling={"score": 0.8})
 

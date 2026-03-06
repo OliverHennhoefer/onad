@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from onad.model.svm.gadget import GADGETSVM, IncrementalOneClassSVM
+from aberrant.model.svm.gadget import GADGETSVM, IncrementalOneClassSVM
 from tests.utils import DataGenerator, TestAssertions
 
 

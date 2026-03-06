@@ -2,12 +2,12 @@
 
 Main entry points:
 
-- `onad.stream.dataset.load`
-- `onad.stream.dataset.download`
-- `onad.stream.dataset.list_available`
-- `onad.stream.dataset.get_dataset_info`
-- `onad.stream.dataset.Dataset`
-- `onad.stream.dataset.DatasetStreamer`
-- `onad.stream.dataset.BatchStreamer`
+- `aberrant.stream.dataset.load`
+- `aberrant.stream.dataset.download`
+- `aberrant.stream.dataset.list_available`
+- `aberrant.stream.dataset.get_dataset_info`
+- `aberrant.stream.dataset.Dataset`
+- `aberrant.stream.dataset.DatasetStreamer`
+- `aberrant.stream.dataset.BatchStreamer`
 
-`onad.stream` re-exports dataset APIs for convenience.
+`aberrant.stream` re-exports dataset APIs for convenience.

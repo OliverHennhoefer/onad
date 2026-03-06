@@ -1,11 +1,11 @@
 """Public API import contract tests."""
 
-from onad import __version__
-from onad.base import BaseModel, BaseTransformer, Pipeline
-from onad.drift import ADWIN, KSWIN, PageHinkley
-from onad.model import NullModel, QuantileThreshold, RandomModel, ThresholdModel
-from onad.model.distance import KNN, LocalOutlierFactor
-from onad.model.iforest import (
+from aberrant import __version__
+from aberrant.base import BaseModel, BaseTransformer, Pipeline
+from aberrant.drift import ADWIN, KSWIN, PageHinkley
+from aberrant.model import NullModel, QuantileThreshold, RandomModel, ThresholdModel
+from aberrant.model.distance import KNN, LocalOutlierFactor
+from aberrant.model.iforest import (
     ASDIsolationForest,
     HalfSpaceTrees,
     MondrianForest,
@@ -14,15 +14,15 @@ from onad.model.iforest import (
     StreamRandomHistogramForest,
     XStream,
 )
-from onad.model.stat import MovingAverage, MovingCovariance
-from onad.model.svm import GADGETSVM, IncrementalOneClassSVMAdaptiveKernel
-from onad.stream import Dataset, load
-from onad.stream.dataset import BatchStreamer, DatasetStreamer
-from onad.transform.preprocessing import MinMaxScaler, StandardScaler
-from onad.transform.projection import IncrementalPCA, RandomProjection
+from aberrant.model.stat import MovingAverage, MovingCovariance
+from aberrant.model.svm import GADGETSVM, IncrementalOneClassSVMAdaptiveKernel
+from aberrant.stream import Dataset, load
+from aberrant.stream.dataset import BatchStreamer, DatasetStreamer
+from aberrant.transform.preprocessing import MinMaxScaler, StandardScaler
+from aberrant.transform.projection import IncrementalPCA, RandomProjection
 
 try:
-    from onad.model.deep import Autoencoder
+    from aberrant.model.deep import Autoencoder
 except ImportError:
     Autoencoder = None  # type: ignore[assignment]
 

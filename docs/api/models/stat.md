@@ -1,6 +1,6 @@
 # Statistical Models
 
-Public objects from `onad.model.stat`:
+Public objects from `aberrant.model.stat`:
 
 - Univariate models such as `MovingAverage`, `MovingVariance`, `MovingQuantile`
 - Multivariate models:

@@ -4,7 +4,7 @@ import math
 import random
 import unittest
 
-from onad.model.distance.lof import LocalOutlierFactor
+from aberrant.model.distance.lof import LocalOutlierFactor
 
 
 class TestLocalOutlierFactor(unittest.TestCase):

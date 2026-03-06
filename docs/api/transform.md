@@ -2,9 +2,9 @@
 
 Public transformer modules:
 
-- `onad.transform.preprocessing`
+- `aberrant.transform.preprocessing`
   - `MinMaxScaler`
   - `StandardScaler`
-- `onad.transform.projection`
+- `aberrant.transform.projection`
   - `IncrementalPCA`
   - `RandomProjection`

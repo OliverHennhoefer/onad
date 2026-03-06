@@ -1,11 +1,9 @@
 """Integration test configuration.
 
 Integration tests rely on optional evaluation dependencies and external datasets.
-They are skipped by default unless explicitly enabled.
 """
 
 import importlib.util
-import os
 from pathlib import Path
 
 import pytest
@@ -15,13 +13,8 @@ _INTEGRATION_ROOT = Path(__file__).resolve().parent
 
 def _integration_skip_reason() -> str | None:
     """Return skip reason for integration tests, or None if enabled."""
-    if os.getenv("ONAD_RUN_INTEGRATION") != "1":
-        return (
-            "Integration tests are disabled by default. "
-            "Set ONAD_RUN_INTEGRATION=1 to execute dataset-backed tests."
-        )
     if importlib.util.find_spec("sklearn") is None:
-        return "Integration tests require scikit-learn. Install eval dependencies."
+        return "Integration tests require scikit-learn. Install dev dependencies."
     return None
 
 

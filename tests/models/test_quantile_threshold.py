@@ -2,7 +2,7 @@
 
 import unittest
 
-from onad.model.quantile_threshold import QuantileThreshold
+from aberrant.model.quantile_threshold import QuantileThreshold
 
 
 class TestQuantileThreshold(unittest.TestCase):
