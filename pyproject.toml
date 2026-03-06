@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aberrant"
-version = "0.3.1"
-description = "Online Anomaly Detection Toolkit"
+version = "0.5.0"
+description = "Online Anomaly Detection Models"
 authors = [
     { name = "Oliver Hennhoefer", email = "oliver.hennhoefer@mail.de" },
     { name = "Pascal Heinzelmann" },
