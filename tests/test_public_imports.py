@@ -10,6 +10,7 @@ from onad.model.iforest import (
     HalfSpaceTrees,
     MondrianForest,
     OnlineIsolationForest,
+    RandomCutForest,
     StreamRandomHistogramForest,
     XStream,
 )
@@ -47,6 +48,7 @@ def test_public_imports_smoke() -> None:
     assert HalfSpaceTrees is not None
     assert MondrianForest is not None
     assert OnlineIsolationForest is not None
+    assert RandomCutForest is not None
     assert StreamRandomHistogramForest is not None
     assert XStream is not None
     assert IncrementalOneClassSVMAdaptiveKernel is not None

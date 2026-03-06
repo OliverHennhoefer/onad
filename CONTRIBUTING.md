@@ -8,6 +8,12 @@ Thanks for contributing.
 uv sync --extra dev --extra docs --extra eval
 ```
 
+Install local Git hooks (including pre-push checks):
+
+```bash
+uv run pre-commit install --hook-type pre-commit --hook-type pre-push
+```
+
 ## Quality gates
 
 Run these before opening a PR:

@@ -6,5 +6,6 @@ Public objects from `onad.model.iforest`:
 - `HalfSpaceTrees`
 - `MondrianForest`
 - `OnlineIsolationForest`
+- `RandomCutForest`
 - `StreamRandomHistogramForest`
 - `XStream`

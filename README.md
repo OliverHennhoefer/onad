@@ -36,7 +36,7 @@ for i, (x, y) in enumerate(dataset.stream()):
         if y == 0:
             model.learn_one(x)
         continue
-    
+
     score = model.score_one(x)
 
     if score > 0.8:
