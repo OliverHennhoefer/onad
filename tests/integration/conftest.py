@@ -34,5 +34,5 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     skip_marker = pytest.mark.skip(reason=reason)
     for item in items:
         item_path = Path(str(getattr(item, "path", item.fspath))).resolve()
-        if _INTEGRATION_ROOT == item_path or _INTEGRATION_ROOT in item_path.parents:
+        if item_path == _INTEGRATION_ROOT or _INTEGRATION_ROOT in item_path.parents:
             item.add_marker(skip_marker)
