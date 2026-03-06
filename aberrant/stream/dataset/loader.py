@@ -8,7 +8,9 @@ import hashlib
 import json
 import os
 import shutil
+import time
 import urllib.request
+from http.client import IncompleteRead, RemoteDisconnected
 from pathlib import Path
 from urllib.error import URLError
 
@@ -44,9 +46,15 @@ class DatasetManager:
         cache_dir: str | None = None,
         github_repo: str = "OliverHennhoefer/nonconform",
         release_tag: str = "v0.9.17-datasets",
+        download_retries: int = 3,
+        download_timeout: float = 30.0,
+        retry_backoff_seconds: float = 1.0,
     ) -> None:
         self.github_repo = github_repo
         self.release_tag = release_tag
+        self.download_retries = max(1, int(download_retries))
+        self.download_timeout = float(download_timeout)
+        self.retry_backoff_seconds = max(0.0, float(retry_backoff_seconds))
 
         # Set up cache directory
         if cache_dir is None:
@@ -101,31 +109,53 @@ class DatasetManager:
 
     def _download_with_progress(self, url: str, dest_path: Path) -> None:
         """Download a file with progress bar."""
-        try:
-            # Get file size for progress bar
-            with urllib.request.urlopen(url) as response:
-                total_size = int(response.headers.get("Content-Length", 0))
+        last_error: Exception | None = None
 
-            # Download with progress bar
-            with (
-                urllib.request.urlopen(url) as response,
-                open(dest_path, "wb") as f,
-                tqdm(
-                    total=total_size,
-                    unit="B",
-                    unit_scale=True,
-                    desc=f"Downloading {dest_path.name}",
-                ) as pbar,
-            ):
-                while True:
-                    chunk = response.read(8192)
-                    if not chunk:
-                        break
-                    f.write(chunk)
-                    pbar.update(len(chunk))
+        for attempt in range(1, self.download_retries + 1):
+            try:
+                with (
+                    urllib.request.urlopen(
+                        url, timeout=self.download_timeout
+                    ) as response,
+                    open(dest_path, "wb") as f,
+                    tqdm(
+                        total=int(response.headers.get("Content-Length", 0)),
+                        unit="B",
+                        unit_scale=True,
+                        desc=f"Downloading {dest_path.name}",
+                    ) as pbar,
+                ):
+                    while True:
+                        chunk = response.read(8192)
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                        pbar.update(len(chunk))
+                return
+            except (
+                URLError,
+                TimeoutError,
+                RemoteDisconnected,
+                ConnectionResetError,
+                IncompleteRead,
+            ) as e:
+                last_error = e
+                if dest_path.exists():
+                    dest_path.unlink()
+                if attempt < self.download_retries:
+                    wait_seconds = self.retry_backoff_seconds * (2 ** (attempt - 1))
+                    print(
+                        f"Download attempt {attempt}/{self.download_retries} failed: {e}. "
+                        f"Retrying in {wait_seconds:.1f}s..."
+                    )
+                    time.sleep(wait_seconds)
+                else:
+                    break
 
-        except URLError as e:
-            raise RuntimeError(f"Failed to download dataset: {e}") from e
+        raise RuntimeError(
+            f"Failed to download dataset after {self.download_retries} attempts: "
+            f"{last_error}"
+        ) from last_error
 
     def _is_dataset_cached(self, dataset: Dataset) -> bool:
         """Check if dataset is cached locally."""
