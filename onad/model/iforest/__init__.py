@@ -9,6 +9,7 @@ __all__ = [
     "MondrianForest",
     "OnlineIsolationForest",
     "StreamRandomHistogramForest",
+    "XStream",
 ]
 
 
@@ -29,4 +30,7 @@ def __getattr__(name: str) -> Any:
     if name == "StreamRandomHistogramForest":
         module = importlib.import_module("onad.model.iforest.rand_hist")
         return module.StreamRandomHistogramForest
+    if name == "XStream":
+        module = importlib.import_module("onad.model.iforest.xstream")
+        return module.XStream
     raise AttributeError(f"module 'onad.model.iforest' has no attribute '{name}'")

@@ -11,6 +11,7 @@ from onad.model.iforest import (
     MondrianForest,
     OnlineIsolationForest,
     StreamRandomHistogramForest,
+    XStream,
 )
 from onad.model.stat import MovingAverage, MovingCovariance
 from onad.model.svm import GADGETSVM, IncrementalOneClassSVMAdaptiveKernel
@@ -47,6 +48,7 @@ def test_public_imports_smoke() -> None:
     assert MondrianForest is not None
     assert OnlineIsolationForest is not None
     assert StreamRandomHistogramForest is not None
+    assert XStream is not None
     assert IncrementalOneClassSVMAdaptiveKernel is not None
     assert GADGETSVM is not None
     assert MovingAverage is not None
