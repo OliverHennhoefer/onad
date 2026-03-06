@@ -71,9 +71,20 @@ class MovingCovariance(BaseModel):
 
         self.window_size = window_size
         self.window: dict[str, deque[float]] = {}
-        self.feature_names: list[str] | None = keys
+        self.feature_names: list[str] | None = list(keys) if keys is not None else None
         self.bias = bias
         self.abs_diff = abs_diff
+        self._ensure_window_initialized()
+
+    def _ensure_window_initialized(self) -> None:
+        """Ensure feature windows exist when feature names are known."""
+        if self.feature_names is None:
+            return
+        if len(self.feature_names) != 2:
+            raise ValueError("Exactly two feature keys are required.")
+        for name in self.feature_names:
+            if name not in self.window:
+                self.window[name] = deque(maxlen=self.window_size)
 
     def learn_one(self, x: dict[str, float]) -> None:
         """
@@ -90,8 +101,11 @@ class MovingCovariance(BaseModel):
 
         if self.feature_names is None:
             self.feature_names = sorted(x.keys())  # Sort for consistency
-            for name in self.feature_names:
-                self.window[name] = deque(maxlen=self.window_size)
+        self._ensure_window_initialized()
+
+        missing = [name for name in self.feature_names if name not in x]
+        if missing:
+            raise ValueError(f"Input is missing required feature(s): {missing}")
 
         # Add values to windows
         for name in self.feature_names:
@@ -164,10 +178,21 @@ class MovingCorrelationCoefficient(BaseModel):
         if window_size <= 0:
             raise ValueError("Window size must be a positive integer.")
         self.window_size = window_size
-        self.window: dict = {}
-        self.feature_names: list[str] | None = keys
+        self.window: dict[str, deque[float]] = {}
+        self.feature_names: list[str] | None = list(keys) if keys is not None else None
         self.bias = bias
         self.abs_diff = abs_diff
+        self._ensure_window_initialized()
+
+    def _ensure_window_initialized(self) -> None:
+        """Ensure feature windows exist when feature names are known."""
+        if self.feature_names is None:
+            return
+        if len(self.feature_names) != 2:
+            raise ValueError("Exactly two feature keys are required.")
+        for name in self.feature_names:
+            if name not in self.window:
+                self.window[name] = deque([], maxlen=self.window_size)
 
     def learn_one(self, x: dict[str, float]) -> None:
         """Update the model with a single resource point.
@@ -176,16 +201,20 @@ class MovingCorrelationCoefficient(BaseModel):
         Raises:
             AssertionError: If the input dictionary contains other than two key-value pairs.
         """
-        assert len(x) == 2, "Dictionary has other than two key-value pairs."
+        if len(x) != 2:
+            raise ValueError("Input must contain exactly two key-value pairs.")
         if self.feature_names is None:
-            self.feature_names = list(x.keys())
-            self.window[self.feature_names[0]] = deque([], maxlen=self.window_size)
-            self.window[self.feature_names[1]] = deque([], maxlen=self.window_size)
+            self.feature_names = sorted(x.keys())
+        self._ensure_window_initialized()
+
+        missing = [name for name in self.feature_names if name not in x]
+        if missing:
+            raise ValueError(f"Input is missing required feature(s): {missing}")
         if isinstance(x[self.feature_names[0]], int | float) and isinstance(
             x[self.feature_names[1]], int | float
         ):
-            self.window[self.feature_names[0]].append(x[self.feature_names[0]])
-            self.window[self.feature_names[1]].append(x[self.feature_names[1]])
+            self.window[self.feature_names[0]].append(float(x[self.feature_names[0]]))
+            self.window[self.feature_names[1]].append(float(x[self.feature_names[1]]))
 
     def _correlation_coefficient(self, window_0, window_1) -> float:
         len_0 = len(window_0)
@@ -193,7 +222,7 @@ class MovingCorrelationCoefficient(BaseModel):
         if len_0 != len_1:
             raise ValueError("Both windows must have the same length.")
         if len_0 < 2:
-            return 0
+            return 0.0
         n = len_0 if self.bias else len_0 - 1
         mean_0 = sum(window_0) / len_0
         mean_1 = sum(window_1) / len_1
@@ -201,7 +230,7 @@ class MovingCorrelationCoefficient(BaseModel):
         std_0 = (sum((_ - mean_0) ** 2 for _ in window_0) / n) ** 0.5
         std_1 = (sum((_ - mean_1) ** 2 for _ in window_1) / n) ** 0.5
         if std_0 == 0 or std_1 == 0:
-            return 0
+            return 0.0
         else:
             return cov / (std_0 * std_1)
 
@@ -213,7 +242,7 @@ class MovingCorrelationCoefficient(BaseModel):
             float: The correlation coefficient difference of the values in the window. 0 if the window is empty or has less than 2 data points.
         """
         if self.feature_names is None:
-            return 0
+            return 0.0
         score_window_0 = list(self.window[self.feature_names[0]])
         score_window_1 = list(self.window[self.feature_names[1]])
         score_window_0.append(x[self.feature_names[0]])

@@ -1,107 +1,56 @@
 site_name: ONAD
-site_description: Online Anomaly Detection Toolkit
-site_author: Oliver Hennhoefer
+site_description: Online anomaly detection for streaming data
+site_author: ONAD contributors
 site_url: https://oliverhennhoefer.github.io/onad
 repo_url: https://github.com/OliverHennhoefer/onad
 repo_name: OliverHennhoefer/onad
 edit_uri: edit/main/docs/
 
-copyright: Copyright © 2025 Oliver Hennhoefer
-
-docs_dir: .  # Set docs directory to current directory (docs/)
+docs_dir: .
 site_dir: ../site
+strict: true
 
 theme:
   name: material
   icon:
     repo: fontawesome/brands/github
-  palette:
-    # Dark mode as default
-    - scheme: slate
-      primary: indigo
-      accent: blue
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-    # Light mode toggle
-    - scheme: default
-      primary: indigo
-      accent: blue
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
   features:
     - navigation.instant
-    - navigation.instant.prefetch
-    - navigation.instant.progress
-    - navigation.path
     - navigation.top
-    - navigation.footer
-    - header.autohide
     - search.highlight
-    - search.suggest
-    - search.share
     - content.code.copy
-    - content.code.select
-    - content.code.annotate
-    - content.tooltips
-    - content.action.edit
-    - content.action.view
-    - toc.follow
 
 nav:
   - Home: index.md
   - Installation: installation.md
-  - Quick Start: quickstart.md
+  - Quickstart: quickstart.md
   - User Guide:
-    - user_guide/index.md
-    - Models Overview: user_guide/models.md
-    - Data Transformers: user_guide/transformers.md
-    - Stream Processing: user_guide/streaming.md
-    - Pipeline Construction: user_guide/pipelines.md
-    - Model Evaluation: user_guide/evaluation.md
+    - Overview: user_guide/index.md
+    - Models: user_guide/models.md
+    - Transformers: user_guide/transformers.md
+    - Streaming Datasets: user_guide/streaming.md
+    - Pipelines: user_guide/pipelines.md
+    - Evaluation: user_guide/evaluation.md
     - Best Practices: user_guide/best_practices.md
-  - Examples:
-    - examples/index.md
-    - Basic Usage: examples/basic_usage.md
-    - Isolation Forest Models: examples/forest_models.md
-    - SVM-based Models: examples/svm_models.md
-    - Statistical Models: examples/statistical_models.md
-    - Custom Pipelines: examples/custom_pipelines.md
+  - Examples: examples/index.md
   - API Reference:
     - Overview: api/index.md
-    - Base Classes: api/base.md
+    - Base: api/base.md
     - Models:
-      - api/models/index.md
-      - Unsupervised: api/models/unsupervised.md
-      - Supervised: api/models/supervised.md
-      - Statistical: api/models/statistics.md
-    - Transformers: api/transform.md
-    - Stream Processing: api/stream.md
-    - Utilities: api/utils.md
+      - Overview: api/models/index.md
+      - Core Models: api/models/core.md
+      - Isolation Forest: api/models/iforest.md
+      - Distance: api/models/distance.md
+      - SVM: api/models/svm.md
+      - Statistical: api/models/stat.md
+    - Transform: api/transform.md
+    - Drift: api/drift.md
+    - Stream Datasets: api/stream.md
   - Contributing: contributing.md
   - Changelog: changelog.md
 
 plugins:
   - search
-  - mkdocstrings:
-      handlers:
-        python:
-          options:
-            docstring_style: google
-            docstring_options:
-              ignore_init_summary: true
-            merge_init_into_class: true
-            show_submodules: true
-            show_source: true
-            show_bases: true
-            show_root_heading: true
-            heading_level: 2
-            members_order: source
-            separate_signature: true
-            show_signature_annotations: true
-            filters:
-              - "!^_"  # Exclude internal functions starting with underscore
 
 markdown_extensions:
   - admonition
@@ -110,8 +59,6 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
   - attr_list
@@ -120,10 +67,3 @@ markdown_extensions:
   - footnotes
   - toc:
       permalink: true
-
-extra:
-  social:
-    - icon: fontawesome/brands/github
-      link: https://github.com/OliverHennhoefer
-    - icon: fontawesome/brands/linkedin
-      link: https://www.linkedin.com/in/oliver-hennhoefer

@@ -29,6 +29,12 @@ class FaissSimilaritySearchEngine(BaseSimilaritySearchEngine):
         self.keys: list[str] | None = None
         self._index_needs_rebuild = True
 
+    def _dict_to_vector(self, x: dict[str, float]) -> np.ndarray:
+        """Convert a feature dictionary to a row vector using the canonical key order."""
+        if self.keys is None:
+            raise ValueError("Feature keys are not initialized")
+        return np.array([x[key] for key in self.keys], dtype=np.float32).reshape(1, -1)
+
     def append(self, x: dict[str, float]) -> None:
         """
         Add a data point to the search engine.
@@ -36,28 +42,30 @@ class FaissSimilaritySearchEngine(BaseSimilaritySearchEngine):
         Args:
             x: Dictionary representing a data point with feature names as keys.
         """
-        # Check if we need to rebuild keys (new features or first data point)
+        # Initialize feature order on first sample.
         if self.keys is None:
-            current_keys = sorted(x.keys())
-            self.keys = current_keys
+            self.keys = sorted(x.keys())
             self._index_needs_rebuild = True
         else:
             current_keys = sorted(x.keys())
             if current_keys != self.keys:
-                # New features detected - need to rebuild everything
-                self.keys = current_keys
-                self._index_needs_rebuild = True
+                expected = ", ".join(self.keys)
+                received = ", ".join(current_keys)
+                raise ValueError(
+                    "Inconsistent feature keys for similarity engine. "
+                    f"Expected [{expected}], received [{received}]."
+                )
 
+        was_full = len(self.window) == self.window_size
         self.window.append(x)
 
-        # Only rebuild index if necessary (new features or index doesn't exist)
-        if self._index_needs_rebuild or self.index is None:
+        # Rebuild when index is uninitialized, key schema changed, or eviction occurred.
+        if self._index_needs_rebuild or self.index is None or was_full:
             self._rebuild_index()
             self._index_needs_rebuild = False
         else:
-            # For incremental updates, we unfortunately need to rebuild with FAISS IndexFlatL2
-            # More sophisticated indices like IndexIVFFlat support add(), but IndexFlatL2 doesn't
-            self._rebuild_index()
+            # For non-evicting appends, incrementally add one vector.
+            self.index.add(self._dict_to_vector(x))
 
     def search(self, item: dict[str, float], n_neighbors: int) -> float:
         """
@@ -79,15 +87,24 @@ class FaissSimilaritySearchEngine(BaseSimilaritySearchEngine):
         if len(self.window) < self.warm_up:
             return 0.0
 
+        if self.keys is None or self.index is None:
+            return 0.0
+
         if n_neighbors > len(self.window):
             raise ValueError(
                 f"n_neighbors ({n_neighbors}) cannot exceed window size ({len(self.window)})"
             )
 
         # Convert query point to vector
-        x = np.array(
-            [item.get(key, 0.0) for key in self.keys], dtype=np.float32
-        ).reshape(1, -1)
+        query_keys = sorted(item.keys())
+        if query_keys != self.keys:
+            expected = ", ".join(self.keys)
+            received = ", ".join(query_keys)
+            raise ValueError(
+                "Inconsistent feature keys for search. "
+                f"Expected [{expected}], received [{received}]."
+            )
+        x = self._dict_to_vector(item)
 
         # Search for nearest neighbors
         distances, _ = self.index.search(x, k=min(n_neighbors, self.index.ntotal))

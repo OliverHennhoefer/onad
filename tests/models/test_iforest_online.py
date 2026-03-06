@@ -176,14 +176,47 @@ class TestOnlineIsolationForestEdgeCases(unittest.TestCase):
         point1 = {"feature1": 1.0, "feature2": 2.0}
         model.learn_one(point1)
 
-        # Score with different feature set - should handle gracefully
+        # Score with different feature set should fail fast
         point2 = {"feature3": 3.0, "feature4": 4.0}
-        try:
-            score = model.score_one(point2)
-            self.assertIsInstance(score, (int, float))
-        except (ValueError, KeyError):
-            # Acceptable to reject inconsistent features
-            pass
+        with self.assertRaises(ValueError):
+            model.score_one(point2)
+
+    def test_feature_order_stability(self):
+        """Test feature-order invariance across different dict insertion orders."""
+        model = self.create_model()
+        p1 = {"b": 2.0, "a": 1.0}
+        p2 = {"a": 1.0, "b": 2.0}
+        p3 = {"b": 3.0, "a": 4.0}
+
+        model.learn_one(p1)
+        model.learn_one(p2)
+
+        score1 = model.score_one(p1)
+        score2 = model.score_one(p2)
+        score3 = model.score_one(p3)
+
+        self.assertIsInstance(score1, float)
+        self.assertIsInstance(score2, float)
+        self.assertIsInstance(score3, float)
+        self.assertAlmostEqual(score1, score2, places=12)
+
+    def test_batch_then_mismatched_dict_does_not_corrupt_feature_width(self):
+        """Test dict conversion after batch training preserves learned feature width."""
+        model = self.create_model()
+        batch = np.array(
+            [[1.0, 2.0, 3.0, 4.0], [1.5, 2.5, 3.5, 4.5]],
+            dtype=np.float32,
+        )
+        model.learn_batch(batch)
+        self.assertEqual(model._n_features, 4)
+
+        with self.assertRaises(ValueError):
+            model.score_one({"a": 1.0, "b": 2.0, "c": 3.0})
+
+        # Ensure failed dict scoring does not mutate learned feature count.
+        self.assertEqual(model._n_features, 4)
+        scores = model.score_batch(np.array([[0.0, 0.0, 0.0, 0.0]], dtype=np.float32))
+        self.assertEqual(scores.shape, (1,))
 
     def test_extreme_values(self):
         """Test with extreme numeric values."""

@@ -152,7 +152,8 @@ class TestThresholdModel(unittest.TestCase):
         """Test mixing scalar and dict parameter types."""
         # Scalar ceiling, dict floor
         model1 = ThresholdModel(
-            ceiling=100.0, floor={"x": 0.0, "y": 10.0}  # Applies to all
+            ceiling=100.0,
+            floor={"x": 0.0, "y": 10.0},  # Applies to all
         )
 
         self.assertEqual(model1.score_one({"x": 50.0, "y": 50.0}), 0.0)
@@ -232,7 +233,9 @@ class TestThresholdModel(unittest.TestCase):
 
         # Dict parameters
         model4 = ThresholdModel(ceiling={"x": 10.0})
-        self.assertEqual(repr(model4), "ThresholdModel(ceiling={'x': 10.0}, floor=None)")
+        self.assertEqual(
+            repr(model4), "ThresholdModel(ceiling={'x': 10.0}, floor=None)"
+        )
 
     def test_consistency_across_features(self):
         """Test that all features are checked consistently."""

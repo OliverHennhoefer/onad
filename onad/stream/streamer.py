@@ -1,9 +1,9 @@
 import os
 from collections.abc import Iterator
 from enum import Enum
+from importlib import import_module
 from typing import Any
 
-import pyarrow.parquet as pq
 from tqdm import tqdm
 
 
@@ -59,14 +59,20 @@ class ParquetStreamer:
         self.label_column = label_column
         self.sanitize_floats = sanitize_floats
         self.file_handle: Any = None
-        self.parquet_file: pq.ParquetFile | None = None
+        self.parquet_file: Any = None
 
     def __enter__(self) -> "ParquetStreamer":
         try:
+            pq = import_module("pyarrow.parquet")
             # Explicitly open file handle for proper resource management
             self.file_handle = open(self.file_path, "rb")
             self.parquet_file = pq.ParquetFile(self.file_handle)
             return self
+        except ModuleNotFoundError as e:
+            raise RuntimeError(
+                "pyarrow is required for ParquetStreamer. "
+                "Install it via `pip install onad[parquet]`."
+            ) from e
         except Exception as e:
             # Ensure file handle is closed if ParquetFile creation fails
             if self.file_handle:

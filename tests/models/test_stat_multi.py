@@ -26,6 +26,18 @@ class TestMovingCovariance(unittest.TestCase):
         self.assertEqual(model.window["x"], deque([1]))
         self.assertEqual(model.window["y"], deque([2]))
 
+    def test_keys_initialization_creates_windows(self):
+        model = MovingCovariance(window_size=3, keys=["x", "y"])
+        self.assertIn("x", model.window)
+        self.assertIn("y", model.window)
+        self.assertEqual(model.window["x"], deque([], maxlen=3))
+        self.assertEqual(model.window["y"], deque([], maxlen=3))
+
+    def test_keys_initialization_rejects_missing_feature(self):
+        model = MovingCovariance(window_size=3, keys=["x", "y"])
+        with self.assertRaises(ValueError):
+            model.learn_one({"x": 1.0, "z": 2.0})
+
     def test_learn_one_with_multiple_points(self):
         model = MovingCovariance(window_size=3)
         points = [{"x": float(i), "y": float(i) + 1} for i in range(5)]
@@ -80,6 +92,18 @@ class TestMovingCorrelationCoefficient(unittest.TestCase):
         model.learn_one(point)
         self.assertEqual(model.window["x"], deque([1]))
         self.assertEqual(model.window["y"], deque([2]))
+
+    def test_keys_initialization_creates_windows(self):
+        model = MovingCorrelationCoefficient(window_size=3, keys=["x", "y"])
+        self.assertIn("x", model.window)
+        self.assertIn("y", model.window)
+        self.assertEqual(model.window["x"], deque([], maxlen=3))
+        self.assertEqual(model.window["y"], deque([], maxlen=3))
+
+    def test_keys_initialization_rejects_missing_feature(self):
+        model = MovingCorrelationCoefficient(window_size=3, keys=["x", "y"])
+        with self.assertRaises(ValueError):
+            model.learn_one({"x": 1.0, "z": 2.0})
 
     def test_learn_one_with_multiple_points(self):
         model = MovingCorrelationCoefficient(window_size=3)
