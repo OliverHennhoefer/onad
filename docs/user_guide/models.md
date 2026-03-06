@@ -20,6 +20,13 @@ from aberrant.model.iforest import (
 
 Use these for general-purpose unsupervised streaming anomaly detection.
 
+`MondrianForest` uses `lambda_` as the Mondrian lifetime budget:
+- smaller `lambda_` yields coarser partitions
+- larger `lambda_` yields finer partitions
+
+For evaluation on a stream, prefer scoring before learning each sample to avoid
+training on the point being evaluated.
+
 ## Distance family
 
 Imports:

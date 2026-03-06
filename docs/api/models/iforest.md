@@ -9,3 +9,6 @@ Public objects from `aberrant.model.iforest`:
 - `RandomCutForest`
 - `StreamRandomHistogramForest`
 - `XStream`
+
+Notes:
+- `MondrianForest(lambda_=...)` uses `lambda_` as the Mondrian lifetime budget.

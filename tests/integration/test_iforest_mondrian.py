@@ -43,8 +43,8 @@ class TestMondrianForest(unittest.TestCase):
             if test_count >= MAX_TEST_STANDARD:
                 break
 
-            model.learn_one(features)
             score = model.score_one(features)
+            model.learn_one(features)
             labels.append(label)
             scores.append(score)
             test_count += 1
@@ -52,7 +52,7 @@ class TestMondrianForest(unittest.TestCase):
         # Calculate and assert PR-AUC
         self.assertGreater(len(scores), 0, "No test samples were processed.")
         pr_auc = average_precision_score(labels, scores)
-        lower_bound, upper_bound = 0.10, 0.22
+        lower_bound, upper_bound = 0.88, 0.97
         self.assertGreaterEqual(
             pr_auc,
             lower_bound,
