@@ -178,3 +178,4 @@ cython_debug/
 
 # AI coding assistant
 .claude
+/.codex

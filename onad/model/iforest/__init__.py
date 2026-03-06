@@ -8,6 +8,7 @@ __all__ = [
     "HalfSpaceTrees",
     "MondrianForest",
     "OnlineIsolationForest",
+    "RandomCutForest",
     "StreamRandomHistogramForest",
     "XStream",
 ]
@@ -27,6 +28,9 @@ def __getattr__(name: str) -> Any:
     if name == "OnlineIsolationForest":
         module = importlib.import_module("onad.model.iforest.online")
         return module.OnlineIsolationForest
+    if name == "RandomCutForest":
+        module = importlib.import_module("onad.model.iforest.random_cut")
+        return module.RandomCutForest
     if name == "StreamRandomHistogramForest":
         module = importlib.import_module("onad.model.iforest.rand_hist")
         return module.StreamRandomHistogramForest

@@ -12,6 +12,7 @@ from onad.model.iforest import (
     HalfSpaceTrees,
     MondrianForest,
     OnlineIsolationForest,
+    RandomCutForest,
     StreamRandomHistogramForest,
     XStream,
 )
