@@ -13,6 +13,7 @@ from onad.model.iforest import (
     MondrianForest,
     OnlineIsolationForest,
     StreamRandomHistogramForest,
+    XStream,
 )
 ```
 

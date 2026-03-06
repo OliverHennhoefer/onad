@@ -7,3 +7,4 @@ Public objects from `onad.model.iforest`:
 - `MondrianForest`
 - `OnlineIsolationForest`
 - `StreamRandomHistogramForest`
+- `XStream`
