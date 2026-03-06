@@ -1,13 +1,13 @@
 # Models
 
-ONAD ships multiple online detector families.
+ABERRANT ships multiple online detector families.
 
 ## Isolation forest family
 
 Imports:
 
 ```python
-from onad.model.iforest import (
+from aberrant.model.iforest import (
     ASDIsolationForest,
     HalfSpaceTrees,
     MondrianForest,
@@ -25,14 +25,14 @@ Use these for general-purpose unsupervised streaming anomaly detection.
 Imports:
 
 ```python
-from onad.model.distance import KNN, LocalOutlierFactor
+from aberrant.model.distance import KNN, LocalOutlierFactor
 ```
 
 `KNN` requires a similarity engine (for example FAISS):
 
 ```python
-from onad.model.distance import KNN
-from onad.utils.similar.faiss_engine import FaissSimilaritySearchEngine
+from aberrant.model.distance import KNN
+from aberrant.utils.similar.faiss_engine import FaissSimilaritySearchEngine
 
 engine = FaissSimilaritySearchEngine(window_size=250, warm_up=50)
 model = KNN(k=25, similarity_engine=engine)
@@ -43,7 +43,7 @@ model = KNN(k=25, similarity_engine=engine)
 Imports:
 
 ```python
-from onad.model.svm import GADGETSVM, IncrementalOneClassSVMAdaptiveKernel
+from aberrant.model.svm import GADGETSVM, IncrementalOneClassSVMAdaptiveKernel
 ```
 
 Use when margin-based decision boundaries are preferred.
@@ -53,7 +53,7 @@ Use when margin-based decision boundaries are preferred.
 Imports:
 
 ```python
-from onad.model.stat import (
+from aberrant.model.stat import (
     MovingAverage,
     MovingCorrelationCoefficient,
     MovingCovariance,
@@ -66,7 +66,7 @@ Use for compact, interpretable change detectors.
 ## Core utility models
 
 ```python
-from onad.model import NullModel, QuantileThreshold, RandomModel, ThresholdModel
+from aberrant.model import NullModel, QuantileThreshold, RandomModel, ThresholdModel
 ```
 
 - `ThresholdModel`: static rule-based boundary detector

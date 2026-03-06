@@ -4,8 +4,9 @@ import unittest
 
 from sklearn.metrics import average_precision_score
 
-from onad.model.stat.multi import MovingCovariance, MovingMahalanobisDistance
-from onad.stream.dataset import Dataset, load
+from aberrant.model.stat.multi import MovingCovariance, MovingMahalanobisDistance
+from aberrant.stream.dataset import Dataset, load
+from tests.integration._settings import MAX_TEST_STANDARD, WARMUP_SAMPLES
 
 
 class TestMultivariateStatisticalModels(unittest.TestCase):
@@ -16,8 +17,8 @@ class TestMultivariateStatisticalModels(unittest.TestCase):
 
     def setUp(self):
         """Set up test configuration."""
-        self.WARMUP_SAMPLES = 1000
-        self.MAX_TEST_SAMPLES = 2000
+        self.WARMUP_SAMPLES = WARMUP_SAMPLES
+        self.MAX_TEST_SAMPLES = MAX_TEST_STANDARD
 
     def test_moving_covariance(self):
         """Test for the bivariate MovingCovariance model."""
@@ -57,7 +58,7 @@ class TestMultivariateStatisticalModels(unittest.TestCase):
         self.assertGreater(len(scores), 0, "No scores were generated.")
         pr_auc = average_precision_score(labels, scores)
 
-        lower, upper = (0.3, 0.75)
+        lower, upper = (0.45, 0.72)
         self.assertGreaterEqual(
             pr_auc,
             lower,
@@ -97,7 +98,7 @@ class TestMultivariateStatisticalModels(unittest.TestCase):
         self.assertGreater(len(scores), 0, "No scores were generated.")
         pr_auc = average_precision_score(labels, scores)
 
-        lower, upper = (0.3, 0.8)
+        lower, upper = (0.65, 0.85)
         self.assertGreaterEqual(
             pr_auc,
             lower,

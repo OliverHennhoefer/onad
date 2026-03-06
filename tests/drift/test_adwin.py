@@ -3,7 +3,7 @@
 import random
 import unittest
 
-from onad.drift.adwin import ADWIN
+from aberrant.drift.adwin import ADWIN
 
 
 class TestADWIN(unittest.TestCase):

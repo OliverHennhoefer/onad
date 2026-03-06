@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from onad.model.iforest.random_cut import RandomCutForest
+from aberrant.model.iforest.random_cut import RandomCutForest
 
 
 class TestRandomCutForest(unittest.TestCase):

@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from onad.model.random import RandomModel
+from aberrant.model.random import RandomModel
 from tests.utils import DataGenerator
 
 

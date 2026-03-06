@@ -1,6 +1,6 @@
 # SVM Models
 
-Public objects from `onad.model.svm`:
+Public objects from `aberrant.model.svm`:
 
 - `IncrementalOneClassSVMAdaptiveKernel`
 - `GADGETSVM`

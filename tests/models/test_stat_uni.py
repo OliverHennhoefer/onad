@@ -4,7 +4,7 @@ from collections import deque
 import numpy as np
 from scipy.stats import kurtosis, skew
 
-from onad.model.stat.uni import (
+from aberrant.model.stat.uni import (
     MovingAverage,
     MovingAverageAbsoluteDeviation,
     MovingGeometricAverage,

@@ -2,7 +2,7 @@
 
 import unittest
 
-from onad.model.threshold import ThresholdModel
+from aberrant.model.threshold import ThresholdModel
 from tests.utils import DataGenerator
 
 

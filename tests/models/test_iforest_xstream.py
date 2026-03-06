@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from onad.model.iforest.xstream import XStream
+from aberrant.model.iforest.xstream import XStream
 
 
 class TestXStream(unittest.TestCase):

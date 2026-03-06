@@ -1,6 +1,6 @@
 # Isolation Forest Models
 
-Public objects from `onad.model.iforest`:
+Public objects from `aberrant.model.iforest`:
 
 - `ASDIsolationForest`
 - `HalfSpaceTrees`

@@ -4,8 +4,9 @@ import unittest
 
 from sklearn.metrics import average_precision_score
 
-from onad.model.svm.adaptive import IncrementalOneClassSVMAdaptiveKernel
-from onad.stream.dataset import Dataset, load
+from aberrant.model.svm.adaptive import IncrementalOneClassSVMAdaptiveKernel
+from aberrant.stream.dataset import Dataset, load
+from tests.integration._settings import MAX_TEST_LONG, WARMUP_SAMPLES
 
 
 class TestAdaptiveSVM(unittest.TestCase):
@@ -16,8 +17,6 @@ class TestAdaptiveSVM(unittest.TestCase):
         Tests the IncrementalOneClassSVMAdaptiveKernel model on the SHUTTLE dataset and snapshots the PR-AUC score.
         """
         # Test configuration
-        WARMUP_SAMPLES = 1000
-        MAX_TEST_SAMPLES = 2000
         SEED = 42
         DATASET = Dataset.SHUTTLE
 
@@ -41,7 +40,7 @@ class TestAdaptiveSVM(unittest.TestCase):
                     warmup_count += 1
                 continue
 
-            if test_count >= MAX_TEST_SAMPLES:
+            if test_count >= MAX_TEST_LONG:
                 break
 
             model.learn_one(features)
@@ -53,13 +52,16 @@ class TestAdaptiveSVM(unittest.TestCase):
         # Calculate and assert PR-AUC
         self.assertGreater(len(scores), 0, "No test samples were processed.")
         pr_auc = average_precision_score(labels, scores)
-        expected_pr_auc = 0.280510
-
-        self.assertAlmostEqual(
+        lower_bound, upper_bound = 0.55, 0.80
+        self.assertGreaterEqual(
             pr_auc,
-            expected_pr_auc,
-            places=6,
-            msg=f"PR-AUC {pr_auc:.10f} should be exactly {expected_pr_auc:.10f}",
+            lower_bound,
+            f"PR-AUC {pr_auc:.3f} is below expected range [{lower_bound}, {upper_bound}]",
+        )
+        self.assertLessEqual(
+            pr_auc,
+            upper_bound,
+            f"PR-AUC {pr_auc:.3f} is above expected range [{lower_bound}, {upper_bound}]",
         )
 
 

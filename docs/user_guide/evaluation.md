@@ -3,7 +3,7 @@
 Install evaluation extras first:
 
 ```bash
-pip install "onad[eval]"
+pip install "aberrant[eval]"
 ```
 
 ## Common metrics

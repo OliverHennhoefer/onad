@@ -1,15 +1,10 @@
-from sklearn.metrics import average_precision_score
+from sklearn.metrics import average_precision_score, roc_auc_score
 
-from onad.model.svm import GADGETSVM
-from onad.stream.dataset import Dataset, load
-from onad.transform.preprocessing.scaler import MinMaxScaler
+from aberrant.model.svm import GADGETSVM
+from aberrant.stream.dataset import Dataset, load
 
-scaler = MinMaxScaler()
 model = GADGETSVM()
-pipeline = scaler | model
 labels, scores = [], []
-
-# Load dataset using new API
 dataset = load(Dataset.FRAUD)
 
 for i, (x, y) in enumerate(dataset.stream()):
@@ -23,4 +18,5 @@ for i, (x, y) in enumerate(dataset.stream()):
     labels.append(y)
     scores.append(score)
 
-print(f"PR_AUC: {round(average_precision_score(labels, scores), 3)}")  # 0.373
+print(f"PR-AUC: {round(average_precision_score(labels, scores), 3)}")
+print(f"ROC-AUC: {round(roc_auc_score(labels, scores), 3)}")

@@ -1,4 +1,4 @@
-# ONAD
+# ABERRANT
 
 Online anomaly detection for streaming data.
 
@@ -12,21 +12,21 @@ Online anomaly detection for streaming data.
 ## Install
 
 ```bash
-pip install onad
+pip install aberrant
 ```
 
 Optional extras:
 
-- `onad[eval]` for evaluation metrics (`scikit-learn`)
-- `onad[dl]` for deep models (`torch`)
-- `onad[parquet]` for legacy parquet streaming (`pyarrow`)
-- `onad[dev]`, `onad[docs]`, `onad[benchmark]`, `onad[all]`
+- `aberrant[eval]` for evaluation metrics (`scikit-learn`)
+- `aberrant[dl]` for deep models (`torch`)
+- `aberrant[parquet]` for legacy parquet streaming (`pyarrow`)
+- `aberrant[dev]`, `aberrant[docs]`, `aberrant[benchmark]`, `aberrant[all]`
 
 ## Quick example
 
 ```python
-from onad.model.iforest import OnlineIsolationForest
-from onad.stream.dataset import Dataset, load
+from aberrant.model.iforest import OnlineIsolationForest
+from aberrant.stream.dataset import Dataset, load
 
 model = OnlineIsolationForest(window_size=512, num_trees=50)
 dataset = load(Dataset.SHUTTLE)
@@ -47,14 +47,14 @@ for i, (x, y) in enumerate(dataset.stream()):
 
 ## Stable public imports
 
-- `onad.drift`
-- `onad.model.iforest`
-- `onad.model.distance`
-- `onad.model.svm`
-- `onad.model.stat`
-- `onad.transform.preprocessing`
-- `onad.transform.projection`
-- `onad.stream.dataset`
+- `aberrant.drift`
+- `aberrant.model.iforest`
+- `aberrant.model.distance`
+- `aberrant.model.svm`
+- `aberrant.model.stat`
+- `aberrant.transform.preprocessing`
+- `aberrant.transform.projection`
+- `aberrant.stream.dataset`
 
 ## Score conventions
 
@@ -64,14 +64,14 @@ for i, (x, y) in enumerate(dataset.stream()):
 
 ## Optional dependency behavior
 
-- Deep models are optional (`onad[dl]`).
+- Deep models are optional (`aberrant[dl]`).
 - Deep unit tests auto-skip when `torch` is unavailable.
-- Integration tests require `onad[eval]`.
+- Integration tests require `aberrant[eval]`.
 
 ## Development
 
 ```bash
-uv sync --extra dev --extra docs --extra eval
+uv sync --extra dev --extra docs
 uv run python -m ruff check .
 uv run python -m pytest -q
 ```

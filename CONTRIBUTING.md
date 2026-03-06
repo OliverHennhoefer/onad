@@ -1,11 +1,11 @@
-# Contributing to ONAD
+# Contributing to ABERRANT
 
 Thanks for contributing.
 
 ## Development setup
 
 ```bash
-uv sync --extra dev --extra docs --extra eval
+uv sync --extra dev --extra docs
 ```
 
 Install local Git hooks (including pre-push checks):
@@ -20,15 +20,15 @@ Run these before opening a PR:
 
 ```bash
 uv run python -m ruff check .
-uv run python -m mypy onad/base/model.py onad/base/transformer.py onad/base/pipeline.py onad/model/threshold.py onad/model/quantile_threshold.py onad/model/__init__.py onad/model/iforest/__init__.py onad/model/distance/__init__.py onad/model/svm/__init__.py onad/model/deep/__init__.py
+uv run python -m mypy aberrant/base/model.py aberrant/base/transformer.py aberrant/base/pipeline.py aberrant/model/threshold.py aberrant/model/quantile_threshold.py aberrant/model/__init__.py aberrant/model/iforest/__init__.py aberrant/model/distance/__init__.py aberrant/model/svm/__init__.py aberrant/model/deep/__init__.py
 uv run python -m pytest -q
 uv run python -m build
 ```
 
-To run dataset-backed integration tests:
+To run integration tests directly:
 
 ```bash
-ONAD_RUN_INTEGRATION=1 uv run python -m pytest tests/integration -q
+uv run python -m pytest tests/integration -q
 ```
 
 ## PR expectations

@@ -1,24 +1,24 @@
 # Transformers
 
-ONAD supports streaming transformers that compose with models using `|`.
+ABERRANT supports streaming transformers that compose with models using `|`.
 
 ## Preprocessing
 
 ```python
-from onad.transform.preprocessing import MinMaxScaler, StandardScaler
+from aberrant.transform.preprocessing import MinMaxScaler, StandardScaler
 ```
 
 ## Projection
 
 ```python
-from onad.transform.projection import IncrementalPCA, RandomProjection
+from aberrant.transform.projection import IncrementalPCA, RandomProjection
 ```
 
 ## Pipeline example
 
 ```python
-from onad.model.iforest import OnlineIsolationForest
-from onad.transform.preprocessing import StandardScaler
+from aberrant.model.iforest import OnlineIsolationForest
+from aberrant.transform.preprocessing import StandardScaler
 
 pipeline = StandardScaler() | OnlineIsolationForest(window_size=512)
 

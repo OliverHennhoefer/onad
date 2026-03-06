@@ -3,8 +3,8 @@
 import unittest
 from unittest.mock import Mock
 
-from onad.model.distance.knn import KNN
-from onad.utils.similar.faiss_engine import FaissSimilaritySearchEngine
+from aberrant.model.distance.knn import KNN
+from aberrant.utils.similar.faiss_engine import FaissSimilaritySearchEngine
 from tests.utils import DataGenerator
 
 

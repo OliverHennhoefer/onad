@@ -5,7 +5,7 @@ Real dataset tests are in tests/integration/test_iforest_models.py
 
 import unittest
 
-from onad.model.iforest.rand_hist import StreamRandomHistogramForest
+from aberrant.model.iforest.rand_hist import StreamRandomHistogramForest
 
 
 class TestStreamRandomHistogramForestEdgeCases(unittest.TestCase):

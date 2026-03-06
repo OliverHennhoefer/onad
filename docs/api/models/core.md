@@ -1,6 +1,6 @@
 # Core Models
 
-Public objects from `onad.model`:
+Public objects from `aberrant.model`:
 
 - `NullModel`
 - `RandomModel`

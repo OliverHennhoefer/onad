@@ -13,8 +13,8 @@ except ImportError:
     TORCH_AVAILABLE = False
 
 if TORCH_AVAILABLE:
-    from onad.model.deep.autoencoder import Autoencoder
-    from onad.utils.deep.architecture import VanillaAutoencoder
+    from aberrant.model.deep.autoencoder import Autoencoder
+    from aberrant.utils.deep.architecture import VanillaAutoencoder
 from tests.utils import DataGenerator
 
 

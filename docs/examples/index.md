@@ -18,6 +18,6 @@ Example scripts are in `examples/models/` and `examples/pipeline.py`.
 
 ## Notes
 
-- Most examples use `onad.stream.dataset` for built-in datasets.
-- Evaluation metrics require `onad[eval]`.
-- Deep model examples require `onad[dl]`.
+- Most examples use `aberrant.stream.dataset` for built-in datasets.
+- Evaluation metrics require `aberrant[eval]`.
+- Deep model examples require `aberrant[dl]`.

@@ -1,1 +1,1 @@
-"""Integration tests for ONAD components."""
+"""Integration tests for ABERRANT components."""

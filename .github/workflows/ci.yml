@@ -36,16 +36,16 @@ jobs:
       - name: Mypy
         run: >
           uv run python -m mypy
-          onad/base/model.py
-          onad/base/transformer.py
-          onad/base/pipeline.py
-          onad/model/threshold.py
-          onad/model/quantile_threshold.py
-          onad/model/__init__.py
-          onad/model/iforest/__init__.py
-          onad/model/distance/__init__.py
-          onad/model/svm/__init__.py
-          onad/model/deep/__init__.py
+          aberrant/base/model.py
+          aberrant/base/transformer.py
+          aberrant/base/pipeline.py
+          aberrant/model/threshold.py
+          aberrant/model/quantile_threshold.py
+          aberrant/model/__init__.py
+          aberrant/model/iforest/__init__.py
+          aberrant/model/distance/__init__.py
+          aberrant/model/svm/__init__.py
+          aberrant/model/deep/__init__.py
 
       - name: Unit tests
         run: uv run python -m pytest tests/models tests/drift tests/transformers -q
@@ -63,7 +63,7 @@ jobs:
         run: uv python install 3.11
 
       - name: Install dependencies
-        run: uv sync --extra dev --extra eval
+        run: uv sync --extra dev
 
       - name: Integration smoke
         run: uv run python -m pytest tests/test_public_imports.py tests/integration -q
@@ -84,7 +84,7 @@ jobs:
         run: uv sync --extra dev
 
       - name: Coverage
-        run: uv run python -m pytest tests/models tests/drift tests/transformers --cov=onad --cov-report=xml --cov-report=term-missing -q
+        run: uv run python -m pytest tests/models tests/drift tests/transformers --cov=aberrant --cov-report=xml --cov-report=term-missing -q
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v7

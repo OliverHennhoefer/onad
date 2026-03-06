@@ -9,8 +9,8 @@ Semantic Versioning.
 
 ### Added
 
-- Public API exports for `onad.model.svm`, `onad.model.stat`, `onad.stream`,
-  `onad.transform`, and deep lazy exports.
+- Public API exports for `aberrant.model.svm`, `aberrant.model.stat`, `aberrant.stream`,
+  `aberrant.transform`, and deep lazy exports.
 - Regression tests for feature-order stability in `OnlineIsolationForest`.
 - Regression tests for `keys=` initialization in multivariate statistical models.
 - Optional dependency extras for `parquet` and benchmark tooling.
@@ -19,8 +19,11 @@ Semantic Versioning.
 ### Changed
 
 - `OnlineIsolationForest` now enforces deterministic feature ordering and key-set checks.
-- Dataset module version now uses `onad.__version__` as single source of truth.
+- Dataset module version now uses `aberrant.__version__` as single source of truth.
 - Documentation was rewritten to match the current public API.
+- `aberrant[dev]` now includes `torch` and `scikit-learn` so the full test suite can
+  run from the dev environment.
+- Integration tests now run by default (no environment-variable gate).
 
 ### Fixed
 

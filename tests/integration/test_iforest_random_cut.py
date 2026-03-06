@@ -4,8 +4,9 @@ import unittest
 
 from sklearn.metrics import average_precision_score
 
-from onad.model.iforest.random_cut import RandomCutForest
-from onad.stream.dataset import Dataset, load
+from aberrant.model.iforest.random_cut import RandomCutForest
+from aberrant.stream.dataset import Dataset, load
+from tests.integration._settings import MAX_TEST_SHORT, WARMUP_SAMPLES
 
 
 class TestRandomCutForest(unittest.TestCase):
@@ -13,8 +14,6 @@ class TestRandomCutForest(unittest.TestCase):
 
     def test_shuttle_dataset_pr_auc(self):
         """Smoke-test RandomCutForest quality on SHUTTLE with bounded PR-AUC."""
-        WARMUP_SAMPLES = 1000
-        MAX_TEST_SAMPLES = 2000
         DATASET = Dataset.SHUTTLE
 
         model = RandomCutForest(
@@ -39,7 +38,7 @@ class TestRandomCutForest(unittest.TestCase):
                     warmup_count += 1
                 continue
 
-            if test_count >= MAX_TEST_SAMPLES:
+            if test_count >= MAX_TEST_SHORT:
                 break
 
             score = model.score_one(features)
@@ -51,7 +50,7 @@ class TestRandomCutForest(unittest.TestCase):
         self.assertGreater(len(scores), 0, "No test samples were processed.")
         pr_auc = average_precision_score(labels, scores)
 
-        lower_bound, upper_bound = 0.05, 0.99
+        lower_bound, upper_bound = 0.72, 0.90
         self.assertGreaterEqual(
             pr_auc,
             lower_bound,

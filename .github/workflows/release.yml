@@ -38,7 +38,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     environment:
       name: pypi
-      url: https://pypi.org/p/onad
+      url: https://pypi.org/p/aberrant
     permissions:
       id-token: write
     steps:

@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from onad.model.svm.adaptive import (
+from aberrant.model.svm.adaptive import (
     IncrementalOneClassSVMAdaptiveKernel,
 )
 

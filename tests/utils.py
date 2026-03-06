@@ -1,4 +1,4 @@
-"""Test utilities for ONAD test suite."""
+"""Test utilities for ABERRANT test suite."""
 
 import math
 import time

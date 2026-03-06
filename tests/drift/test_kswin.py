@@ -3,7 +3,7 @@
 import random
 import unittest
 
-from onad.drift.kswin import KSWIN
+from aberrant.drift.kswin import KSWIN
 
 
 class TestKSWIN(unittest.TestCase):

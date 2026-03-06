@@ -1,7 +1,7 @@
 from sklearn.metrics import average_precision_score, roc_auc_score
 
-from onad.model.iforest import XStream
-from onad.stream.dataset import Dataset, load
+from aberrant.model.iforest import XStream
+from aberrant.stream.dataset import Dataset, load
 
 model = XStream(
     k=64,
@@ -18,7 +18,6 @@ model = XStream(
 labels, scores = [], []
 dataset = load(Dataset.SHUTTLE)
 
-# Warmup: train on the first 5000 normal instances only; score anomalies if seen.
 for i, (x, y) in enumerate(dataset.stream()):
     if i < 5000 and y == 0:
         model.learn_one(x)
@@ -29,5 +28,5 @@ for i, (x, y) in enumerate(dataset.stream()):
     labels.append(y)
     scores.append(score)
 
-print(f"PR-AUC: {round(average_precision_score(labels, scores), 3)}")  # 0.754
-print(f"ROC-AUC: {round(roc_auc_score(labels, scores), 3)}")  # 0.98
+print(f"PR-AUC: {round(average_precision_score(labels, scores), 3)}")
+print(f"ROC-AUC: {round(roc_auc_score(labels, scores), 3)}")

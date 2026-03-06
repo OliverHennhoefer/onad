@@ -7,7 +7,7 @@ import unittest
 
 import numpy as np
 
-from onad.model.iforest.online import OnlineIsolationForest
+from aberrant.model.iforest.online import OnlineIsolationForest
 
 
 class TestOnlineIsolationForestEdgeCases(unittest.TestCase):

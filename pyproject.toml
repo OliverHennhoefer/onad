@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "onad"
-version = "0.3.0"
+name = "aberrant"
+version = "0.3.1"
 description = "Online Anomaly Detection Toolkit"
 authors = [
     { name = "Oliver Hennhoefer", email = "oliver.hennhoefer@mail.de" },
@@ -38,6 +38,8 @@ dev = [
     "pytest-cov>=6.0.0,<8.0.0",
     "hypothesis>=6.0.0,<7.0.0",
     "mypy>=1.13.0,<2.0.0",
+    "scikit-learn>=1.6.1,<2.0.0",
+    "torch>=2.6.0,<3.0.0",
 ]
 docs = [
     "mkdocs",
@@ -69,10 +71,10 @@ all = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/OliverHennhoefer/onad"
-"Bugs" = "https://github.com/OliverHennhoefer/onad/issues"
-"Documentation" = "https://oliverhennhoefer.github.io/onad"
-"Changelog" = "https://github.com/OliverHennhoefer/onad/blob/main/CHANGELOG.md"
+"Homepage" = "https://github.com/OliverHennhoefer/aberrant"
+"Bugs" = "https://github.com/OliverHennhoefer/aberrant/issues"
+"Documentation" = "https://oliverhennhoefer.github.io/aberrant"
+"Changelog" = "https://github.com/OliverHennhoefer/aberrant/blob/main/CHANGELOG.md"
 
 # Ruff configuration
 [tool.ruff]
@@ -113,7 +115,7 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.ruff.lint.isort]
-known-first-party = ["onad"]
+known-first-party = ["aberrant"]
 
 # MyPy configuration
 [tool.mypy]
