@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import hashlib
-from collections import deque
+from collections import OrderedDict, deque
+from collections.abc import Iterator
 
 import numpy as np
 
@@ -39,6 +40,8 @@ class XStream(BaseModel):
         init_sample_size: Number of projected samples used to initialize range
             statistics and chain parameters.
         density: Fraction of non-zero StreamHash dimensions per feature.
+        max_feature_cache_size: Maximum number of feature hash mappings to keep
+            in memory. ``None`` disables eviction.
         seed: Random seed for reproducibility.
 
     References:
@@ -56,6 +59,7 @@ class XStream(BaseModel):
         window_size: int = 256,
         init_sample_size: int = 256,
         density: float = 1.0 / 3.0,
+        max_feature_cache_size: int | None = 10_000,
         seed: int | None = None,
     ) -> None:
         if k <= 0:
@@ -74,6 +78,8 @@ class XStream(BaseModel):
             raise ValueError("init_sample_size must be positive")
         if not (0.0 < density <= 1.0):
             raise ValueError("density must be in (0, 1]")
+        if max_feature_cache_size is not None and max_feature_cache_size <= 0:
+            raise ValueError("max_feature_cache_size must be positive or None")
 
         self.k = k
         self.n_chains = n_chains
@@ -83,6 +89,7 @@ class XStream(BaseModel):
         self.window_size = window_size
         self.init_sample_size = init_sample_size
         self.density = density
+        self.max_feature_cache_size = max_feature_cache_size
         self.seed = seed
 
         self.rng = np.random.default_rng(seed)
@@ -104,10 +111,18 @@ class XStream(BaseModel):
 
         self._hash_coeffs: np.ndarray | None = None
         self._hash_offsets: np.ndarray | None = None
+        self._hash_coeffs_mod: np.ndarray | None = None
+        self._hash_offsets_mod: np.ndarray | None = None
+        self._scratch_z: np.ndarray | None = None
+        self._scratch_bins: np.ndarray | None = None
+        self._scratch_feature_visits: np.ndarray | None = None
+        self._scratch_hash_dots: np.ndarray | None = None
 
         # Cache sparse StreamHash mappings for seen feature names:
         # feature -> (indices, signs)
-        self._feature_cache: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+        self._feature_cache: OrderedDict[str, tuple[np.ndarray, np.ndarray]] = (
+            OrderedDict()
+        )
 
     def reset(self) -> None:
         """Reset learned state while keeping hyperparameters."""
@@ -122,7 +137,7 @@ class XStream(BaseModel):
         for key, value in x.items():
             if not isinstance(key, str):
                 raise ValueError("All feature keys must be strings")
-            if not isinstance(value, (int, float, np.number)):
+            if not isinstance(value, int | float | np.number):
                 raise ValueError(f"Feature '{key}' is not numeric")
             if not np.isfinite(float(value)):
                 raise ValueError(f"Feature '{key}' must be finite")
@@ -130,7 +145,7 @@ class XStream(BaseModel):
     def _feature_seed(self, feature: str) -> int:
         """Create deterministic seed for one feature name."""
         seed_prefix = "none" if self.seed is None else str(self.seed)
-        payload = f"{seed_prefix}|{feature}".encode("utf-8")
+        payload = f"{seed_prefix}|{feature}".encode()
         digest = hashlib.blake2b(payload, digest_size=8).digest()
         return int.from_bytes(digest, byteorder="little", signed=False)
 
@@ -138,6 +153,7 @@ class XStream(BaseModel):
         """Get cached sparse projection indices and signs for one feature."""
         cached = self._feature_cache.get(feature)
         if cached is not None:
+            self._feature_cache.move_to_end(feature)
             return cached
 
         nnz = max(1, int(round(self.k * self.density)))
@@ -149,6 +165,11 @@ class XStream(BaseModel):
 
         mapping = (indices, signs)
         self._feature_cache[feature] = mapping
+        if (
+            self.max_feature_cache_size is not None
+            and len(self._feature_cache) > self.max_feature_cache_size
+        ):
+            self._feature_cache.popitem(last=False)
         return mapping
 
     def _project_one(self, x: dict[str, float]) -> np.ndarray:
@@ -175,9 +196,10 @@ class XStream(BaseModel):
         self._chain_dims = self.rng.integers(
             0, self.k, size=(self.n_chains, self.depth), dtype=np.int32
         )
-        self._shift = self.rng.uniform(
-            low=0.0, high=1.0, size=(self.n_chains, self.k)
-        ) * self._deltamax
+        self._shift = (
+            self.rng.uniform(low=0.0, high=1.0, size=(self.n_chains, self.k))
+            * self._deltamax
+        )
 
         self._cms_current = np.zeros(
             (self.n_chains, self.depth, self.cms_num_hashes, self.cms_width),
@@ -197,6 +219,13 @@ class XStream(BaseModel):
             size=(self.n_chains, self.depth, self.cms_num_hashes),
             dtype=np.int64,
         )
+        self._hash_coeffs_mod = self._hash_coeffs % self.cms_width
+        self._hash_offsets_mod = self._hash_offsets % self.cms_width
+        self._scratch_z = np.zeros(self.k, dtype=np.float64)
+        # Use Python-int bins so large finite features cannot overflow int64.
+        self._scratch_bins = np.zeros(self.k, dtype=object)
+        self._scratch_feature_visits = np.zeros(self.k, dtype=np.int32)
+        self._scratch_hash_dots = np.zeros(self.cms_num_hashes, dtype=np.int64)
 
         self._ready = True
         self._samples_in_window = 0
@@ -212,45 +241,87 @@ class XStream(BaseModel):
             self._deltamax is None
             or self._chain_dims is None
             or self._shift is None
-            or self._hash_coeffs is None
-            or self._hash_offsets is None
+            or self._hash_coeffs_mod is None
+            or self._hash_offsets_mod is None
+            or self._scratch_z is None
+            or self._scratch_bins is None
+            or self._scratch_feature_visits is None
+            or self._scratch_hash_dots is None
         ):
             raise RuntimeError("Model is not initialized")
 
         hash_index = np.arange(self.cms_num_hashes, dtype=np.intp)
 
         for chain in range(self.n_chains):
-            z = np.zeros(self.k, dtype=np.float64)
-            bins = np.zeros(self.k, dtype=np.int64)
-            feature_visits = np.zeros(self.k, dtype=np.int16)
-            hash_dots = np.zeros(self.cms_num_hashes, dtype=np.int64)
+            for level, buckets in self._iter_chain_buckets(
+                y,
+                chain,
+                self._scratch_z,
+                self._scratch_bins,
+                self._scratch_feature_visits,
+                self._scratch_hash_dots,
+            ):
+                sketch[chain, level, hash_index, buckets] += 1
 
-            for level in range(self.depth):
-                feature = int(self._chain_dims[chain, level])
-                feature_visits[feature] += 1
+    def _iter_chain_buckets(
+        self,
+        y: np.ndarray,
+        chain: int,
+        z: np.ndarray,
+        bins: np.ndarray,
+        feature_visits: np.ndarray,
+        hash_dots: np.ndarray,
+    ) -> Iterator[tuple[int, np.ndarray]]:
+        """
+        Yield traversal buckets for each level of one chain.
 
-                if feature_visits[feature] == 1:
-                    z_new = (y[feature] + self._shift[chain, feature]) / self._deltamax[
-                        feature
-                    ]
-                else:
-                    z_new = (
-                        2.0 * z[feature]
-                        - self._shift[chain, feature] / self._deltamax[feature]
-                    )
+        This helper centralizes half-space chain traversal shared by sketch
+        update and scoring paths.
+        """
+        if (
+            self._deltamax is None
+            or self._chain_dims is None
+            or self._shift is None
+            or self._hash_coeffs_mod is None
+            or self._hash_offsets_mod is None
+        ):
+            raise RuntimeError("Model is not initialized")
 
-                z[feature] = z_new
-                bin_new = int(np.floor(z_new))
+        z.fill(0.0)
+        bins.fill(0)
+        feature_visits.fill(0)
+        hash_dots.fill(0)
+        hash_coeffs_mod = self._hash_coeffs_mod
+        hash_offsets_mod = self._hash_offsets_mod[chain, :, :]
 
-                if bin_new != bins[feature]:
-                    delta = bin_new - bins[feature]
-                    bins[feature] = bin_new
-                    hash_dots += delta * self._hash_coeffs[:, feature]
+        for level in range(self.depth):
+            feature = int(self._chain_dims[chain, level])
+            feature_visits[feature] += 1
 
-                buckets = (
-                    hash_dots + self._hash_offsets[chain, level, :]
-                ) % self.cms_width
-                sketch[chain, level, hash_index, buckets.astype(np.intp)] += 1
+            if feature_visits[feature] == 1:
+                z_new = (y[feature] + self._shift[chain, feature]) / self._deltamax[
+                    feature
+                ]
+            else:
+                z_new = (
+                    2.0 * z[feature]
+                    - self._shift[chain, feature] / self._deltamax[feature]
+                )
+
+            z[feature] = z_new
+            bin_new = int(np.floor(z_new))
+
+            if bin_new != bins[feature]:
+                delta = bin_new - bins[feature]
+                bins[feature] = bin_new
+                delta_mod = int(delta % self.cms_width)
+                if delta_mod:
+                    hash_dots = (
+                        hash_dots + delta_mod * hash_coeffs_mod[:, feature]
+                    ) % self.cms_width
+
+            buckets = (hash_dots + hash_offsets_mod[level, :]) % self.cms_width
+            yield level, buckets.astype(np.intp)
 
     def _learn_projected(self, y: np.ndarray) -> None:
         """Learn one projected sample and maintain current/reference windows."""
@@ -293,8 +364,12 @@ class XStream(BaseModel):
             or self._chain_dims is None
             or self._shift is None
             or self._cms_reference is None
-            or self._hash_coeffs is None
-            or self._hash_offsets is None
+            or self._hash_coeffs_mod is None
+            or self._hash_offsets_mod is None
+            or self._scratch_z is None
+            or self._scratch_bins is None
+            or self._scratch_feature_visits is None
+            or self._scratch_hash_dots is None
         ):
             return 0.0
 
@@ -302,45 +377,21 @@ class XStream(BaseModel):
         chain_scores = np.empty(self.n_chains, dtype=np.float64)
 
         for chain in range(self.n_chains):
-            z = np.zeros(self.k, dtype=np.float64)
-            bins = np.zeros(self.k, dtype=np.int64)
-            feature_visits = np.zeros(self.k, dtype=np.int16)
-            hash_dots = np.zeros(self.cms_num_hashes, dtype=np.int64)
             best_level_score = np.inf
 
-            for level in range(self.depth):
-                feature = int(self._chain_dims[chain, level])
-                feature_visits[feature] += 1
-
-                if feature_visits[feature] == 1:
-                    z_new = (y[feature] + self._shift[chain, feature]) / self._deltamax[
-                        feature
-                    ]
-                else:
-                    z_new = (
-                        2.0 * z[feature]
-                        - self._shift[chain, feature] / self._deltamax[feature]
-                    )
-
-                z[feature] = z_new
-                bin_new = int(np.floor(z_new))
-
-                if bin_new != bins[feature]:
-                    delta = bin_new - bins[feature]
-                    bins[feature] = bin_new
-                    hash_dots += delta * self._hash_coeffs[:, feature]
-
-                buckets = (
-                    hash_dots + self._hash_offsets[chain, level, :]
-                ) % self.cms_width
-                counts = self._cms_reference[
-                    chain, level, hash_index, buckets.astype(np.intp)
-                ]
+            for level, buckets in self._iter_chain_buckets(
+                y,
+                chain,
+                self._scratch_z,
+                self._scratch_bins,
+                self._scratch_feature_visits,
+                self._scratch_hash_dots,
+            ):
+                counts = self._cms_reference[chain, level, hash_index, buckets]
                 estimated_count = int(np.min(counts))
 
                 level_score = np.log2(1.0 + estimated_count) + (level + 1.0)
-                if level_score < best_level_score:
-                    best_level_score = level_score
+                best_level_score = min(best_level_score, level_score)
 
             chain_scores[chain] = 2.0 ** (1.0 - best_level_score)
 
@@ -367,6 +418,7 @@ class XStream(BaseModel):
             f"XStream(k={self.k}, n_chains={self.n_chains}, depth={self.depth}, "
             f"cms_width={self.cms_width}, cms_num_hashes={self.cms_num_hashes}, "
             f"window_size={self.window_size}, init_sample_size={self.init_sample_size}, "
-            f"density={self.density}, ready={self._ready}, "
+            f"density={self.density}, max_feature_cache_size={self.max_feature_cache_size}, "
+            f"feature_cache_size={len(self._feature_cache)}, ready={self._ready}, "
             f"reference_ready={self._reference_ready})"
         )

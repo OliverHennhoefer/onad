@@ -18,13 +18,14 @@ model = XStream(
 labels, scores = [], []
 dataset = load(Dataset.SHUTTLE)
 
+# Warmup: train on the first 5000 normal instances only; score anomalies if seen.
 for i, (x, y) in enumerate(dataset.stream()):
     if i < 5000 and y == 0:
         model.learn_one(x)
         continue
 
-    model.learn_one(x)
     score = model.score_one(x)
+    model.learn_one(x)
     labels.append(y)
     scores.append(score)
 

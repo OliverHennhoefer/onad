@@ -34,7 +34,7 @@ class TestXStream(unittest.TestCase):
         warmup_count = 0
         test_count = 0
 
-        for _i, (features, label) in enumerate(dataset_stream.stream()):
+        for features, label in dataset_stream.stream():
             if warmup_count < WARMUP_SAMPLES:
                 if label == 0:
                     model.learn_one(features)
@@ -44,8 +44,8 @@ class TestXStream(unittest.TestCase):
             if test_count >= MAX_TEST_SAMPLES:
                 break
 
-            model.learn_one(features)
             score = model.score_one(features)
+            model.learn_one(features)
             labels.append(label)
             scores.append(score)
             test_count += 1

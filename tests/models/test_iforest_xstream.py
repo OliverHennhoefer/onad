@@ -20,6 +20,7 @@ class TestXStream(unittest.TestCase):
             window_size=16,
             init_sample_size=16,
             density=0.25,
+            max_feature_cache_size=32,
             seed=42,
         )
 
@@ -30,6 +31,7 @@ class TestXStream(unittest.TestCase):
         self.assertEqual(model.n_chains, 100)
         self.assertEqual(model.depth, 15)
         self.assertEqual(model.window_size, 256)
+        self.assertEqual(model.max_feature_cache_size, 10_000)
         self.assertFalse(model._ready)
         self.assertFalse(model._reference_ready)
 
@@ -53,6 +55,8 @@ class TestXStream(unittest.TestCase):
             XStream(density=0.0)
         with self.assertRaises(ValueError):
             XStream(density=1.5)
+        with self.assertRaises(ValueError):
+            XStream(max_feature_cache_size=0)
 
     def test_score_zero_before_ready(self):
         """score_one should return 0.0 before model warm-up is complete."""
@@ -71,6 +75,32 @@ class TestXStream(unittest.TestCase):
             model.learn_one({"x": "bad"})  # type: ignore[arg-type]
         with self.assertRaises(ValueError):
             model.score_one({"x": float("inf")})
+        with self.assertRaises(ValueError):
+            model.score_one({"x": float("nan")})
+
+    def test_large_finite_values_do_not_overflow(self):
+        """Large finite values should not trigger integer overflow."""
+        model = XStream(
+            k=8,
+            n_chains=4,
+            depth=4,
+            cms_width=64,
+            cms_num_hashes=2,
+            window_size=8,
+            init_sample_size=8,
+            density=0.5,
+            seed=7,
+        )
+        for i in range(16):
+            model.learn_one({"x": float(i), "y": 0.0})
+
+        large_point = {"x": 1e30, "y": 0.0}
+        score = model.score_one(large_point)
+        model.learn_one(large_point)
+
+        self.assertIsInstance(score, float)
+        self.assertGreaterEqual(score, 0.0)
+        self.assertLessEqual(score, 1.0)
 
     def test_deterministic_with_seed(self):
         """Same seed and data should produce identical scores."""
@@ -102,6 +132,33 @@ class TestXStream(unittest.TestCase):
         self.assertIsInstance(score, float)
         self.assertGreaterEqual(score, 0.0)
         self.assertLessEqual(score, 1.0)
+
+    def test_feature_cache_is_bounded_lru(self):
+        """Feature cache should evict least recently used mappings."""
+        model = XStream(
+            k=8,
+            n_chains=4,
+            depth=4,
+            cms_width=64,
+            cms_num_hashes=2,
+            window_size=8,
+            init_sample_size=8,
+            density=0.5,
+            max_feature_cache_size=3,
+            seed=7,
+        )
+
+        model._feature_projection("a")
+        model._feature_projection("b")
+        model._feature_projection("c")
+        model._feature_projection("a")  # refresh "a"
+        model._feature_projection("d")  # should evict "b"
+
+        self.assertEqual(len(model._feature_cache), 3)
+        self.assertNotIn("b", model._feature_cache)
+        self.assertIn("a", model._feature_cache)
+        self.assertIn("c", model._feature_cache)
+        self.assertIn("d", model._feature_cache)
 
     def test_window_rollover_sets_reference(self):
         """After enough samples, reference sketch should become available."""
