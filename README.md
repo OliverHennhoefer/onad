@@ -36,11 +36,13 @@ for i, (x, y) in enumerate(dataset.stream()):
         if y == 0:
             model.learn_one(x)
         continue
-
-    model.learn_one(x)
+    
     score = model.score_one(x)
+
     if score > 0.8:
         print("anomaly", score, y)
+
+    model.learn_one(x)
 ```
 
 ## Stable public imports
