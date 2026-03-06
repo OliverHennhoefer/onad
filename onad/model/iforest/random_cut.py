@@ -156,7 +156,10 @@ class _RandomCutTree:
 
         if sample is not None:
             cut_dim, cut_value = sample
-            if cut_value <= node.bbox_min[cut_dim] or cut_value >= node.bbox_max[cut_dim]:
+            if (
+                cut_value <= node.bbox_min[cut_dim]
+                or cut_value >= node.bbox_max[cut_dim]
+            ):
                 if new_leaf.point[cut_dim] <= cut_value:
                     branch = _RCFBranch(
                         left=new_leaf,
@@ -252,10 +255,7 @@ class _RandomCutTree:
         """Traverse tree cuts and return reached leaf."""
         node = self.root
         while isinstance(node, _RCFBranch):
-            if point[node.cut_dim] <= node.cut_value:
-                node = node.left
-            else:
-                node = node.right
+            node = node.left if point[node.cut_dim] <= node.cut_value else node.right
         if node is None:
             raise RuntimeError("Tree is unexpectedly empty")
         return node
