@@ -1,51 +1,25 @@
-"""
-ASD Isolation Forest example for online anomaly detection.
-
-This example demonstrates using ASD (Anomaly Subspace Detection) Isolation Forest
-for anomaly detection on the SHUTTLE dataset, with online learning.
-"""
-
-from sklearn.metrics import average_precision_score
+from sklearn.metrics import average_precision_score, roc_auc_score
 
 from aberrant.model.iforest.asd import ASDIsolationForest
 from aberrant.stream.dataset import Dataset, load
 
-# Hyperparameters
-N_ESTIMATORS = 750  # Number of trees in the iforest
-MAX_SAMPLES = 2750  # Samples per tree (buffer size)
-SEED = 1  # Random seed for reproducibility
-WARMUP_SAMPLES = 10_000  # Train only on normal samples during warmup
-
-# Initialize the ASD Isolation Forest model
-asd_iforest = ASDIsolationForest(
-    n_estimators=N_ESTIMATORS, max_samples=MAX_SAMPLES, seed=SEED
-)
-
-# Storage for evaluation
+model = ASDIsolationForest(n_estimators=750, max_samples=2750, seed=1)
 labels, scores = [], []
-
-# Load and process the dataset
-print("Loading SHUTTLE dataset...")
 dataset = load(Dataset.SHUTTLE)
 
-print(f"Starting online learning with {WARMUP_SAMPLES} warmup samples...")
 for i, (x, y) in enumerate(dataset.stream()):
-    # Warmup phase: train only on normal samples (y == 0)
-    if i < WARMUP_SAMPLES and y == 0:
-        asd_iforest.learn_one(x)
+    if i < 10_000 and y == 0:
+        model.learn_one(x)
         continue
 
-    # Skip non-normal samples during warmup
-    if i < WARMUP_SAMPLES:
+    if i < 10_000:
         continue
 
-    # Online phase: learn from all samples and compute scores
-    asd_iforest.learn_one(x)
-    score = asd_iforest.score_one(x)
+    model.learn_one(x)
+    score = model.score_one(x)
 
     labels.append(y)
     scores.append(score)
 
-# Evaluate performance
-pr_auc = average_precision_score(labels, scores)
-print(f"PR_AUC: {round(pr_auc, 3)}")  # 0.727
+print(f"PR-AUC: {round(average_precision_score(labels, scores), 3)}")
+print(f"ROC-AUC: {round(roc_auc_score(labels, scores), 3)}")

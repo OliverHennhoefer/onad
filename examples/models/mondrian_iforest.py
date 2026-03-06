@@ -1,10 +1,9 @@
-from sklearn.metrics import average_precision_score
+from sklearn.metrics import average_precision_score, roc_auc_score
 
 from aberrant.model.iforest.mondrian import MondrianForest
 from aberrant.stream.dataset import Dataset, load
 
 model = MondrianForest(n_estimators=250, subspace_size=500, seed=1)
-
 labels, scores = [], []
 dataset = load(Dataset.SHUTTLE)
 
@@ -19,4 +18,5 @@ for i, (x, y) in enumerate(dataset.stream()):
     labels.append(y)
     scores.append(score)
 
-print(f"PR_AUC: {round(average_precision_score(labels, scores), 3)}")  # 0.043
+print(f"PR-AUC: {round(average_precision_score(labels, scores), 3)}")
+print(f"ROC-AUC: {round(roc_auc_score(labels, scores), 3)}")

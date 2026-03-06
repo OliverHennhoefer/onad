@@ -3,7 +3,6 @@ from sklearn.metrics import average_precision_score, roc_auc_score
 from aberrant.model.iforest.online import OnlineIsolationForest
 from aberrant.stream.dataset import Dataset, load
 
-# Create True Online Isolation Forest with original algorithm
 model = OnlineIsolationForest(
     num_trees=20,
     max_leaf_samples=32,
@@ -16,8 +15,6 @@ model = OnlineIsolationForest(
 )
 
 labels, scores = [], []
-
-# Load dataset using new API
 dataset = load(Dataset.SHUTTLE)
 
 for i, (x, y) in enumerate(dataset.stream()):
@@ -30,7 +27,6 @@ for i, (x, y) in enumerate(dataset.stream()):
 
     labels.append(y)
     scores.append(score)
-
 
 print(f"PR-AUC: {round(average_precision_score(labels, scores), 3)}")
 print(f"ROC-AUC: {round(roc_auc_score(labels, scores), 3)}")

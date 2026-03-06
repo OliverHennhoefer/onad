@@ -1,4 +1,4 @@
-from sklearn.metrics import average_precision_score
+from sklearn.metrics import average_precision_score, roc_auc_score
 
 from aberrant.model.svm.adaptive import (
     IncrementalOneClassSVMAdaptiveKernel,
@@ -13,13 +13,10 @@ model = IncrementalOneClassSVMAdaptiveKernel(
     initial_gamma=0.5,
     adaptation_rate=0.3,
     gamma_bounds=(0.1, 5.0),
-    seed=1
+    seed=1,
 )
-
 pipeline = scaler | model
 labels, scores = [], []
-
-# Load dataset using new API
 dataset = load(Dataset.SHUTTLE)
 
 for i, (x, y) in enumerate(dataset.stream()):
@@ -34,4 +31,5 @@ for i, (x, y) in enumerate(dataset.stream()):
     labels.append(y)
     scores.append(score)
 
-print(f"PR_AUC: {round(average_precision_score(labels, scores), 3)}")  # 0.144
+print(f"PR-AUC: {round(average_precision_score(labels, scores), 3)}")
+print(f"ROC-AUC: {round(roc_auc_score(labels, scores), 3)}")

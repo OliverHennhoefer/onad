@@ -1,4 +1,4 @@
-from sklearn.metrics import average_precision_score
+from sklearn.metrics import average_precision_score, roc_auc_score
 
 from aberrant.model.iforest import StreamRandomHistogramForest
 from aberrant.stream.dataset import Dataset, load
@@ -8,7 +8,6 @@ model = StreamRandomHistogramForest(
 )
 
 labels, scores = [], []
-# Load dataset using new API
 dataset = load(Dataset.SHUTTLE)
 
 for i, (x, y) in enumerate(dataset.stream()):
@@ -23,4 +22,5 @@ for i, (x, y) in enumerate(dataset.stream()):
     labels.append(y)
     scores.append(score)
 
-print(f"PR_AUC: {round(average_precision_score(labels, scores), 3)}")  # 0.46
+print(f"PR-AUC: {round(average_precision_score(labels, scores), 3)}")
+print(f"ROC-AUC: {round(roc_auc_score(labels, scores), 3)}")

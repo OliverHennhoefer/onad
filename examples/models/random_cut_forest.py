@@ -16,7 +16,6 @@ model = RandomCutForest(
 labels, scores = [], []
 dataset = load(Dataset.SHUTTLE)
 
-# Warmup: train on the first 5000 normal instances only.
 for i, (x, y) in enumerate(dataset.stream()):
     if i < 5000 and y == 0:
         model.learn_one(x)
