@@ -70,6 +70,18 @@ from aberrant.model.stat import (
 
 Use for compact, interpretable change detectors.
 
+## Deep family
+
+Imports:
+
+```python
+from aberrant.model.deep import Autoencoder, KitNET
+```
+
+- `Autoencoder` depends on `torch` (`aberrant[dl]`).
+- `KitNET` is an online ensemble of lightweight autoencoders with explicit
+  warm-up phases (`feature_map_grace`, `ad_grace`).
+
 ## Core utility models
 
 ```python

@@ -13,6 +13,7 @@ Example scripts are in `examples/models/` and `examples/pipeline.py`.
 - `examples/models/knn.py`
 - `examples/models/adaptive_svm.py`
 - `examples/models/gadget_svm.py`
+- `examples/models/kitnet.py`
 - `examples/models/threshold.py`
 - `examples/pipeline.py`
 
@@ -20,4 +21,4 @@ Example scripts are in `examples/models/` and `examples/pipeline.py`.
 
 - Most examples use `aberrant.stream.dataset` for built-in datasets.
 - Evaluation metrics require `aberrant[eval]`.
-- Deep model examples require `aberrant[dl]`.
+- `examples/models/autoencoder.py` requires `aberrant[dl]`.

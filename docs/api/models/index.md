@@ -7,3 +7,4 @@ Model APIs are split by family:
 - Distance-based detectors
 - SVM detectors
 - Statistical detectors
+- Deep detectors
