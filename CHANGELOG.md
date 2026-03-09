@@ -15,6 +15,7 @@ Semantic Versioning.
 - Regression tests for `keys=` initialization in multivariate statistical models.
 - Optional dependency extras for `parquet` and benchmark tooling.
 - Repository standards and CI/security/release workflows.
+- `KitNET` online deep detector with phased warm-up, tests, docs, and example script.
 
 ### Changed
 

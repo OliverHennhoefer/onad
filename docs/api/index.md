@@ -11,6 +11,7 @@ This section documents the supported ABERRANT public surface.
 - `aberrant.model.distance`
 - `aberrant.model.svm`
 - `aberrant.model.stat`
+- `aberrant.model.deep`
 - `aberrant.transform`
 - `aberrant.transform.preprocessing`
 - `aberrant.transform.projection`
@@ -20,7 +21,7 @@ This section documents the supported ABERRANT public surface.
 
 - Binary: `ThresholdModel` and threshold wrappers.
 - Bounded `[0, 1]`: isolation-forest variants.
-- Continuous/unbounded: distance, SVM, and statistical models.
+- Continuous/unbounded: distance, SVM, statistical, and deep models.
 
 ## Stability policy
 

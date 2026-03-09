@@ -25,6 +25,7 @@ try:
     from aberrant.model.deep import Autoencoder
 except ImportError:
     Autoencoder = None  # type: ignore[assignment]
+from aberrant.model.deep import KitNET
 
 
 def test_public_imports_smoke() -> None:
@@ -42,6 +43,7 @@ def test_public_imports_smoke() -> None:
     # Deep model imports are optional and depend on torch availability.
     if Autoencoder is not None:
         assert Autoencoder.__name__ == "Autoencoder"
+    assert KitNET is not None
     assert KNN is not None
     assert LocalOutlierFactor is not None
     assert ASDIsolationForest is not None
