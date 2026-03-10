@@ -35,6 +35,7 @@ Each `x` is `dict[str, float]`.
 | Isolation Forest | `ASDIsolationForest`, `HalfSpaceTrees`, `MondrianForest`, `OnlineIsolationForest`, `RandomCutForest`, `StreamRandomHistogramForest`, `XStream` |
 | Distance | `KNN`, `LocalOutlierFactor`, `SDOStream` |
 | Sketch | `MStream`, `RSHash` |
+| Graph | `ISCONNA` |
 | SVM | `GADGETSVM`, `IncrementalOneClassSVMAdaptiveKernel` |
 | Statistical | `MovingAverage`, `MovingAverageAbsoluteDeviation`, `MovingGeometricAverage`, `MovingHarmonicAverage`, `MovingInterquartileRange`, `MovingKurtosis`, `MovingMedian`, `MovingQuantile`, `MovingSkewness`, `MovingVariance`, `MovingCorrelationCoefficient`, `MovingCovariance`, `MovingMahalanobisDistance` |
 | Deep (`aberrant[dl]`) | `Autoencoder`, `KitNET` |
@@ -86,6 +87,7 @@ Optional extras:
 - `aberrant.model.iforest`
 - `aberrant.model.distance`
 - `aberrant.model.sketch`
+- `aberrant.model.graph`
 - `aberrant.model.svm`
 - `aberrant.model.stat`
 - `aberrant.model.deep` (optional extra)

@@ -71,6 +71,21 @@ Use `MStream` and `RSHash` for bounded-memory sketch-based streaming detection.
 - If `time_key=None`, it uses arrival order as the implicit time axis.
 - Returns a continuous non-negative anomaly score.
 
+## Graph family
+
+Imports:
+
+```python
+from aberrant.model.graph import ISCONNA
+```
+
+Use `ISCONNA` for dynamic edge streams where each sample encodes source and
+destination IDs (plus optional timestamp).
+
+- Uses bounded-memory count-min sketches.
+- Supports optional explicit timestamp handling via `time_key`.
+- Returns a continuous non-negative anomaly score.
+
 ## SVM family
 
 Imports:
