@@ -62,10 +62,10 @@ model = SDOStream(k=128, T=256.0, qv=0.3, x_neighbors=8, seed=42)
 Imports:
 
 ```python
-from aberrant.model.sketch import MStream
+from aberrant.model.sketch import MStream, RSHash
 ```
 
-Use `MStream` for bounded-memory sketch-based streaming detection.
+Use `MStream` and `RSHash` for bounded-memory sketch-based streaming detection.
 
 - Supports `time_key` for explicit bucketed time updates.
 - If `time_key=None`, it uses arrival order as the implicit time axis.

@@ -13,6 +13,7 @@ Example scripts are in `examples/models/` and `examples/pipeline.py`.
 - `examples/models/knn.py`
 - `examples/models/sdostream.py`
 - `examples/models/mstream.py`
+- `examples/models/rshash.py`
 - `examples/models/adaptive_svm.py`
 - `examples/models/gadget_svm.py`
 - `examples/models/kitnet.py`

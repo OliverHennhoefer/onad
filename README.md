@@ -34,7 +34,7 @@ Each `x` is `dict[str, float]`.
 | --- | --- |
 | Isolation Forest | `ASDIsolationForest`, `HalfSpaceTrees`, `MondrianForest`, `OnlineIsolationForest`, `RandomCutForest`, `StreamRandomHistogramForest`, `XStream` |
 | Distance | `KNN`, `LocalOutlierFactor`, `SDOStream` |
-| Sketch | `MStream` |
+| Sketch | `MStream`, `RSHash` |
 | SVM | `GADGETSVM`, `IncrementalOneClassSVMAdaptiveKernel` |
 | Statistical | `MovingAverage`, `MovingAverageAbsoluteDeviation`, `MovingGeometricAverage`, `MovingHarmonicAverage`, `MovingInterquartileRange`, `MovingKurtosis`, `MovingMedian`, `MovingQuantile`, `MovingSkewness`, `MovingVariance`, `MovingCorrelationCoefficient`, `MovingCovariance`, `MovingMahalanobisDistance` |
 | Deep (`aberrant[dl]`) | `Autoencoder`, `KitNET` |
