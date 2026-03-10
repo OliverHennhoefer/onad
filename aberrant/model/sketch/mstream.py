@@ -99,7 +99,9 @@ class MStream(BaseModel):
             size=self.rows,
             dtype=np.uint64,
         )
-        return tuple(int(salt).to_bytes(16, byteorder="little", signed=False) for salt in salts)
+        return tuple(
+            int(salt).to_bytes(16, byteorder="little", signed=False) for salt in salts
+        )
 
     def reset(self) -> None:
         """Reset learned state while keeping hyperparameters."""
@@ -265,7 +267,9 @@ class MStream(BaseModel):
 
         for view_index in range(n_views):
             view_bins = bucket_indices[view_index]
-            current_counts = self._current_sketch[view_index, self._row_index, view_bins]
+            current_counts = self._current_sketch[
+                view_index, self._row_index, view_bins
+            ]
             historical_counts = self._historical_sketch[
                 view_index, self._row_index, view_bins
             ]

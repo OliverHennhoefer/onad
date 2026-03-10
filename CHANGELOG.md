@@ -18,6 +18,8 @@ Semantic Versioning.
 - `KitNET` online deep detector with phased warm-up, tests, docs, and example script.
 - `MStream` sketch-based streaming detector with `aberrant.model.sketch` public API,
   unit/integration tests, docs, and example script.
+- `SDOStream` bounded-memory observer-based detector in `aberrant.model.distance`
+  with unit/integration tests, docs, and example script.
 
 ### Changed
 

@@ -335,8 +335,8 @@ class KitNET(BaseModel):
             zip(self._feature_groups, self._ensemble, strict=False)
         ):
             subset = x_vec[group]
-            errors[idx] = autoencoder.learn(subset) if train else autoencoder.score(
-                subset
+            errors[idx] = (
+                autoencoder.learn(subset) if train else autoencoder.score(subset)
             )
         return errors
 

@@ -32,7 +32,7 @@ training on the point being evaluated.
 Imports:
 
 ```python
-from aberrant.model.distance import KNN, LocalOutlierFactor
+from aberrant.model.distance import KNN, LocalOutlierFactor, SDOStream
 ```
 
 `KNN` requires a similarity engine (for example FAISS):
@@ -44,6 +44,18 @@ from aberrant.utils.similar.faiss_engine import FaissSimilaritySearchEngine
 engine = FaissSimilaritySearchEngine(window_size=250, warm_up=50)
 model = KNN(k=25, similarity_engine=engine)
 ```
+
+`SDOStream` is a bounded-memory observer-based online detector:
+
+```python
+from aberrant.model.distance import SDOStream
+
+model = SDOStream(k=128, T=256.0, qv=0.3, x_neighbors=8, seed=42)
+```
+
+- Returns a continuous non-negative anomaly score (distance-based).
+- Supports optional explicit time handling through `time_key`.
+- Uses fixed-size observer state (`k`) with exponential fading (`T`).
 
 ## Sketch family
 
