@@ -16,6 +16,8 @@ Semantic Versioning.
 - Optional dependency extras for `parquet` and benchmark tooling.
 - Repository standards and CI/security/release workflows.
 - `KitNET` online deep detector with phased warm-up, tests, docs, and example script.
+- `MStream` sketch-based streaming detector with `aberrant.model.sketch` public API,
+  unit/integration tests, docs, and example script.
 
 ### Changed
 

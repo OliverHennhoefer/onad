@@ -3,6 +3,7 @@
 Available submodules:
     - distance: Distance-based models (KNN, LocalOutlierFactor)
     - iforest: Isolation forest variants
+    - sketch: Sketch-based streaming models
     - stat: Statistical models
     - svm: SVM-based models
     - deep: Deep learning models (requires torch)

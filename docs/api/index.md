@@ -9,6 +9,7 @@ This section documents the supported ABERRANT public surface.
 - `aberrant.model`
 - `aberrant.model.iforest`
 - `aberrant.model.distance`
+- `aberrant.model.sketch`
 - `aberrant.model.svm`
 - `aberrant.model.stat`
 - `aberrant.model.deep`
@@ -21,7 +22,7 @@ This section documents the supported ABERRANT public surface.
 
 - Binary: `ThresholdModel` and threshold wrappers.
 - Bounded `[0, 1]`: isolation-forest variants.
-- Continuous/unbounded: distance, SVM, statistical, and deep models.
+- Continuous/unbounded: sketch, distance, SVM, statistical, and deep models.
 
 ## Stability policy
 

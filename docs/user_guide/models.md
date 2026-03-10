@@ -45,6 +45,20 @@ engine = FaissSimilaritySearchEngine(window_size=250, warm_up=50)
 model = KNN(k=25, similarity_engine=engine)
 ```
 
+## Sketch family
+
+Imports:
+
+```python
+from aberrant.model.sketch import MStream
+```
+
+Use `MStream` for bounded-memory sketch-based streaming detection.
+
+- Supports `time_key` for explicit bucketed time updates.
+- If `time_key=None`, it uses arrival order as the implicit time axis.
+- Returns a continuous non-negative anomaly score.
+
 ## SVM family
 
 Imports:

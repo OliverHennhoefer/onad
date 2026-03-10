@@ -5,7 +5,7 @@ Online anomaly detection for streaming data.
 ## Highlights
 
 - Streaming-first model APIs: `learn_one` and `score_one`
-- Detector families: isolation forests, distance, SVM, statistical
+- Detector families: isolation forests, distance, SVM, statistical, sketch
 - Dataset streaming API with caching
 - Composable transforms and pipelines
 
@@ -50,6 +50,7 @@ for i, (x, y) in enumerate(dataset.stream()):
 - `aberrant.drift`
 - `aberrant.model.iforest`
 - `aberrant.model.distance`
+- `aberrant.model.sketch`
 - `aberrant.model.svm`
 - `aberrant.model.stat`
 - `aberrant.transform.preprocessing`
@@ -60,7 +61,7 @@ for i, (x, y) in enumerate(dataset.stream()):
 
 - `ThresholdModel`: binary score (`0.0` or `1.0`)
 - Isolation forest variants: bounded score in `[0, 1]`
-- Distance/SVM/statistical models: model-specific continuous scores
+- Sketch/distance/SVM/statistical models: model-specific continuous scores
 
 ## Optional dependency behavior
 

@@ -41,6 +41,7 @@ nav:
       - Core Models: api/models/core.md
       - Isolation Forest: api/models/iforest.md
       - Distance: api/models/distance.md
+      - Sketch: api/models/sketch.md
       - SVM: api/models/svm.md
       - Statistical: api/models/stat.md
       - Deep: api/models/deep.md
