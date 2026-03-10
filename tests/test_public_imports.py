@@ -5,7 +5,7 @@ from aberrant.base import BaseModel, BaseTransformer, Pipeline
 from aberrant.drift import ADWIN, KSWIN, PageHinkley
 from aberrant.model import NullModel, QuantileThreshold, RandomModel, ThresholdModel
 from aberrant.model.distance import KNN, LocalOutlierFactor, SDOStream
-from aberrant.model.graph import ISCONNA
+from aberrant.model.graph import ISCONNA, MIDAS
 from aberrant.model.iforest import (
     ASDIsolationForest,
     HalfSpaceTrees,
@@ -50,6 +50,7 @@ def test_public_imports_smoke() -> None:
     assert LocalOutlierFactor is not None
     assert SDOStream is not None
     assert ISCONNA is not None
+    assert MIDAS is not None
     assert ASDIsolationForest is not None
     assert HalfSpaceTrees is not None
     assert MondrianForest is not None

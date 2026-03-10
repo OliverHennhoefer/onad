@@ -1,4 +1,4 @@
-"""ISCONNA detector for online anomaly detection in dynamic edge streams."""
+"""MIDAS detector for online anomaly detection in dynamic edge streams."""
 
 from __future__ import annotations
 
@@ -51,25 +51,24 @@ class _CountMinSketch:
         indices = self._indices(payload)
         return float(np.min(self.table[self._row_index, indices]))
 
-    def decay(self, factor: float) -> None:
-        """Multiply all bins by the same factor."""
-        self.table *= factor
+    def clear(self) -> None:
+        """Set all bins to zero."""
+        self.table.fill(0.0)
 
 
-class ISCONNA(BaseModel):
+class MIDAS(BaseModel):
     """
-    ISCONNA-style conditional detector for dynamic graph edge streams.
+    MIDAS-style detector for anomaly detection in dynamic edge streams.
 
-    The detector consumes one edge at a time with source, destination, and
-    optional timestamp keys. It keeps decayed "current" sketches and cumulative
-    "total" sketches for edge and endpoint frequencies, and scores each edge
-    by contrasting current conditional surprise against historical conditional
-    surprise.
+    MIDAS scores each edge by contrasting its candidate-inclusive count in the
+    current time bucket with a historical expectation derived from cumulative
+    counts. Optionally, a relational score from source and destination
+    frequencies can be fused via ``max``.
 
     Notes:
     - Scores are continuous and non-negative.
     - With ``normalize_score=True``, scores are squashed to ``[0, 1)``.
-    - State is bounded by a fixed sketch size.
+    - State is bounded by fixed-size sketches.
     """
 
     def __init__(
@@ -77,10 +76,10 @@ class ISCONNA(BaseModel):
         source_key: str = "src",
         destination_key: str = "dst",
         time_key: str | None = "t",
-        count_min_rows: int = 8,
-        count_min_cols: int = 1024,
-        time_decay_factor: float = 0.5,
-        warm_up_samples: int = 64,
+        count_min_rows: int = 4,
+        count_min_cols: int = 2048,
+        warm_up_samples: int = 128,
+        use_relational: bool = True,
         normalize_score: bool = False,
         eps: float = 1e-9,
         seed: int | None = None,
@@ -101,8 +100,6 @@ class ISCONNA(BaseModel):
             raise ValueError("count_min_rows must be positive")
         if count_min_cols <= 0:
             raise ValueError("count_min_cols must be positive")
-        if not (0.0 < time_decay_factor <= 1.0):
-            raise ValueError("time_decay_factor must be in (0, 1]")
         if warm_up_samples <= 0:
             raise ValueError("warm_up_samples must be positive")
         if eps <= 0.0:
@@ -113,8 +110,8 @@ class ISCONNA(BaseModel):
         self.time_key = time_key
         self.count_min_rows = count_min_rows
         self.count_min_cols = count_min_cols
-        self.time_decay_factor = time_decay_factor
         self.warm_up_samples = warm_up_samples
+        self.use_relational = use_relational
         self.normalize_score = normalize_score
         self.eps = eps
         self.seed = seed
@@ -134,32 +131,37 @@ class ISCONNA(BaseModel):
             cols=self.count_min_cols,
             rng=self._rng,
         )
-        self._source_current = _CountMinSketch(
-            rows=self.count_min_rows,
-            cols=self.count_min_cols,
-            rng=self._rng,
-        )
-        self._source_total = _CountMinSketch(
-            rows=self.count_min_rows,
-            cols=self.count_min_cols,
-            rng=self._rng,
-        )
-        self._destination_current = _CountMinSketch(
-            rows=self.count_min_rows,
-            cols=self.count_min_cols,
-            rng=self._rng,
-        )
-        self._destination_total = _CountMinSketch(
-            rows=self.count_min_rows,
-            cols=self.count_min_cols,
-            rng=self._rng,
-        )
+
+        self._source_current: _CountMinSketch | None = None
+        self._source_total: _CountMinSketch | None = None
+        self._destination_current: _CountMinSketch | None = None
+        self._destination_total: _CountMinSketch | None = None
+        if self.use_relational:
+            self._source_current = _CountMinSketch(
+                rows=self.count_min_rows,
+                cols=self.count_min_cols,
+                rng=self._rng,
+            )
+            self._source_total = _CountMinSketch(
+                rows=self.count_min_rows,
+                cols=self.count_min_cols,
+                rng=self._rng,
+            )
+            self._destination_current = _CountMinSketch(
+                rows=self.count_min_rows,
+                cols=self.count_min_cols,
+                rng=self._rng,
+            )
+            self._destination_total = _CountMinSketch(
+                rows=self.count_min_rows,
+                cols=self.count_min_cols,
+                rng=self._rng,
+            )
 
         self._current_bucket: int | None = None
-        self._arrival_index = 0
+        self._bucket_index = 0
         self._samples_seen = 0
-        self._current_edge_mass = 0.0
-        self._total_edge_mass = 0.0
+        self._arrival_index = 0
 
     def reset(self) -> None:
         """Reset learned state while keeping hyperparameters."""
@@ -211,6 +213,7 @@ class ISCONNA(BaseModel):
     def _rollover_if_needed(self, bucket: int) -> None:
         if self._current_bucket is None:
             self._current_bucket = bucket
+            self._bucket_index = 1
             return
 
         if bucket < self._current_bucket:
@@ -221,13 +224,13 @@ class ISCONNA(BaseModel):
             return
 
         delta = bucket - self._current_bucket
-        decay = self.time_decay_factor**delta
+        self._edge_current.clear()
+        if self._source_current is not None and self._destination_current is not None:
+            self._source_current.clear()
+            self._destination_current.clear()
 
-        self._edge_current.decay(decay)
-        self._source_current.decay(decay)
-        self._destination_current.decay(decay)
-        self._current_edge_mass *= decay
         self._current_bucket = bucket
+        self._bucket_index += delta
 
     def _source_payload(self, src: float) -> bytes:
         return b"s" + np.float64(src).tobytes()
@@ -238,32 +241,40 @@ class ISCONNA(BaseModel):
     def _edge_payload(self, src: float, dst: float) -> bytes:
         return b"e" + np.float64(src).tobytes() + np.float64(dst).tobytes()
 
-    def _raw_score(self, src: float, dst: float) -> float:
+    def _edge_score(self, src: float, dst: float) -> tuple[float, float]:
         edge_payload = self._edge_payload(src, dst)
+        current_count = self._edge_current.query(edge_payload) + 1.0
+        total_count = self._edge_total.query(edge_payload) + 1.0
+
+        expected = total_count / max(float(self._bucket_index), 1.0)
+        score = ((current_count - expected) ** 2) / (expected + self.eps)
+        if not np.isfinite(score):
+            return 0.0, current_count
+        return float(max(score, 0.0)), current_count
+
+    def _relational_score(self, src: float, dst: float, current_count: float) -> float:
+        if (
+            self._source_total is None
+            or self._destination_total is None
+            or not self.use_relational
+        ):
+            return 0.0
+
         source_payload = self._source_payload(src)
         destination_payload = self._destination_payload(dst)
+        source_total = self._source_total.query(source_payload) + 1.0
+        destination_total = self._destination_total.query(destination_payload) + 1.0
 
-        current_edge = self._edge_current.query(edge_payload) + 1.0
-        total_edge = self._edge_total.query(edge_payload) + 1.0
-        current_source = self._source_current.query(source_payload) + 1.0
-        current_destination = self._destination_current.query(destination_payload) + 1.0
-        total_source = self._source_total.query(source_payload) + 1.0
-        total_destination = self._destination_total.query(destination_payload) + 1.0
-
-        current_mass = max(self._current_edge_mass + 1.0, 1.0)
-        total_mass = max(self._total_edge_mass + 1.0, 1.0)
-
-        expected_current = (current_source * current_destination) / current_mass
-        expected_total = (total_source * total_destination) / total_mass
-
-        conditional_rarity = expected_total / (total_edge + self.eps)
-        novelty = 1.0 / (total_edge + self.eps)
-        burst = (current_edge + self.eps) / (expected_current + self.eps)
-
-        raw = (conditional_rarity + novelty) * burst
-        if not np.isfinite(raw):
+        total_mass = max(float(self._samples_seen + 1), 1.0)
+        expected_relational = (source_total * destination_total) / (
+            total_mass + self.eps
+        )
+        score = ((current_count - expected_relational) ** 2) / (
+            expected_relational + self.eps
+        )
+        if not np.isfinite(score):
             return 0.0
-        return float(max(raw, 0.0))
+        return float(max(score, 0.0))
 
     def learn_one(self, x: dict[str, float]) -> None:
         """Update detector state with one sample."""
@@ -271,19 +282,23 @@ class ISCONNA(BaseModel):
         self._rollover_if_needed(bucket)
 
         edge_payload = self._edge_payload(src, dst)
-        source_payload = self._source_payload(src)
-        destination_payload = self._destination_payload(dst)
-
         self._edge_current.update(edge_payload, 1.0)
         self._edge_total.update(edge_payload, 1.0)
-        self._source_current.update(source_payload, 1.0)
-        self._source_total.update(source_payload, 1.0)
-        self._destination_current.update(destination_payload, 1.0)
-        self._destination_total.update(destination_payload, 1.0)
+
+        if (
+            self._source_current is not None
+            and self._source_total is not None
+            and self._destination_current is not None
+            and self._destination_total is not None
+        ):
+            source_payload = self._source_payload(src)
+            destination_payload = self._destination_payload(dst)
+            self._source_current.update(source_payload, 1.0)
+            self._source_total.update(source_payload, 1.0)
+            self._destination_current.update(destination_payload, 1.0)
+            self._destination_total.update(destination_payload, 1.0)
 
         self._samples_seen += 1
-        self._current_edge_mass += 1.0
-        self._total_edge_mass += 1.0
         if self.time_key is None:
             self._arrival_index += 1
 
@@ -292,22 +307,26 @@ class ISCONNA(BaseModel):
         bucket, src, dst = self._prepare_sample(x)
         self._rollover_if_needed(bucket)
 
-        if self._samples_seen < self.warm_up_samples:
+        if self._samples_seen < self.warm_up_samples or self._bucket_index < 2:
             return 0.0
 
-        score = self._raw_score(src, dst)
+        edge_score, current_count = self._edge_score(src, dst)
+        raw_score = edge_score
+
+        if self.use_relational:
+            relational_score = self._relational_score(src, dst, current_count)
+            raw_score = max(raw_score, relational_score)
+
         if self.normalize_score:
-            return float(score / (1.0 + score))
-        return score
+            return float(raw_score / (1.0 + raw_score))
+        return raw_score
 
     def __repr__(self) -> str:
         return (
-            "ISCONNA("
+            "MIDAS("
             f"source_key={self.source_key!r}, destination_key={self.destination_key!r}, "
             f"time_key={self.time_key!r}, count_min_rows={self.count_min_rows}, "
-            f"count_min_cols={self.count_min_cols}, "
-            f"time_decay_factor={self.time_decay_factor}, "
-            f"warm_up_samples={self.warm_up_samples}, "
-            f"normalize_score={self.normalize_score}, eps={self.eps}, "
-            f"seed={self.seed}, samples_seen={self._samples_seen})"
+            f"count_min_cols={self.count_min_cols}, warm_up_samples={self.warm_up_samples}, "
+            f"use_relational={self.use_relational}, normalize_score={self.normalize_score}, "
+            f"eps={self.eps}, seed={self.seed}, samples_seen={self._samples_seen})"
         )

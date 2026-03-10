@@ -1,61 +1,59 @@
-"""Unit tests for the ISCONNA graph-stream anomaly detector."""
+"""Unit tests for the MIDAS graph-stream anomaly detector."""
 
 import unittest
 
-from aberrant.model.graph import ISCONNA
+from aberrant.model.graph import MIDAS
 
 
-class TestISCONNA(unittest.TestCase):
-    """Test suite for ISCONNA."""
+class TestMIDAS(unittest.TestCase):
+    """Test suite for MIDAS."""
 
-    def create_model(self, **overrides: object) -> ISCONNA:
+    def create_model(self, **overrides: object) -> MIDAS:
         defaults: dict[str, object] = {
             "source_key": "src",
             "destination_key": "dst",
             "time_key": "t",
             "count_min_rows": 4,
             "count_min_cols": 256,
-            "time_decay_factor": 0.5,
             "warm_up_samples": 16,
+            "use_relational": True,
             "normalize_score": False,
             "eps": 1e-9,
             "seed": 42,
         }
         defaults.update(overrides)
-        return ISCONNA(**defaults)
+        return MIDAS(**defaults)
 
     def test_initialization_defaults(self) -> None:
-        model = ISCONNA()
+        model = MIDAS()
         self.assertEqual(model.source_key, "src")
         self.assertEqual(model.destination_key, "dst")
         self.assertEqual(model.time_key, "t")
-        self.assertEqual(model.count_min_rows, 8)
-        self.assertEqual(model.count_min_cols, 1024)
-        self.assertEqual(model.time_decay_factor, 0.5)
-        self.assertEqual(model.warm_up_samples, 64)
+        self.assertEqual(model.count_min_rows, 4)
+        self.assertEqual(model.count_min_cols, 2048)
+        self.assertEqual(model.warm_up_samples, 128)
+        self.assertTrue(model.use_relational)
         self.assertFalse(model.normalize_score)
 
     def test_invalid_parameters(self) -> None:
         with self.assertRaises(ValueError):
-            ISCONNA(source_key="")
+            MIDAS(source_key="")
         with self.assertRaises(ValueError):
-            ISCONNA(destination_key="")
+            MIDAS(destination_key="")
         with self.assertRaises(ValueError):
-            ISCONNA(source_key="x", destination_key="x")
+            MIDAS(source_key="x", destination_key="x")
         with self.assertRaises(ValueError):
-            ISCONNA(time_key="")
+            MIDAS(time_key="")
         with self.assertRaises(ValueError):
-            ISCONNA(time_key="src")
+            MIDAS(time_key="src")
         with self.assertRaises(ValueError):
-            ISCONNA(count_min_rows=0)
+            MIDAS(count_min_rows=0)
         with self.assertRaises(ValueError):
-            ISCONNA(count_min_cols=0)
+            MIDAS(count_min_cols=0)
         with self.assertRaises(ValueError):
-            ISCONNA(time_decay_factor=0.0)
+            MIDAS(warm_up_samples=0)
         with self.assertRaises(ValueError):
-            ISCONNA(warm_up_samples=0)
-        with self.assertRaises(ValueError):
-            ISCONNA(eps=0.0)
+            MIDAS(eps=0.0)
 
     def test_input_validation(self) -> None:
         model = self.create_model()
@@ -71,6 +69,8 @@ class TestISCONNA(unittest.TestCase):
             model.learn_one({"src": "bad", "dst": 2.0, "t": 1.0})  # type: ignore[arg-type]
         with self.assertRaises(ValueError):
             model.score_one({"src": 1.0, "dst": 2.0, "t": float("inf")})
+        with self.assertRaises(ValueError):
+            model.score_one({"src": 1.0, "dst": 2.0, "t": 1.5})
 
     def test_score_is_zero_before_warmup(self) -> None:
         model = self.create_model(warm_up_samples=32)
@@ -101,20 +101,30 @@ class TestISCONNA(unittest.TestCase):
         self.assertIsInstance(score, float)
         self.assertGreaterEqual(score, 0.0)
 
+    def test_relational_toggle_disables_node_sketches(self) -> None:
+        model = self.create_model(use_relational=False)
+        model.learn_one({"src": 1.0, "dst": 2.0, "t": 1.0})
+        score = model.score_one({"src": 1.0, "dst": 2.0, "t": 2.0})
+        self.assertGreaterEqual(score, 0.0)
+        self.assertIsNone(model._source_current)
+        self.assertIsNone(model._source_total)
+        self.assertIsNone(model._destination_current)
+        self.assertIsNone(model._destination_total)
+
     def test_deterministic_with_seed(self) -> None:
         model1 = self.create_model(seed=7, warm_up_samples=8)
         model2 = self.create_model(seed=7, warm_up_samples=8)
 
-        for i in range(200):
+        for i in range(240):
             point = {
                 "src": float((i * 3) % 23),
                 "dst": float((i * 5) % 29),
-                "t": float(i),
+                "t": float(i // 8),
             }
             model1.learn_one(point)
             model2.learn_one(point)
 
-        query = {"src": 3.0, "dst": 17.0, "t": 201.0}
+        query = {"src": 3.0, "dst": 17.0, "t": 31.0}
         self.assertAlmostEqual(
             model1.score_one(query), model2.score_one(query), places=12
         )
@@ -126,13 +136,13 @@ class TestISCONNA(unittest.TestCase):
             warm_up_samples=32,
             seed=11,
         )
-        for i in range(400):
-            src = float(i % 20)
-            dst = float((i % 20 + 1) % 20)
-            model.learn_one({"src": src, "dst": dst, "t": float(i)})
+        for i in range(800):
+            src = float(i % 10)
+            dst = float((i % 10 + 1) % 10)
+            model.learn_one({"src": src, "dst": dst, "t": float(i // 16)})
 
-        normal_score = model.score_one({"src": 2.0, "dst": 3.0, "t": 401.0})
-        outlier_score = model.score_one({"src": 1000.0, "dst": 1001.0, "t": 401.0})
+        normal_score = model.score_one({"src": 2.0, "dst": 3.0, "t": 49.0})
+        outlier_score = model.score_one({"src": 999.0, "dst": 998.0, "t": 49.0})
         self.assertGreaterEqual(normal_score, 0.0)
         self.assertGreater(outlier_score, normal_score)
 
@@ -145,19 +155,20 @@ class TestISCONNA(unittest.TestCase):
                 {
                     "src": float(i % 37),
                     "dst": float((i * 2) % 41),
-                    "t": float(i),
+                    "t": float(i // 4),
                 }
             )
 
         self.assertEqual(model._edge_current.table.shape, baseline_shape)
         self.assertEqual(model._edge_total.table.shape, baseline_shape)
-        self.assertEqual(model._source_current.table.shape, baseline_shape)
-        self.assertEqual(model._destination_total.table.shape, baseline_shape)
+        if model._source_current is not None and model._destination_total is not None:
+            self.assertEqual(model._source_current.table.shape, baseline_shape)
+            self.assertEqual(model._destination_total.table.shape, baseline_shape)
 
     def test_reset_restores_cold_state(self) -> None:
         model = self.create_model(warm_up_samples=8)
         for i in range(100):
-            model.learn_one({"src": 1.0, "dst": 2.0, "t": float(i)})
+            model.learn_one({"src": 1.0, "dst": 2.0, "t": float(i // 2)})
 
         self.assertGreater(model.n_samples_seen, 0)
         model.reset()
@@ -167,16 +178,16 @@ class TestISCONNA(unittest.TestCase):
     def test_normalize_score_bounds_output(self) -> None:
         model = self.create_model(normalize_score=True, warm_up_samples=8)
         for i in range(64):
-            model.learn_one({"src": 1.0, "dst": 2.0, "t": float(i)})
+            model.learn_one({"src": 1.0, "dst": 2.0, "t": float(i // 4)})
 
-        score = model.score_one({"src": 999.0, "dst": 998.0, "t": 65.0})
+        score = model.score_one({"src": 999.0, "dst": 998.0, "t": 16.0})
         self.assertGreaterEqual(score, 0.0)
         self.assertLess(score, 1.0)
 
     def test_repr_contains_key_config(self) -> None:
         model = self.create_model(count_min_rows=9, count_min_cols=257)
         output = repr(model)
-        self.assertIn("ISCONNA", output)
+        self.assertIn("MIDAS", output)
         self.assertIn("count_min_rows=9", output)
         self.assertIn("count_min_cols=257", output)
 

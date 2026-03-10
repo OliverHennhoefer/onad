@@ -330,11 +330,13 @@ class RSHash(BaseModel):
             for hash_index in range(self.hash_num):
                 acc = int(self._hash_b[component, hash_index])
                 for dimension_index in range(q.shape[0]):
-                    coefficient = int(self._hash_a[component, hash_index, dimension_index])
+                    coefficient = int(
+                        self._hash_a[component, hash_index, dimension_index]
+                    )
                     q_value = int(q[dimension_index])
-                    acc = (
-                        acc + coefficient * (q_value % int(_HASH_MODULUS))
-                    ) % int(_HASH_MODULUS)
+                    acc = (acc + coefficient * (q_value % int(_HASH_MODULUS))) % int(
+                        _HASH_MODULUS
+                    )
                 buckets[component, hash_index] = acc % self.bins
 
         return buckets

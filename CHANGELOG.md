@@ -20,6 +20,8 @@ Semantic Versioning.
   unit/integration tests, docs, and example script.
 - `SDOStream` bounded-memory observer-based detector in `aberrant.model.distance`
   with unit/integration tests, docs, and example script.
+- `MIDAS` graph-stream detector in `aberrant.model.graph` with public export,
+  unit/integration tests, docs, and example script.
 
 ### Changed
 

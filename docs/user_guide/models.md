@@ -76,11 +76,11 @@ Use `MStream` and `RSHash` for bounded-memory sketch-based streaming detection.
 Imports:
 
 ```python
-from aberrant.model.graph import ISCONNA
+from aberrant.model.graph import ISCONNA, MIDAS
 ```
 
-Use `ISCONNA` for dynamic edge streams where each sample encodes source and
-destination IDs (plus optional timestamp).
+Use `ISCONNA` and `MIDAS` for dynamic edge streams where each sample encodes
+source and destination IDs (plus optional timestamp).
 
 - Uses bounded-memory count-min sketches.
 - Supports optional explicit timestamp handling via `time_key`.
