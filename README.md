@@ -1,13 +1,72 @@
 # ABERRANT
 
-Online anomaly detection for streaming data.
+Online anomaly detection for real streams.
 
-## Highlights
+ABERRANT is for systems that score and adapt one event at a time.  
+No batch retraining loop required. No framework lock-in.
 
-- Streaming-first model APIs: `learn_one` and `score_one`
-- Detector families: isolation forests, distance, SVM, statistical, sketch
-- Dataset streaming API with caching
-- Composable transforms and pipelines
+## Why ABERRANT
+
+- Streaming-first anomaly detection with a broad algorithm surface under one API
+- Coverage for low-latency scoring, bounded-memory setups, interpretable baselines, and optional deep models
+- One interface across detector families: `learn_one`, `score_one`
+- Composable online preprocessing with `|` pipelines
+- Built-in benchmark dataset streaming with local caching
+- Drift detectors and threshold models for production alerting policies
+
+## Core interface
+
+```python
+from aberrant.model.iforest import OnlineIsolationForest
+
+model = OnlineIsolationForest(window_size=512, num_trees=50)
+
+for x in live_stream:
+    score = model.score_one(x)  # score current point
+    model.learn_one(x)          # update state incrementally
+```
+
+Each `x` is `dict[str, float]`.
+
+## Algorithms included
+
+| Family | Algorithms |
+| --- | --- |
+| Isolation Forest | `ASDIsolationForest`, `HalfSpaceTrees`, `MondrianForest`, `OnlineIsolationForest`, `RandomCutForest`, `StreamRandomHistogramForest`, `XStream` |
+| Distance | `KNN`, `LocalOutlierFactor`, `SDOStream` |
+| Sketch | `MStream` |
+| SVM | `GADGETSVM`, `IncrementalOneClassSVMAdaptiveKernel` |
+| Statistical | `MovingAverage`, `MovingAverageAbsoluteDeviation`, `MovingGeometricAverage`, `MovingHarmonicAverage`, `MovingInterquartileRange`, `MovingKurtosis`, `MovingMedian`, `MovingQuantile`, `MovingSkewness`, `MovingVariance`, `MovingCorrelationCoefficient`, `MovingCovariance`, `MovingMahalanobisDistance` |
+| Deep (`aberrant[dl]`) | `Autoencoder`, `KitNET` |
+| Utility | `ThresholdModel`, `QuantileThreshold`, `NullModel`, `RandomModel` |
+| Drift Detection | `ADWIN`, `KSWIN`, `PageHinkley` |
+
+## Pipelines
+
+```python
+from aberrant.model.distance import KNN
+from aberrant.transform.preprocessing import StandardScaler
+from aberrant.transform.projection import IncrementalPCA
+from aberrant.utils.similar.faiss_engine import FaissSimilaritySearchEngine
+
+engine = FaissSimilaritySearchEngine(window_size=250, warm_up=50)
+detector = StandardScaler() | IncrementalPCA(n_components=3, n0=100) | KNN(
+    k=45,
+    similarity_engine=engine,
+)
+```
+
+## Streaming datasets
+
+```python
+from aberrant.stream.dataset import Dataset, load
+
+dataset = load(Dataset.SHUTTLE)
+for x, y in dataset.stream():
+    ...
+```
+
+`load(...)` auto-downloads and caches benchmark datasets locally.
 
 ## Install
 
@@ -17,57 +76,30 @@ pip install aberrant
 
 Optional extras:
 
-- `aberrant[eval]` for evaluation metrics (`scikit-learn`)
-- `aberrant[dl]` for deep models (`torch`)
-- `aberrant[parquet]` for legacy parquet streaming (`pyarrow`)
+- `aberrant[eval]`: evaluation metrics (`scikit-learn`)
+- `aberrant[dl]`: deep models (`torch`)
+- `aberrant[parquet]`: legacy parquet streamer (`pyarrow`)
 - `aberrant[dev]`, `aberrant[docs]`, `aberrant[benchmark]`, `aberrant[all]`
 
-## Quick example
+## Public modules
 
-```python
-from aberrant.model.iforest import OnlineIsolationForest
-from aberrant.stream.dataset import Dataset, load
-
-model = OnlineIsolationForest(window_size=512, num_trees=50)
-dataset = load(Dataset.SHUTTLE)
-
-for i, (x, y) in enumerate(dataset.stream()):
-    if i < 2000:
-        if y == 0:
-            model.learn_one(x)
-        continue
-
-    score = model.score_one(x)
-
-    if score > 0.8:
-        print("anomaly", score, y)
-
-    model.learn_one(x)
-```
-
-## Stable public imports
-
-- `aberrant.drift`
 - `aberrant.model.iforest`
 - `aberrant.model.distance`
 - `aberrant.model.sketch`
 - `aberrant.model.svm`
 - `aberrant.model.stat`
+- `aberrant.model.deep` (optional extra)
+- `aberrant.model`
+- `aberrant.drift`
 - `aberrant.transform.preprocessing`
 - `aberrant.transform.projection`
 - `aberrant.stream.dataset`
 
-## Score conventions
+## Scoring notes
 
-- `ThresholdModel`: binary score (`0.0` or `1.0`)
-- Isolation forest variants: bounded score in `[0, 1]`
-- Sketch/distance/SVM/statistical models: model-specific continuous scores
-
-## Optional dependency behavior
-
-- Deep models are optional (`aberrant[dl]`).
-- Deep unit tests auto-skip when `torch` is unavailable.
-- Integration tests require `aberrant[eval]`.
+- Isolation-forest variants return bounded scores in `[0, 1]`
+- `ThresholdModel` returns binary decisions (`0.0` or `1.0`)
+- Other models return continuous family-specific scores
 
 ## Development
 
@@ -77,13 +109,6 @@ uv run python -m ruff check .
 uv run python -m pytest -q
 ```
 
-## Project docs
-
-- Docs site config: `docs/mkdocs.yml`
-- Changelog: `CHANGELOG.md`
-- Contributing: `CONTRIBUTING.md`
-- Security policy: `SECURITY.md`
-
 ## License
 
-MIT (see `LICENSE`).
+MIT (`LICENSE`)
