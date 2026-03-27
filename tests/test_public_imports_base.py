@@ -1,4 +1,4 @@
-"""Public API import contract tests."""
+"""Public API import contract tests for base install."""
 
 from aberrant import __version__
 from aberrant.base import BaseModel, BaseTransformer, Pipeline
@@ -23,14 +23,8 @@ from aberrant.stream.dataset import BatchStreamer, DatasetStreamer
 from aberrant.transform.preprocessing import MinMaxScaler, StandardScaler
 from aberrant.transform.projection import IncrementalPCA, RandomProjection
 
-try:
-    from aberrant.model.deep import Autoencoder
-except ImportError:
-    Autoencoder = None  # type: ignore[assignment]
-from aberrant.model.deep import KitNET
 
-
-def test_public_imports_smoke() -> None:
+def test_public_imports_base_smoke() -> None:
     assert isinstance(__version__, str)
     assert BaseModel is not None
     assert BaseTransformer is not None
@@ -42,10 +36,6 @@ def test_public_imports_smoke() -> None:
     assert RandomModel is not None
     assert ThresholdModel is not None
     assert QuantileThreshold is not None
-    # Deep model imports are optional and depend on torch availability.
-    if Autoencoder is not None:
-        assert Autoencoder.__name__ == "Autoencoder"
-    assert KitNET is not None
     assert KNN is not None
     assert LocalOutlierFactor is not None
     assert SDOStream is not None

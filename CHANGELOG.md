@@ -22,6 +22,9 @@ Semantic Versioning.
   with unit/integration tests, docs, and example script.
 - `MIDAS` graph-stream detector in `aberrant.model.graph` with public export,
   unit/integration tests, docs, and example script.
+- Production hardening CI jobs for base-install smoke and optional-extras smoke.
+- Trusted SHA256 checksums for built-in dataset artifacts.
+- `py.typed` marker for downstream type-checker support.
 
 ### Changed
 
@@ -31,10 +34,19 @@ Semantic Versioning.
 - `aberrant[dev]` now includes `torch` and `scikit-learn` so the full test suite can
   run from the dev environment.
 - Integration tests now run by default (no environment-variable gate).
+- CI and release workflows now run `mypy aberrant` as a full-package type gate.
+- `faiss-cpu` moved from base dependency to optional `aberrant[faiss]`.
+- Public import tests are split into base-install and extras-install smoke tests.
+- Dataset streaming now defaults to non-interactive mode (no progress bars unless enabled).
 
 ### Fixed
 
 - `keys=` initialization path in multivariate statistical detectors.
 - Deep tests now skip gracefully when `torch` is unavailable.
-- Legacy parquet streamer now fails with a clear optional-dependency message.
 - Packaging metadata now correctly declares MIT classifier.
+- Dataset cache validation now enforces trusted checksum verification.
+
+### Removed
+
+- Legacy `aberrant.stream.streamer` parquet module.
+- `aberrant.model.svm/todo.txt` from distributable package contents.

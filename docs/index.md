@@ -20,7 +20,7 @@ Optional extras:
 
 - `aberrant[eval]`: evaluation tools (`scikit-learn`)
 - `aberrant[dl]`: deep-learning model support (`torch`)
-- `aberrant[parquet]`: legacy parquet streamer support (`pyarrow`)
+- `aberrant[faiss]`: FAISS similarity engine support (`faiss-cpu`)
 - `aberrant[docs]`, `aberrant[dev]`, `aberrant[benchmark]`, `aberrant[all]`
 
 ## Minimal example

@@ -60,7 +60,9 @@ from .registry import (
 from .streamers import BatchStreamer, DatasetStreamer, NpzStreamer
 
 
-def load(dataset: Dataset, auto_download: bool = True, **kwargs) -> DatasetStreamer:
+def load(
+    dataset: Dataset, auto_download: bool = True, **kwargs: Any
+) -> DatasetStreamer:
     """Load a dataset for streaming.
 
     This is the main entry point for loading datasets. It uses the global

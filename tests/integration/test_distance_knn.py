@@ -2,7 +2,10 @@
 
 import unittest
 
+import pytest
 from sklearn.metrics import average_precision_score
+
+pytest.importorskip("faiss")
 
 from aberrant.model.distance.knn import KNN
 from aberrant.stream.dataset import Dataset, load

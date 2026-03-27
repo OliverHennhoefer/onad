@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aberrant"
-version = "0.5.0"
+dynamic = ["version"]
 description = "Online Anomaly Detection Models"
 authors = [
     { name = "Oliver Hennhoefer", email = "oliver.hennhoefer@mail.de" },
@@ -19,13 +19,14 @@ license = { file = "LICENSE" }
 readme = { file = "README.md", content-type = "text/markdown" }
 classifiers = [
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 requires-python = ">=3.10"
 dependencies = [
     "numpy>=2.2.3",
-    "faiss-cpu>=1.10.0",
     "tqdm>=4.67.1",
     "scipy>=1.15.2"
 ]
@@ -52,7 +53,7 @@ benchmark = [
     "river>=0.22.0,<1.0.0",
     "pytest-benchmark>=5.0.0,<6.0.0",
 ]
-parquet = ["pyarrow>=18.0.0,<24.0.0"]
+faiss = ["faiss-cpu>=1.10.0,<2.0.0"]
 all = [
     "ruff>=0.8.0,<1.0.0",
     "pre-commit>=4.0.0,<5.0.0",
@@ -67,7 +68,8 @@ all = [
     "torch>=2.6.0,<3.0.0",
     "river>=0.22.0,<1.0.0",
     "pytest-benchmark>=5.0.0,<6.0.0",
-    "pyarrow>=18.0.0,<24.0.0",
+    # Keep in sync with the `faiss` extra above; avoid self-referential extras.
+    "faiss-cpu>=1.10.0,<2.0.0",
 ]
 
 [project.urls]
@@ -75,6 +77,9 @@ all = [
 "Bugs" = "https://github.com/OliverHennhoefer/aberrant/issues"
 "Documentation" = "https://oliverhennhoefer.github.io/aberrant"
 "Changelog" = "https://github.com/OliverHennhoefer/aberrant/blob/main/CHANGELOG.md"
+
+[tool.hatch.version]
+path = "aberrant/__init__.py"
 
 # Ruff configuration
 [tool.ruff]
@@ -128,3 +133,42 @@ check_untyped_defs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "tqdm",
+    "tqdm.*",
+    "scipy",
+    "scipy.stats",
+    "scipy.*",
+    "faiss",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["aberrant.drift.kswin"]
+disable_error_code = ["import-untyped"]
+
+[[tool.mypy.overrides]]
+# Temporary typing tech debt.
+# Keep this list frozen (do not add new modules) and remove entries incrementally.
+# TODO: Track phased removal of this suppression block in a dedicated issue.
+module = [
+    "aberrant.model.iforest.asd",
+    "aberrant.model.iforest.halfspace",
+    "aberrant.model.iforest.mondrian",
+    "aberrant.model.iforest.online",
+    "aberrant.model.iforest.rand_hist",
+    "aberrant.model.iforest.random_cut",
+    "aberrant.model.stat.multi",
+    "aberrant.model.stat.uni",
+    "aberrant.model.svm.adaptive",
+    "aberrant.model.svm.gadget",
+    "aberrant.model.sketch.rshash",
+    "aberrant.model.distance.lof",
+    "aberrant.model.distance.sdostream",
+    "aberrant.model.deep.autoencoder",
+    "aberrant.utils.deep.architecture",
+    "aberrant.transform.projection.incremental_pca",
+]
+ignore_errors = true

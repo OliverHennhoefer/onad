@@ -132,7 +132,7 @@ class KSWIN(BaseDriftDetector):
         historical = [window_values[i] for i in sample_indices]
 
         # Perform KS test
-        statistic, p_value = ks_2samp(recent, historical)
+        statistic, p_value = ks_2samp(recent, historical, method="asymp")
         self._statistic = statistic
         self._p_value = p_value
 

@@ -23,8 +23,37 @@ jobs:
       - name: Install Python
         run: uv python install 3.11
 
+      - name: Install dependencies
+        run: uv sync --extra dev --extra faiss
+
+      - name: Ruff
+        run: uv run python -m ruff check .
+
+      - name: Mypy
+        run: uv run python -m mypy aberrant
+
+      - name: Test suite
+        run: uv run python -m pytest -q
+
       - name: Build distributions
         run: uv build
+
+      - name: Wheel smoke test
+        run: |
+          uv venv .venv-smoke --python 3.11
+          VIRTUAL_ENV=.venv-smoke uv pip install dist/*.whl
+          . .venv-smoke/bin/activate
+          python - <<'PY'
+          from aberrant.model import ThresholdModel
+          from aberrant.model.iforest import OnlineIsolationForest
+          from aberrant.transform.preprocessing import StandardScaler
+
+          model = ThresholdModel(ceiling=1.0)
+          assert model.score_one({"x": 2.0}) == 1.0
+          pipeline = StandardScaler() | OnlineIsolationForest()
+          pipeline.learn_one({"x": 0.0, "y": 1.0})
+          assert isinstance(pipeline.score_one({"x": 0.1, "y": 0.9}), float)
+          PY
 
       - name: Upload distribution artifacts
         uses: actions/upload-artifact@v7

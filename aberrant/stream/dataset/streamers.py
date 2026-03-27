@@ -50,6 +50,7 @@ class NpzStreamer:
         label_column: str = "y",
         feature_column: str = "X",
         sanitize_floats: bool = True,
+        show_progress: bool = False,
     ) -> None:
         self.file_path = file_path
         self.dataset_info = dataset_info
@@ -57,6 +58,7 @@ class NpzStreamer:
         self.label_column = label_column
         self.feature_column = feature_column
         self.sanitize_floats = sanitize_floats
+        self.show_progress = show_progress
         self.npz_file: np.lib.npyio.NpzFile | None = None
 
     def __enter__(self) -> "NpzStreamer":
@@ -111,7 +113,9 @@ class NpzStreamer:
         if self.dataset_info:
             progress_desc = f"Loading {self.dataset_info.name}"
 
-        progress_bar = tqdm(total=n_samples, desc=progress_desc, unit="sample")
+        progress_bar: tqdm | None = None
+        if self.show_progress:
+            progress_bar = tqdm(total=n_samples, desc=progress_desc, unit="sample")
 
         try:
             # Generate feature column names
@@ -136,10 +140,12 @@ class NpzStreamer:
                         label = float(label)
 
                 yield features_dict, label
-                progress_bar.update(1)
+                if progress_bar is not None:
+                    progress_bar.update(1)
 
         finally:
-            progress_bar.close()
+            if progress_bar is not None:
+                progress_bar.close()
 
 
 class DatasetStreamer:
@@ -162,7 +168,11 @@ class DatasetStreamer:
     """
 
     def __init__(
-        self, dataset: Dataset, data_dir: str, dataset_info: DatasetInfo, **kwargs
+        self,
+        dataset: Dataset,
+        data_dir: str,
+        dataset_info: DatasetInfo,
+        **kwargs: Any,
     ) -> None:
         self.dataset = dataset
         self.data_dir = data_dir

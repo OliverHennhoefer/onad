@@ -1,9 +1,19 @@
-import collections
+from __future__ import annotations
 
-import faiss
+import collections
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 from aberrant.base.similarity import BaseSimilaritySearchEngine
+
+if TYPE_CHECKING:
+    import faiss as faiss_types
+
+try:
+    import faiss
+except ModuleNotFoundError:  # pragma: no cover - exercised when optional extra missing
+    faiss = None
 
 
 class FaissSimilaritySearchEngine(BaseSimilaritySearchEngine):
@@ -19,13 +29,21 @@ class FaissSimilaritySearchEngine(BaseSimilaritySearchEngine):
     """
 
     def __init__(self, window_size: int, warm_up: int) -> None:
-        self.window: collections.deque = collections.deque(maxlen=window_size)
+        if faiss is None:
+            raise RuntimeError(
+                "faiss-cpu is required for FaissSimilaritySearchEngine. "
+                'Install it via `pip install "aberrant[faiss]"`.'
+            )
+
+        self.window: collections.deque[dict[str, float]] = collections.deque(
+            maxlen=window_size
+        )
         self.window_size = window_size
 
         self._check_params(window_size, warm_up)
         self.warm_up: int = warm_up
 
-        self.index: faiss.Index | None = None
+        self.index: faiss_types.Index | None = None
         self.keys: list[str] | None = None
         self._index_needs_rebuild = True
 
@@ -126,6 +144,7 @@ class FaissSimilaritySearchEngine(BaseSimilaritySearchEngine):
         )
 
         # Create new index and add all data
+        assert faiss is not None  # guaranteed by __init__ guard
         self.index = faiss.IndexFlatL2(len(self.keys))
         if len(data_matrix) > 0:
             self.index.add(data_matrix)

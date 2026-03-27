@@ -34,7 +34,14 @@ print(get_cache_info())
 print(list_cached())
 ```
 
-## Legacy parquet streamer
+## Progress bars
 
-`aberrant.stream.streamer.ParquetStreamer` is legacy and requires `aberrant[parquet]`.
-It is not part of the preferred public API.
+```python
+from aberrant.stream.dataset import Dataset, DatasetManager
+
+manager = DatasetManager(show_progress=True)  # download progress
+dataset = manager.load(Dataset.FRAUD, show_progress=True)  # streaming progress
+
+for x, y in dataset.stream():
+    ...
+```

@@ -1,3 +1,0 @@
-Variants:
-- NESVM
-- Very Fast Kernel SVM

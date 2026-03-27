@@ -57,6 +57,8 @@ detector = StandardScaler() | IncrementalPCA(n_components=3, n0=100) | KNN(
 )
 ```
 
+`FaissSimilaritySearchEngine` requires the optional `aberrant[faiss]` extra.
+
 ## Streaming datasets
 
 ```python
@@ -79,7 +81,7 @@ Optional extras:
 
 - `aberrant[eval]`: evaluation metrics (`scikit-learn`)
 - `aberrant[dl]`: deep models (`torch`)
-- `aberrant[parquet]`: legacy parquet streamer (`pyarrow`)
+- `aberrant[faiss]`: FAISS similarity engine (`faiss-cpu`)
 - `aberrant[dev]`, `aberrant[docs]`, `aberrant[benchmark]`, `aberrant[all]`
 
 ## Public modules
@@ -96,6 +98,7 @@ Optional extras:
 - `aberrant.transform.preprocessing`
 - `aberrant.transform.projection`
 - `aberrant.stream.dataset`
+- `aberrant.utils.similar`
 
 ## Scoring notes
 

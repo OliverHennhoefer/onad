@@ -3,6 +3,10 @@
 import unittest
 from unittest.mock import Mock
 
+import pytest
+
+pytest.importorskip("faiss")
+
 from aberrant.model.distance.knn import KNN
 from aberrant.utils.similar.faiss_engine import FaissSimilaritySearchEngine
 from tests.utils import DataGenerator
