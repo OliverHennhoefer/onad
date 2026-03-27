@@ -21,7 +21,7 @@
 
 - Persist model state regularly (pickle/joblib where supported).
 - Add deterministic seeds for reproducibility in experiments.
-- Keep optional dependencies explicit (`eval`, `dl`, `parquet` extras).
+- Keep optional dependencies explicit (`eval`, `dl`, `faiss` extras).
 
 ## Deployment checklist
 

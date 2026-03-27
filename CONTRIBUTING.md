@@ -20,7 +20,7 @@ Run these before opening a PR:
 
 ```bash
 uv run python -m ruff check .
-uv run python -m mypy aberrant/base/model.py aberrant/base/transformer.py aberrant/base/pipeline.py aberrant/model/threshold.py aberrant/model/quantile_threshold.py aberrant/model/__init__.py aberrant/model/iforest/__init__.py aberrant/model/distance/__init__.py aberrant/model/svm/__init__.py aberrant/model/deep/__init__.py
+uv run python -m mypy aberrant
 uv run python -m pytest -q
 uv run python -m build
 ```

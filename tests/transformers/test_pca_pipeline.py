@@ -1,6 +1,9 @@
 import unittest
 
 import numpy as np
+import pytest
+
+pytest.importorskip("faiss")
 
 from aberrant.model.distance.knn import KNN
 from aberrant.stream.dataset import Dataset, load

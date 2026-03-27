@@ -5,13 +5,16 @@ for anomaly detection benchmarks hosted on GitHub releases.
 """
 
 import hashlib
+import hmac
 import json
+import logging
 import os
 import shutil
 import time
 import urllib.request
 from http.client import IncompleteRead, RemoteDisconnected
 from pathlib import Path
+from typing import Any, cast
 from urllib.error import URLError
 
 import numpy as np
@@ -49,12 +52,16 @@ class DatasetManager:
         download_retries: int = 3,
         download_timeout: float = 30.0,
         retry_backoff_seconds: float = 1.0,
+        show_progress: bool = False,
+        logger: logging.Logger | None = None,
     ) -> None:
+        self.logger = logger or logging.getLogger(__name__)
         self.github_repo = github_repo
         self.release_tag = release_tag
         self.download_retries = max(1, int(download_retries))
         self.download_timeout = float(download_timeout)
         self.retry_backoff_seconds = max(0.0, float(retry_backoff_seconds))
+        self.show_progress = show_progress
 
         # Set up cache directory
         if cache_dir is None:
@@ -67,12 +74,12 @@ class DatasetManager:
         self.metadata_file = self.cache_dir / "metadata.json"
         self.metadata = self._load_metadata()
 
-    def _load_metadata(self) -> dict:
+    def _load_metadata(self) -> dict[str, Any]:
         """Load cache metadata from disk."""
         if self.metadata_file.exists():
             try:
-                with open(self.metadata_file) as f:
-                    return json.load(f)
+                with open(self.metadata_file, encoding="utf-8") as f:
+                    return cast(dict[str, Any], json.load(f))
             except (OSError, json.JSONDecodeError):
                 pass
         return {"version": "1.0", "datasets": {}}
@@ -80,10 +87,10 @@ class DatasetManager:
     def _save_metadata(self) -> None:
         """Save cache metadata to disk."""
         try:
-            with open(self.metadata_file, "w") as f:
+            with open(self.metadata_file, "w", encoding="utf-8") as f:
                 json.dump(self.metadata, f, indent=2)
         except OSError as e:
-            print(f"Warning: Could not save cache metadata: {e}")
+            self.logger.warning("Could not save cache metadata: %s", e)
 
     def _get_dataset_url(self, dataset: Dataset) -> str:
         """Get GitHub release download URL for a dataset."""
@@ -118,19 +125,26 @@ class DatasetManager:
                         url, timeout=self.download_timeout
                     ) as response,
                     open(dest_path, "wb") as f,
-                    tqdm(
-                        total=int(response.headers.get("Content-Length", 0)),
-                        unit="B",
-                        unit_scale=True,
-                        desc=f"Downloading {dest_path.name}",
-                    ) as pbar,
                 ):
-                    while True:
-                        chunk = response.read(8192)
-                        if not chunk:
-                            break
-                        f.write(chunk)
-                        pbar.update(len(chunk))
+                    pbar: tqdm | None = None
+                    try:
+                        if self.show_progress:
+                            pbar = tqdm(
+                                total=int(response.headers.get("Content-Length", 0)),
+                                unit="B",
+                                unit_scale=True,
+                                desc=f"Downloading {dest_path.name}",
+                            )
+                        while True:
+                            chunk = response.read(8192)
+                            if not chunk:
+                                break
+                            f.write(chunk)
+                            if pbar is not None:
+                                pbar.update(len(chunk))
+                    finally:
+                        if pbar is not None:
+                            pbar.close()
                 return
             except (
                 URLError,
@@ -144,9 +158,12 @@ class DatasetManager:
                     dest_path.unlink()
                 if attempt < self.download_retries:
                     wait_seconds = self.retry_backoff_seconds * (2 ** (attempt - 1))
-                    print(
-                        f"Download attempt {attempt}/{self.download_retries} failed: {e}. "
-                        f"Retrying in {wait_seconds:.1f}s..."
+                    self.logger.warning(
+                        "Download attempt %s/%s failed: %s. Retrying in %.1fs...",
+                        attempt,
+                        self.download_retries,
+                        e,
+                        wait_seconds,
                     )
                     time.sleep(wait_seconds)
                 else:
@@ -168,13 +185,50 @@ class DatasetManager:
         if not cache_path.exists():
             return False
 
-        # Check if file is corrupted (basic validation)
-        try:
-            with np.load(cache_path) as npz_file:
-                # Basic validation - check required arrays exist
-                return "X" in npz_file and "y" in npz_file
-        except Exception:
-            return False
+        return (
+            self._validate_cached_dataset_at_path(dataset=dataset, path=cache_path)
+            is not None
+        )
+
+    def _verify_checksum(
+        self,
+        dataset: Dataset,
+        path: Path,
+        verify_metadata_hash: bool = True,
+    ) -> str | None:
+        """Verify dataset file checksum and return the hash on success."""
+        actual_hash = self._calculate_file_hash(path)
+        info = get_dataset_info(dataset)
+        if not hmac.compare_digest(actual_hash, info.sha256):
+            self.logger.warning(
+                "Checksum mismatch for %s. Expected trusted hash %s, got %s.",
+                dataset.value,
+                info.sha256,
+                actual_hash,
+            )
+            return None
+
+        if verify_metadata_hash:
+            datasets_meta = self.metadata.get("datasets", {})
+            metadata_entry = (
+                datasets_meta.get(dataset.value)
+                if isinstance(datasets_meta, dict)
+                else None
+            )
+            if isinstance(metadata_entry, dict):
+                cached_hash = metadata_entry.get("hash")
+                if isinstance(cached_hash, str) and not hmac.compare_digest(
+                    actual_hash, cached_hash
+                ):
+                    self.logger.warning(
+                        "Cache metadata hash mismatch for %s. Metadata hash %s differs from file hash %s.",
+                        dataset.value,
+                        cached_hash,
+                        actual_hash,
+                    )
+                    return None
+
+        return actual_hash
 
     def download(self, dataset: Dataset, force: bool = False) -> Path:
         """Download a dataset to local cache.
@@ -198,21 +252,31 @@ class DatasetManager:
         # Check if already cached and valid
         if not force and self._is_dataset_cached(dataset):
             if self._validate_cached_dataset(dataset):
-                print(f"Dataset {dataset.value} already cached at {cache_path}")
+                self.logger.info(
+                    "Dataset %s already cached at %s", dataset.value, cache_path
+                )
                 return cache_path
             else:
-                print(f"Cached dataset {dataset.value} is corrupted, re-downloading...")
+                self.logger.warning(
+                    "Cached dataset %s is corrupted or failed integrity checks, re-downloading.",
+                    dataset.value,
+                )
 
         # Download dataset
         url = self._get_dataset_url(dataset)
         temp_path = cache_path.with_suffix(".tmp")
 
         try:
-            print(f"Downloading {dataset.value} from {url}...")
+            self.logger.info("Downloading %s from %s", dataset.value, url)
             self._download_with_progress(url, temp_path)
 
             # Validate downloaded file
-            if not self._validate_cached_dataset_at_path(temp_path):
+            verified_hash = self._validate_cached_dataset_at_path(
+                dataset=dataset,
+                path=temp_path,
+                verify_metadata_hash=False,
+            )
+            if verified_hash is None:
                 raise RuntimeError("Downloaded dataset failed validation")
 
             # Move to final location
@@ -221,16 +285,17 @@ class DatasetManager:
             temp_path.rename(cache_path)
 
             # Update metadata
-            file_hash = self._calculate_file_hash(cache_path)
             self.metadata["datasets"][dataset.value] = {
                 "downloaded": True,
-                "hash": file_hash,
+                "hash": verified_hash,
                 "size": cache_path.stat().st_size,
                 "release_tag": self.release_tag,
             }
             self._save_metadata()
 
-            print(f"Successfully downloaded {dataset.value} to {cache_path}")
+            self.logger.info(
+                "Successfully downloaded %s to %s", dataset.value, cache_path
+            )
             return cache_path
 
         except Exception as e:
@@ -241,16 +306,27 @@ class DatasetManager:
                 f"Failed to download dataset {dataset.value}: {e}"
             ) from e
 
-    def _validate_cached_dataset_at_path(self, path: Path) -> bool:
-        """Validate dataset at specific path."""
+    def _validate_cached_dataset_at_path(
+        self,
+        dataset: Dataset,
+        path: Path,
+        verify_metadata_hash: bool = True,
+    ) -> str | None:
+        """Validate dataset at specific path and return verified hash on success."""
         try:
             with np.load(path) as npz_file:
-                return "X" in npz_file and "y" in npz_file
+                if "X" not in npz_file or "y" not in npz_file:
+                    return None
+            return self._verify_checksum(
+                dataset,
+                path,
+                verify_metadata_hash=verify_metadata_hash,
+            )
         except Exception:
-            return False
+            return None
 
     def load(
-        self, dataset: Dataset, auto_download: bool = True, **kwargs
+        self, dataset: Dataset, auto_download: bool = True, **kwargs: Any
     ) -> DatasetStreamer:
         """Load a dataset for streaming.
 
@@ -311,7 +387,7 @@ class DatasetManager:
             cache_path = self._get_cache_path(dataset)
             if cache_path.exists():
                 cache_path.unlink()
-                print(f"Removed {dataset.value} from cache")
+                self.logger.info("Removed %s from cache", dataset.value)
 
             # Update metadata
             if dataset.value in self.metadata.get("datasets", {}):
@@ -326,7 +402,7 @@ class DatasetManager:
             # Reset metadata
             self.metadata = {"version": "1.0", "datasets": {}}
             self._save_metadata()
-            print("Cleared all dataset cache")
+            self.logger.info("Cleared all dataset cache")
 
     def get_cache_size(self) -> int:
         """Get total size of dataset cache in bytes.

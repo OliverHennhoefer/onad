@@ -10,6 +10,41 @@ permissions:
   contents: read
 
 jobs:
+  minimal-install-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install Python
+        run: uv python install 3.11
+
+      - name: Install base dependencies only
+        run: uv sync
+
+      - name: Base install smoke
+        run: |
+          uv run python - <<'PY'
+          import aberrant
+          from aberrant.base import Pipeline
+          from aberrant.model import NullModel, QuantileThreshold, RandomModel, ThresholdModel
+          from aberrant.model.iforest import OnlineIsolationForest
+          from aberrant.transform.preprocessing import StandardScaler
+
+          assert isinstance(aberrant.__version__, str)
+          assert NullModel().score_one({"x": 1.0}) == 0.0
+          assert 0.0 <= RandomModel().score_one({"x": 1.0}) <= 1.0
+          assert ThresholdModel(ceiling=1.0).score_one({"x": 2.0}) == 1.0
+          q = QuantileThreshold()
+          q.learn_one({"score": 0.1})
+          _ = q.score_one({"score": 0.1})
+          p = StandardScaler() | OnlineIsolationForest()
+          assert isinstance(p, Pipeline)
+          PY
+
   lint-type-test:
     strategy:
       fail-fast: false
@@ -34,21 +69,42 @@ jobs:
         run: uv run python -m ruff check .
 
       - name: Mypy
-        run: >
-          uv run python -m mypy
-          aberrant/base/model.py
-          aberrant/base/transformer.py
-          aberrant/base/pipeline.py
-          aberrant/model/threshold.py
-          aberrant/model/quantile_threshold.py
-          aberrant/model/__init__.py
-          aberrant/model/iforest/__init__.py
-          aberrant/model/distance/__init__.py
-          aberrant/model/svm/__init__.py
-          aberrant/model/deep/__init__.py
+        run: uv run python -m mypy aberrant
 
       - name: Unit tests
         run: uv run python -m pytest tests/models tests/drift tests/transformers -q
+
+  extras-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install Python
+        run: uv python install 3.11
+
+      - name: Install extras
+        run: uv sync --extra dev --extra faiss
+
+      - name: Extras import smoke
+        run: |
+          uv run python - <<'PY'
+          from aberrant.model.deep import Autoencoder, KitNET
+          from aberrant.utils.similar.faiss_engine import FaissSimilaritySearchEngine
+
+          assert Autoencoder is not None
+          assert KitNET is not None
+          engine = FaissSimilaritySearchEngine(window_size=8, warm_up=2)
+          engine.append({"x": 0.0, "y": 0.0})
+          engine.append({"x": 1.0, "y": 1.0})
+          assert isinstance(engine.search({"x": 0.5, "y": 0.5}, n_neighbors=1), float)
+          PY
+
+      - name: FAISS model smoke tests
+        run: uv run python -m pytest tests/models/test_distance_knn.py -q
 
   integration-smoke:
     runs-on: ubuntu-latest
@@ -66,7 +122,7 @@ jobs:
         run: uv sync --extra dev
 
       - name: Integration smoke
-        run: uv run python -m pytest tests/test_public_imports.py tests/integration -q
+        run: uv run python -m pytest tests/test_public_imports_base.py tests/test_public_imports_extras.py tests/integration -q
 
   coverage:
     runs-on: ubuntu-latest
