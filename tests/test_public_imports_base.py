@@ -4,7 +4,12 @@ from aberrant import __version__
 from aberrant.base import BaseModel, BaseTransformer, Pipeline
 from aberrant.drift import ADWIN, KSWIN, PageHinkley
 from aberrant.model import NullModel, QuantileThreshold, RandomModel, ThresholdModel
-from aberrant.model.distance import KNN, LocalOutlierFactor, SDOStream
+from aberrant.model.distance import (
+    KNN,
+    STARE,
+    LocalOutlierFactor,
+    SDOStream,
+)
 from aberrant.model.graph import ISCONNA, MIDAS
 from aberrant.model.iforest import (
     ASDIsolationForest,
@@ -39,6 +44,7 @@ def test_public_imports_base_smoke() -> None:
     assert KNN is not None
     assert LocalOutlierFactor is not None
     assert SDOStream is not None
+    assert STARE is not None
     assert ISCONNA is not None
     assert MIDAS is not None
     assert ASDIsolationForest is not None

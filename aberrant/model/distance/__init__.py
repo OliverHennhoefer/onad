@@ -7,6 +7,7 @@ __all__ = [
     "KNN",
     "LocalOutlierFactor",
     "SDOStream",
+    "STARE",
 ]
 
 
@@ -21,4 +22,7 @@ def __getattr__(name: str) -> Any:
     if name == "SDOStream":
         module = importlib.import_module("aberrant.model.distance.sdostream")
         return module.SDOStream
+    if name == "STARE":
+        module = importlib.import_module("aberrant.model.distance.stare")
+        return module.STARE
     raise AttributeError(f"module 'aberrant.model.distance' has no attribute '{name}'")

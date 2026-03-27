@@ -32,7 +32,7 @@ training on the point being evaluated.
 Imports:
 
 ```python
-from aberrant.model.distance import KNN, LocalOutlierFactor, SDOStream
+from aberrant.model.distance import KNN, LocalOutlierFactor, SDOStream, STARE
 ```
 
 `KNN` requires a similarity engine (for example FAISS):
@@ -56,6 +56,24 @@ model = SDOStream(k=128, T=256.0, qv=0.3, x_neighbors=8, seed=42)
 - Returns a continuous non-negative anomaly score (distance-based).
 - Supports optional explicit time handling through `time_key`.
 - Uses fixed-size observer state (`k`) with exponential fading (`T`).
+
+`STARE` is a bounded sliding-window local outlier detector:
+
+```python
+from aberrant.model.distance import STARE
+
+model = STARE(
+    k=40,
+    radius=1.5,
+    window_size=2048,
+    slide_size=128,
+    skip_threshold=0.1,
+)
+```
+
+- Returns bounded scores in `[0, 1]`.
+- Supports optional explicit time handling through `time_key`.
+- Uses bounded-memory sliding window state (`window_size`).
 
 ## Sketch family
 

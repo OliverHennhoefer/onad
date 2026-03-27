@@ -12,6 +12,7 @@ Example scripts are in `examples/models/` and `examples/pipeline.py`.
 - `examples/models/random_cut_forest.py`
 - `examples/models/knn.py`
 - `examples/models/sdostream.py`
+- `examples/models/stare.py`
 - `examples/models/mstream.py`
 - `examples/models/rshash.py`
 - `examples/models/isconna.py`
