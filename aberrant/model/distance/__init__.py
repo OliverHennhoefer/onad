@@ -6,6 +6,7 @@ from typing import Any
 __all__ = [
     "KNN",
     "LocalOutlierFactor",
+    "NETS",
     "SDOStream",
     "STARE",
 ]
@@ -19,6 +20,9 @@ def __getattr__(name: str) -> Any:
     if name == "LocalOutlierFactor":
         module = importlib.import_module("aberrant.model.distance.lof")
         return module.LocalOutlierFactor
+    if name == "NETS":
+        module = importlib.import_module("aberrant.model.distance.nets")
+        return module.NETS
     if name == "SDOStream":
         module = importlib.import_module("aberrant.model.distance.sdostream")
         return module.SDOStream

@@ -6,6 +6,7 @@ from aberrant.drift import ADWIN, KSWIN, PageHinkley
 from aberrant.model import NullModel, QuantileThreshold, RandomModel, ThresholdModel
 from aberrant.model.distance import (
     KNN,
+    NETS,
     STARE,
     LocalOutlierFactor,
     SDOStream,
@@ -43,6 +44,7 @@ def test_public_imports_base_smoke() -> None:
     assert QuantileThreshold is not None
     assert KNN is not None
     assert LocalOutlierFactor is not None
+    assert NETS is not None
     assert SDOStream is not None
     assert STARE is not None
     assert ISCONNA is not None

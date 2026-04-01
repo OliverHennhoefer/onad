@@ -32,7 +32,7 @@ training on the point being evaluated.
 Imports:
 
 ```python
-from aberrant.model.distance import KNN, LocalOutlierFactor, SDOStream, STARE
+from aberrant.model.distance import KNN, LocalOutlierFactor, NETS, SDOStream, STARE
 ```
 
 `KNN` requires a similarity engine (for example FAISS):
@@ -44,6 +44,36 @@ from aberrant.utils.similar.faiss_engine import FaissSimilaritySearchEngine
 engine = FaissSimilaritySearchEngine(window_size=250, warm_up=50)
 model = KNN(k=25, similarity_engine=engine)
 ```
+
+`LocalOutlierFactor` is a bounded sliding-window local-density detector:
+
+```python
+from aberrant.model.distance import LocalOutlierFactor
+
+model = LocalOutlierFactor(k=10, window_size=1000, distance="euclidean")
+```
+
+- Returns a continuous LOF score, where values above `1` are more outlier-like.
+- Uses bounded-memory window state (`window_size`).
+
+`NETS` is a bounded streaming detector using cell-level net-effect pruning:
+
+```python
+from aberrant.model.distance import NETS
+
+model = NETS(
+    k=30,
+    radius=1.5,
+    window_size=2048,
+    slide_size=128,
+    subspace_dim=3,
+    seed=42,
+)
+```
+
+- Returns bounded scores in `[0, 1]`.
+- Supports optional explicit time handling through `time_key`.
+- Uses bounded-memory full/subspace cell state over a sliding window.
 
 `SDOStream` is a bounded-memory observer-based online detector:
 

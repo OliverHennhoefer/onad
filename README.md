@@ -33,7 +33,7 @@ Each `x` is `dict[str, float]`.
 | Family | Algorithms |
 | --- | --- |
 | Isolation Forest | `ASDIsolationForest`, `HalfSpaceTrees`, `MondrianForest`, `OnlineIsolationForest`, `RandomCutForest`, `StreamRandomHistogramForest`, `XStream` |
-| Distance | `KNN`, `LocalOutlierFactor`, `SDOStream`, `STARE` |
+| Distance | `KNN`, `LocalOutlierFactor`, `NETS`, `SDOStream`, `STARE` |
 | Sketch | `MStream`, `RSHash` |
 | Graph | `ISCONNA`, `MIDAS` |
 | SVM | `GADGETSVM`, `IncrementalOneClassSVMAdaptiveKernel` |
