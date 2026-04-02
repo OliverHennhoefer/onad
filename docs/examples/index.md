@@ -16,6 +16,7 @@ Example scripts are in `examples/models/` and `examples/pipeline.py`.
 - `examples/models/stare.py`
 - `examples/models/mstream.py`
 - `examples/models/rshash.py`
+- `examples/models/anoedge.py`
 - `examples/models/isconna.py`
 - `examples/models/midas.py`
 - `examples/models/streamspot.py`

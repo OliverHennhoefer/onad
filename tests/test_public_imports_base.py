@@ -11,7 +11,7 @@ from aberrant.model.distance import (
     LocalOutlierFactor,
     SDOStream,
 )
-from aberrant.model.graph import ISCONNA, MIDAS, StreamSpot
+from aberrant.model.graph import ISCONNA, MIDAS, AnoEdgeL, StreamSpot
 from aberrant.model.iforest import (
     ASDIsolationForest,
     HalfSpaceTrees,
@@ -47,6 +47,7 @@ def test_public_imports_base_smoke() -> None:
     assert NETS is not None
     assert SDOStream is not None
     assert STARE is not None
+    assert AnoEdgeL is not None
     assert ISCONNA is not None
     assert MIDAS is not None
     assert StreamSpot is not None

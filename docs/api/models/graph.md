@@ -2,9 +2,12 @@
 
 Public objects from `aberrant.model.graph`:
 
+- `AnoEdgeL`
 - `ISCONNA`
 - `MIDAS`
 - `StreamSpot`
+
+`AnoEdgeL` is a bounded-memory local-density detector for dynamic edge streams.
 
 `ISCONNA` is a bounded-memory conditional detector for dynamic edge streams.
 

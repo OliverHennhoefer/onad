@@ -22,6 +22,8 @@ Semantic Versioning.
   with unit/integration tests, docs, and example script.
 - `MIDAS` graph-stream detector in `aberrant.model.graph` with public export,
   unit/integration tests, docs, and example script.
+- `AnoEdgeL` graph-stream detector in `aberrant.model.graph` with public export,
+  unit/integration tests, docs, and example script.
 - Production hardening CI jobs for base-install smoke and optional-extras smoke.
 - Trusted SHA256 checksums for built-in dataset artifacts.
 - `py.typed` marker for downstream type-checker support.

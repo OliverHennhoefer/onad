@@ -4,6 +4,7 @@ import importlib
 from typing import Any
 
 __all__ = [
+    "AnoEdgeL",
     "ISCONNA",
     "MIDAS",
     "StreamSpot",
@@ -12,6 +13,9 @@ __all__ = [
 
 def __getattr__(name: str) -> Any:
     """Lazy import of graph model classes."""
+    if name == "AnoEdgeL":
+        module = importlib.import_module("aberrant.model.graph.anoedge")
+        return module.AnoEdgeL
     if name == "ISCONNA":
         module = importlib.import_module("aberrant.model.graph.isconna")
         return module.ISCONNA
