@@ -110,12 +110,27 @@ model = STARE(
 Imports:
 
 ```python
-from aberrant.model.sketch import MStream, RSHash
+from aberrant.model.sketch import LODA, MStream, RSHash
 ```
 
-Use `MStream` and `RSHash` for bounded-memory sketch-based streaming detection.
+Use `LODA`, `MStream`, and `RSHash` for bounded-memory sketch-based streaming detection.
 
-- Supports `time_key` for explicit bucketed time updates.
+`LODA` is a random-projection histogram detector:
+
+```python
+from aberrant.model.sketch import LODA
+
+model = LODA(
+    n_projections=64,
+    n_bins=24,
+    sparsity=0.3,
+    warm_up_samples=256,
+    decay=1.0,
+    seed=42,
+)
+```
+
+- Sketch models support optional explicit time handling via `time_key`.
 - If `time_key=None`, it uses arrival order as the implicit time axis.
 - Returns a continuous non-negative anomaly score.
 

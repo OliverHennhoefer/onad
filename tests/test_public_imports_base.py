@@ -21,7 +21,7 @@ from aberrant.model.iforest import (
     StreamRandomHistogramForest,
     XStream,
 )
-from aberrant.model.sketch import MStream, RSHash
+from aberrant.model.sketch import LODA, MStream, RSHash
 from aberrant.model.stat import MovingAverage, MovingCovariance
 from aberrant.model.svm import GADGETSVM, IncrementalOneClassSVMAdaptiveKernel
 from aberrant.stream import Dataset, load
@@ -58,6 +58,7 @@ def test_public_imports_base_smoke() -> None:
     assert RandomCutForest is not None
     assert StreamRandomHistogramForest is not None
     assert XStream is not None
+    assert LODA is not None
     assert MStream is not None
     assert RSHash is not None
     assert IncrementalOneClassSVMAdaptiveKernel is not None

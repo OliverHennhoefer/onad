@@ -2,8 +2,11 @@
 
 Public objects from `aberrant.model.sketch`:
 
+- `LODA`
 - `MStream`
 - `RSHash`
+
+`LODA` is a bounded-memory random-projection histogram detector.
 
 `MStream` is a bounded-memory streaming detector based on fixed-size sketches.
 
