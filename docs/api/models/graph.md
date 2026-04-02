@@ -4,10 +4,13 @@ Public objects from `aberrant.model.graph`:
 
 - `ISCONNA`
 - `MIDAS`
+- `StreamSpot`
 
 `ISCONNA` is a bounded-memory conditional detector for dynamic edge streams.
 
 `MIDAS` is a bounded-memory microcluster detector for dynamic edge streams.
+
+`StreamSpot` is a bounded-memory structural detector for per-graph edge streams.
 
 Notes:
 - Expects source and destination node identifiers per sample.

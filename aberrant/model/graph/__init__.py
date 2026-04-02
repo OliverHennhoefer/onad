@@ -6,6 +6,7 @@ from typing import Any
 __all__ = [
     "ISCONNA",
     "MIDAS",
+    "StreamSpot",
 ]
 
 
@@ -17,4 +18,7 @@ def __getattr__(name: str) -> Any:
     if name == "MIDAS":
         module = importlib.import_module("aberrant.model.graph.midas")
         return module.MIDAS
+    if name == "StreamSpot":
+        module = importlib.import_module("aberrant.model.graph.streamspot")
+        return module.StreamSpot
     raise AttributeError(f"module 'aberrant.model.graph' has no attribute '{name}'")

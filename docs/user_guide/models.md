@@ -124,15 +124,33 @@ Use `MStream` and `RSHash` for bounded-memory sketch-based streaming detection.
 Imports:
 
 ```python
-from aberrant.model.graph import ISCONNA, MIDAS
+from aberrant.model.graph import ISCONNA, MIDAS, StreamSpot
 ```
 
-Use `ISCONNA` and `MIDAS` for dynamic edge streams where each sample encodes
+Use `ISCONNA`, `MIDAS`, and `StreamSpot` for dynamic edge streams where each sample encodes
 source and destination IDs (plus optional timestamp).
 
-- Uses bounded-memory count-min sketches.
+- `ISCONNA` and `MIDAS` use bounded-memory count-min sketches.
 - Supports optional explicit timestamp handling via `time_key`.
 - Returns a continuous non-negative anomaly score.
+
+`StreamSpot` models graph-level structural change with bounded per-graph shingle
+sketches and online cluster summaries:
+
+```python
+from aberrant.model.graph import StreamSpot
+
+model = StreamSpot(
+    graph_key="graph",
+    source_key="src",
+    destination_key="dst",
+    edge_type_key="etype",
+    sketch_dim=256,
+    shingle_size=2,
+    num_clusters=8,
+    max_graphs=256,
+)
+```
 
 ## SVM family
 
